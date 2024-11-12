@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Обработка изображений</title>
+  <style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        display: flex;
+        justify-content: center;
+    }
+
+    .main-container {
+        max-width: 1280px;
+        width: 100%;
+    }
+
+    .slider-container {
+        margin-top: -3px;
+    }
+
+    .images-container {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+        margin-top: 20px;
+    }
+
+    .image-wrapper {
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        border: 2px solid #ddd;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        background-color: #f0f0f0;
+    }
+
+    .image-wrapper img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .image-info {
+        text-align: center;
+        margin-top: 5px;
+        font-size: 0.9em;
+        color: #555;
+    }
+
+    .header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+</style>
+</head>
+<body>
+    <div class="main-container">
+        <h1>Загрузка изображения</h1>
+        <input type="file" id="fileInput" accept="image/*">
+
+        <div class="images-container">
+            <div>
+                <h3>Оригинальное изображение</h3>
+                <div class="image-wrapper" id="originalImageWrapper">
+                    <p>Загрузите изображение</p>
+                </div>
+                <div class="image-info" id="originalSize">Размер: - кБ</div>
+            </div>
+            <div>
+                <div class="header">
+                    <h3>Сжатое изображение</h3>
+                     <div class="slider-container">
+                        <label for="qualitySlider">Качество сжатия: <span id="qualityValue">75</span></label>
+                        <input type="range" id="qualitySlider" min="1" max="100" value="75">
+                    </div>
+                    <a id="downloadButton" href="#" download="compressed_image.jpg" style="display: none;">Скачать</a>
+                </div>
+                <div class="image-wrapper" id="compressedImageWrapper">
+                    <p>Загрузите изображение</p>
+                </div>
+                <div class="image-info" id="compressedSize">Размер: - кБ</div>
+            </div>
+            <div>
+                <h3>Выделение оттенков цвета</h3>
+                <select id="colorSelect" oninput="updateColorHighlightedImage()">
+                    <option value="red">Красный</option>
+                    <option value="green">Зеленый</option>
+                    <option value="blue">Синий</option>
+                </select>
+                <div class="image-wrapper" id="colorHighlightedImageWrapper">
+                    <p>Загрузите изображение</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script
+        src = "script.js">
+
+    </script>
+</body>
+</html>
+
