@@ -1,125 +1,233 @@
-        // Получаем ссылки на элементы HTML
-const qualitySlider = document.getElementById('qualitySlider'); // Ползунок для выбора качества сжатия
-const qualityValue = document.getElementById('qualityValue'); // Элемент для отображения выбранного качества
-const fileInput = document.getElementById('fileInput'); // Элемент для загрузки изображения
-const originalImageWrapper = document.getElementById('originalImageWrapper'); // Обертка для оригинального изображения
-const compressedImageWrapper = document.getElementById('compressedImageWrapper'); // Обертка для сжатого изображения
-const originalSizeInfo = document.getElementById('originalSize'); // Элемент для отображения размера оригинального изображения
-const compressedSizeInfo = document.getElementById('compressedSize'); // Элемент для отображения размера сжатого изображения
-const downloadButton = document.getElementById('downloadButton'); // Кнопка для скачивания сжатого изображения
-const colorSelect = document.getElementById('colorSelect'); // Элемент выбора цвета для выделения
-const colorHighlightedImageWrapper = document.getElementById('colorHighlightedImageWrapper'); // Обертка для изображения с выделением цвета
-let debounceTimeout, debounceTimeoutColor; // Переменные для дебаунсинга, чтобы уменьшить количество запросов
+// Получаем ссылки на элементы HTML
+const qualitySlider = document.getElementById('qualitySlider');
+const qualityValue = document.getElementById('qualityValue');
+const fileInput = document.getElementById('fileInput');
+const originalImageWrapper = document.getElementById('originalImageWrapper');
+const compressedImageWrapper = document.getElementById('compressedImageWrapper');
+const originalSizeInfo = document.getElementById('originalSize');
+const compressedSizeInfo = document.getElementById('compressedSize');
+const downloadButton = document.getElementById('downloadButton');
+const colorSelect = document.getElementById('colorSelect');
+const colorHighlightedImageWrapper = document.getElementById('colorHighlightedImageWrapper');
+const finalProcessedImageWrapper = document.getElementById('finalImageWrapper');
+const frame1 = document.getElementById('frame1');
+let debounceTimeout, debounceTimeoutColor;
 
-// При изменении ползунка качества обновляем отображаемое значение и запускаем обновление сжатого изображения
-qualitySlider.oninput = function() {
-    qualityValue.textContent = this.value; // Обновляем отображение значения ползунка
-    updateCompressedImage(); // Обновляем сжатое изображение
+// Обновление отображаемого значения ползунка качества
+qualitySlider.oninput = function () {
+    qualityValue.textContent = this.value;
+    updateCompressedImage();
 };
 
-// При изменении выбранного файла отображаем оригинальное изображение, обновляем сжатое изображение и выделение цвета
-fileInput.onchange = function() {
-    displayOriginalImage(); // Отображаем оригинальное изображение
-    updateCompressedImage(); // Обновляем сжатое изображение
-    updateColorHighlightedImage(); // Обновляем выделение цвета
+// При выборе файла запускаем все процессы обработки
+fileInput.onchange = function () {
+    loadBlueChannelImage();
+    loadRedChannelImage();
+    loadGreenChannelImage();
+    loadHueImage();
+    loadSaturationImage();
+    loadValueImage();
+    loadLightnessHlsImage();
+    displayOriginalImage();
+    updateCompressedImage();
+    updateColorHighlightedImage();
+    updateFinalProcessedImage();
+    updateLightnessHLSImage();
+
 };
 
-// Функция для форматирования размера файла в килобайты
+// Форматируем размер файла в килобайты
 function formatSize(sizeInBytes) {
-    return (sizeInBytes / 1024).toFixed(2) + ' кБ'; // Преобразуем байты в килобайты и форматируем до двух знаков
+    return (sizeInBytes / 1024).toFixed(2) + ' кБ';
 }
 
-// Функция для отображения оригинального изображения
+// Отображаем оригинальное изображение
 async function displayOriginalImage() {
-    const file = fileInput.files[0]; // Получаем выбранное изображение
+    const file = fileInput.files[0];
     if (file) {
-        const originalURL = URL.createObjectURL(file); // Создаем URL для изображения
-        originalImageWrapper.innerHTML = `<img src="${originalURL}" alt="Оригинальное изображение">`; // Отображаем изображение
-        originalSizeInfo.textContent = `Размер: ${formatSize(file.size)}`; // Отображаем размер изображения
+        const originalURL = URL.createObjectURL(file);
+        originalImageWrapper.innerHTML = `<img src="${originalURL}" alt="Оригинальное изображение">`;
+        originalSizeInfo.textContent = `Размер: ${formatSize(file.size)}`;
     }
 }
 
-// Функция для обновления сжатого изображения
+// Обновляем сжатое изображение
 async function updateCompressedImage() {
-    clearTimeout(debounceTimeout); // Очищаем предыдущий таймаут для предотвращения частых запросов
+    clearTimeout(debounceTimeout);
     debounceTimeout = setTimeout(async () => {
-        const file = fileInput.files[0]; // Получаем выбранное изображение
-        const quality = qualitySlider.value; // Получаем значение качества сжатия
+        const file = fileInput.files[0];
+        const quality = qualitySlider.value;
 
-        if (!file) { // Если файл не выбран, показываем ошибку
+        if (!file) {
             alert("Пожалуйста, выберите файл для загрузки.");
             return;
         }
 
-        const formData = new FormData(); // Создаем объект FormData для отправки данных
-        formData.append('file', file); // Добавляем файл в данные
-        formData.append('quality', quality); // Добавляем качество сжатия
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('quality', quality);
 
         try {
-            // Отправляем запрос на сервер для сжатия изображения
             const response = await fetch('http://localhost:5000/compress-image', {
                 method: 'POST',
                 body: formData,
             });
 
-            if (!response.ok) { // Если сервер вернул ошибку
+            if (!response.ok) {
                 const errorText = await response.text();
                 throw new Error(`Ошибка ${response.status}: ${errorText}`);
             }
 
-            const blob = await response.blob(); // Получаем изображение в виде Blob
-            const imgURL = URL.createObjectURL(blob); // Создаем URL для сжатого изображения
-            compressedImageWrapper.innerHTML = `<img src="${imgURL}" alt="Сжатое изображение">`; // Отображаем сжатое изображение
-
-            // Обновляем ссылку для скачивания
+            const blob = await response.blob();
+            const imgURL = URL.createObjectURL(blob);
+            compressedImageWrapper.innerHTML = `<img src="${imgURL}" alt="Сжатое изображение">`;
             downloadButton.href = imgURL;
-            downloadButton.style.display = 'inline-block'; // Делаем кнопку скачивания видимой
-
-            // Обновляем размер сжатого изображения
-            const compressedSize = blob.size;
-            compressedSizeInfo.textContent = `Размер: ${formatSize(compressedSize)}`;
+            downloadButton.style.display = 'inline-block';
+            compressedSizeInfo.textContent = `Размер: ${formatSize(blob.size)}`;
         } catch (error) {
             console.error('Ошибка:', error);
-            alert("Произошла ошибка при загрузке изображения: " + error.message); // Показываем ошибку пользователю
+            alert("Ошибка сжатия: " + error.message);
         }
-    }, 300); // Устанавливаем задержку перед запросом (debounce)
+    }, 300);
 }
 
-// Функция для обновления изображения с выделением цвета
+// Обновляем изображение с выделением цвета
 async function updateColorHighlightedImage() {
-    clearTimeout(debounceTimeoutColor); // Очищаем предыдущий таймаут для предотвращения частых запросов
+    clearTimeout(debounceTimeoutColor);
     debounceTimeoutColor = setTimeout(async () => {
-        const file = fileInput.files[0]; // Получаем выбранное изображение
-        const color = colorSelect.value; // Получаем выбранный цвет для выделения
+        const file = fileInput.files[0];
+        const color = colorSelect.value;
 
-        if (!file) { // Если файл не выбран, показываем ошибку
+        if (!file) {
             alert("Пожалуйста, выберите файл для загрузки.");
             return;
         }
 
-        const formData = new FormData(); // Создаем объект FormData для отправки данных
-        formData.append('file', file); // Добавляем файл в данные
-        formData.append('color', color); // Добавляем выбранный цвет
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('color', color);
 
         try {
-            // Отправляем запрос на сервер для обработки изображения с выделением цвета
             const response = await fetch('http://localhost:5000/highlight-color', {
                 method: 'POST',
                 body: formData,
             });
 
-            if (!response.ok) { // Если сервер вернул ошибку
+            if (!response.ok) {
                 const errorText = await response.text();
                 throw new Error(`Ошибка ${response.status}: ${errorText}`);
             }
 
-            const blob = await response.blob(); // Получаем изображение в виде Blob
-            const imgURL = URL.createObjectURL(blob); // Создаем URL для обработанного изображения
-            colorHighlightedImageWrapper.innerHTML = `<img src="${imgURL}" alt="Выделенное изображение">`; // Отображаем изображение с выделением
+            const blob = await response.blob();
+            const imgURL = URL.createObjectURL(blob);
+            colorHighlightedImageWrapper.innerHTML = `<img src="${imgURL}" alt="Выделенное изображение">`;
         } catch (error) {
             console.error('Ошибка:', error);
-            alert("Произошла ошибка при обработке изображения: " + error.message); // Показываем ошибку пользователю
+            alert("Ошибка обработки цвета: " + error.message);
         }
-    }, 300); // Устанавливаем задержку перед запросом (debounce)
+    }, 300);
+}
+
+// Обновляем итоговое обработанное изображение
+async function updateFinalProcessedImage() {
+    const file = fileInput.files[0];
+
+    if (!file) {
+        alert("Пожалуйста, выберите файл для загрузки.");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        const response = await fetch('http://localhost:5000/segment-image', {
+            method: 'POST',
+            body: formData,
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Ошибка ${response.status}: ${errorText}`);
+        }
+
+        const blob = await response.blob();
+        const imgURL = URL.createObjectURL(blob);
+        finalProcessedImageWrapper.innerHTML = `<img src="${imgURL}" alt="Итоговое обработанное изображение">`;
+    } catch (error) {
+        console.error('Ошибка:', error);
+        alert("Ошибка итоговой обработки: " + error.message);
+    }
+}
+
+// универсальная функция для загрузки чистых оттенков, яркости и чистоты цвета
+async function loadChannelImage(route, frameElement) {
+    const file = fileInput.files[0]; // Получаем выбранный файл
+
+    if (!file) {
+        alert("Пожалуйста, выберите файл для загрузки.");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file); // Отправляем файл на сервер
+
+    try {
+        // Отправляем POST-запрос на сервер
+        const response = await fetch(`http://localhost:5000/${route}`, {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Ошибка ${response.status}: ${errorText}`);
+        }
+
+        // Получаем изображение из ответа
+        const blob = await response.blob();
+        const imgURL = URL.createObjectURL(blob);
+
+        // Вставляем изображение в указанный контейнер
+        frameElement.innerHTML = `<img src="${imgURL}" alt="${route} результат">`;
+
+    } catch (error) {
+        console.error('Ошибка:', error);
+        alert("Ошибка загрузки изображения: " + error.message);
+    }
+}
+// Функция для загрузки синего канала
+async function loadBlueChannelImage() {
+    await loadChannelImage('blue-channel', frame1);
+}
+
+// Функция для загрузки красного канала
+async function loadRedChannelImage() {
+    await loadChannelImage('red-channel', frame2);
+}
+
+// Функция для загрузки зеленого канала
+async function loadGreenChannelImage() {
+    await loadChannelImage('green-channel', frame3);
+}
+
+// Функция для загрузки оттенков (Hue)
+async function loadHueImage() {
+    await loadChannelImage('hue', frame4);
+}
+
+// Функция для загрузки насыщенности (Saturation)
+async function loadSaturationImage() {
+    await loadChannelImage('saturation', frame5);
+}
+
+// Функция для загрузки яркости (Value)
+async function loadValueImage() {
+    await loadChannelImage('value', frame6);
+}
+
+// Функция для загрузки Lightness в HLS
+async function loadLightnessHlsImage() {
+    await loadChannelImage('lightness-hls', frame7);
 }
 
