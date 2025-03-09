@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Roboto, sans-serif;
+            background-color: #f5f5f5;
+            min-height: 100vh;
+        }
+
+        .main-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 5%;
+            min-height: 100vh;
+        }
+
+        .content-container {
+            background-color: #fff;
+            width: 100%;
+            max-width: 1200px;
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header-nav {
+            background-color: #676767;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 20px;
+            border-radius: 10px;
+            width: 100%;
+        }
+
+        .search-input {
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            font-size: 16px;
+            width: 200px;
+            margin-right: auto;
+        }
+
+        .logo {
+            height: 50px;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .nav-actions button {
+            background-color: #FB9C9C;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .user-list-container {
+            width: 100%;
+            overflow-x: auto;
+            white-space: nowrap;
+            padding: 10px 0;
+        }
+
+        .user-list {
+            display: flex;
+            gap: 20px;
+            width: max-content;
+            padding-bottom: 10px;
+        }
+
+        .user-card {
+            background-color: #D9D9D9;
+            padding: 20px;
+            border-radius: 10px;
+            width: 250px;
+            height: 250px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .user-card h4 {
+            margin-bottom: 10px;
+            font-size: 18px;
+            color: #333;
+        }
+
+        .user-card p {
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 8px;
+        }
+
+        .user-card button {
+            background-color: #6A85FA;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .add-user-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 30px;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .add-user-form input,
+        .add-user-form select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            width: 250px;
+        }
+
+        .add-user-wrapper {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .add-user-message {
+            color: red;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+
+        .add-user-button {
+            background-color: #4CAF50;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+
+        .edit-user-form {
+            display: none;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 30px;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .edit-user-form input,
+        .edit-user-form select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            width: 250px;
+        }
+
+        .edit-user-wrapper {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .edit-user-message {
+            color: red;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+
+        .edit-user-button {
+            background-color: #4CAF50;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+
+        .cancel-edit-button {
+            background-color: #FF6347;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-wrapper">
+        <div class="content-container">
+            <nav class="header-nav">
+                <input type="text" id="searchInput" class="search-input" placeholder="Поиск пользователей..." />
+                <img src="logo.png" alt="Site Logo" class="logo" />
+                <div class="nav-actions">
+                    <button id="logoutButton">Выход</button>
+                </div>
+            </nav>
+            <h1 class="page-title">Панель администратора</h1>
+
+            <div class="user-list-container">
+                <div class="user-list" id="userCards">
+                    <!-- Карточки пользователей будут загружаться сюда -->
+                </div>
+            </div>
+
+            <!-- Форма добавления пользователя -->
+            <div class="add-user-form">
+                <input type="text" id="username" placeholder="Имя пользователя" />
+                <input type="text" id="password" placeholder="Пароль" />  <!-- Здесь заменили на type="text" -->
+                <select id="position">
+                    <option value="Сотрудник">Сотрудник</option>
+                    <option value="Администратор">Администратор</option>
+                </select>
+                <input type="text" id="accessRights" placeholder="Права доступа" />
+            </div>
+
+            <div class="add-user-wrapper">
+                <p id="message" class="add-user-message"></p>
+                <button id="addUserButton" class="add-user-button">Добавить пользователя</button>
+                <button id="cancelEditButton" class="cancel-edit-button" style="display: none;">Отменить редактирование</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    async function fetchUsers() {
+        const response = await fetch('http://localhost:5000/get_users');
+        const users = await response.json();
+        const userCards = document.getElementById('userCards');
+        userCards.innerHTML = '';
+
+        users.forEach(user => {
+            const card = `<div class="user-card" data-username="${user.username.toLowerCase()}" id="user-${user.username}">
+                            <h4>${user.username}</h4>
+                            <p><strong>Роль:</strong> ${user.position}</p>
+                            <p><strong>Дата:</strong> ${user.registration_date}</p>
+                            <p><strong>Права:</strong> ${user.access_rights}</p>
+                            <button onclick="openJournal('${user.username}')">Открыть журнал</button>
+                            <button onclick="editUser('${user.username}', '${user.password}', '${user.position}', '${user.access_rights}')">Редактировать</button>
+                        </div>`;
+            userCards.insertAdjacentHTML('beforeend', card);
+        });
+    }
+
+    function openJournal(username) {
+        alert(`Открытие журнала пользователя: ${username}`);
+    }
+
+    function editUser(username, password, position, accessRights) {
+        // Убедитесь, что данные правильно передаются в поля
+        document.getElementById('username').value = username;
+        document.getElementById('password').value = password;  // Пароль теперь будет виден
+        document.getElementById('position').value = position;
+        document.getElementById('accessRights').value = accessRights;
+
+        // Скрываем кнопку "Добавить пользователя"
+        document.getElementById('addUserButton').style.display = 'none';
+        document.getElementById('cancelEditButton').style.display = 'block';  // Показываем кнопку "Отменить редактирование"
+        document.getElementById('editUserButton').style.display = 'block';  // Показываем кнопку "Редактировать"
+        document.getElementById('editUserButton').onclick = function() {
+            updateUser(username);
+        };
+    }
+
+    async function updateUser(originalUsername) {
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value.trim();
+        const position = document.getElementById('position').value;
+        const accessRights = document.getElementById('accessRights').value.trim();
+
+        if (!username || !password || !position || !accessRights) {
+            document.getElementById('message').textContent = 'Заполните все поля';
+            return;
+        }
+
+        const response = await fetch('http://localhost:5000/update_user', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ originalUsername, username, password, position, accessRights }),
+        });
+
+        const result = await response.json();
+        document.getElementById('message').textContent = result.success ? 'Пользователь обновлен!' : `Ошибка: ${result.message}`;
+        if (result.success) fetchUsers();
+    }
+
+    document.getElementById('cancelEditButton').addEventListener('click', cancelEdit);
+
+    function cancelEdit() {
+        document.getElementById('username').value = '';
+        document.getElementById('password').value = '';  // Пароль очищаем, если отмена
+        document.getElementById('position').value = 'Сотрудник';
+        document.getElementById('accessRights').value = '';
+
+        document.getElementById('addUserButton').style.display = 'block'; // вернуть кнопку "Добавить пользователя"
+        document.getElementById('cancelEditButton').style.display = 'none'; // скрыть кнопку "Отменить редактирование"
+        document.getElementById('editUserButton').style.display = 'none'; // скрыть кнопку "Редактировать"
+    }
+
+    document.getElementById('addUserButton').addEventListener('click', async () => {
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value.trim();
+        const position = document.getElementById('position').value;
+        const accessRights = document.getElementById('accessRights').value.trim();
+
+        if (!username || !password || !position || !accessRights) {
+            document.getElementById('message').textContent = 'Заполните все поля';
+            return;
+        }
+
+        const response = await fetch('http://localhost:5000/add_user', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password, position, accessRights }),
+        });
+
+        const result = await response.json();
+        document.getElementById('message').textContent = result.success ? 'Пользователь добавлен!' : `Ошибка: ${result.message}`;
+        if (result.success) fetchUsers();
+    });
+
+    document.getElementById('logoutButton').addEventListener('click', () => {
+        window.location.href = 'site_picedit.html';
+    });
+
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase();
+        const userCards = document.querySelectorAll('.user-card');
+        userCards.forEach(card => {
+            const username = card.getAttribute('data-username');
+            if (username.includes(query)) {
+                card.style.display = '';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    });
+
+    fetchUsers();  // Загружаем пользователей при запуске
+</script>
+</body>
+</html>

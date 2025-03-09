@@ -1,182 +1,61 @@
 from flask import Flask, request, send_file, jsonify
 from flask_cors import CORS
 from PIL import Image
+import traceback
 import io
+import base64
 import pymysql
 from bcrypt import checkpw
 import cv2
 from datetime import datetime
 import numpy as np
-# DB_CONFIG = {
-#     'host': 'localhost',        # Имя хоста
-#     'user': 'root',             # Пользователь MySQL
-#     'password': '123',          # Пароль MySQL
-#     'database': 'site_users',   # Имя базы данных
-# }
+from flask import render_template
+import database  # Импортируем наш новый модуль
+
 # Инициализация Flask приложения
 app = Flask(__name__)
 CORS(app)  # Разрешаем CORS для всех запросов
 
+# инициализация страниц
+@app.route('/compress')
+def compress_page():
+    return render_template('compress.html')
+@app.route('/select_area')
+def select_area():
+    return render_template('select_area.html')
+
+@app.route('/find_area')
+def find_area():
+    return render_template('find_area.html')
+
+@app.route('/test')
+def test():
+    return render_template('test.html')
+
 
 
 # Подключение к базе данных
+@app.route('/login', methods=['POST'])
+def login():
+    return database.login()
+
+@app.route('/add_user', methods=['POST'])
+def add_user():
+    return database.add_user()
+
+@app.route('/get_users', methods=['GET'])
+def get_users():
+    return database.get_users()
+
+@app.route('/get_user_actions', methods=['GET'])
+def get_user_actions():
+    return database.get_user_actions()
 
 
-# def get_db_connection():
-#     return pymysql.connect(
-#         host=DB_CONFIG['host'],
-#         user=DB_CONFIG['user'],
-#         password=DB_CONFIG['password'],
-#         database=DB_CONFIG['database'],
-#         charset='utf8mb4',
-#         cursorclass=pymysql.cursors.DictCursor
-#     )
-#
-# # Маршрут для проверки логина
-#
-# @app.route('/login', methods=['POST'])
-# def login():
-#     try:
-#         data = request.json
-#         username = data.get('username')
-#         password = data.get('password')
-#
-#         if not username or not password:
-#             return jsonify({"success": False, "message": "Missing credentials"}), 400
-#
-#         conn = get_db_connection()
-#         if not conn:
-#             return jsonify({"success": False, "message": "Database connection error"}), 500
-#
-#         try:
-#             with conn.cursor() as cursor:
-#                 sql = "SELECT * FROM users WHERE username = %s AND password_hash = %s"
-#                 cursor.execute(sql, (username, password))
-#                 user = cursor.fetchone()
-#
-#                 if user:
-#                     return jsonify({"success": True}), 200
-#                 else:
-#                     return jsonify({"success": False, "message": "Invalid credentials"}), 401
-#         except Exception as e:
-#             print("Database query error:", e)  # Выводим подробную ошибку
-#             return jsonify({"success": False, "message": str(e)}), 500
-#         finally:
-#             conn.close()
-#     except Exception as e:
-#         print("General error:", e)  # Выводим ошибку общего уровня
-#         return jsonify({"success": False, "message": str(e)}), 500
-#
-# @app.route('/add_user', methods=['POST'])
-# def add_user():
-#     try:
-#         data = request.json
-#         username = data.get('username')
-#         password = data.get('password')
-#         position = data.get('position')
-#         access_rights = data.get('accessRights')
-#
-#         if not username or not password or not position or not access_rights:
-#             return jsonify({"success": False, "message": "Заполните все поля"}), 400
-#
-#         registration_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Форматируем дату
-#
-#         conn = get_db_connection()
-#         if not conn:
-#             return jsonify({"success": False, "message": "Ошибка подключения к БД"}), 500
-#
-#         try:
-#             with conn.cursor() as cursor:
-#                 # Проверяем, существует ли пользователь
-#                 cursor.execute("SELECT id FROM users WHERE username = %s", (username,))
-#                 if cursor.fetchone():
-#                     return jsonify({"success": False, "message": "Пользователь уже существует"}), 400
-#
-#                 # Добавляем нового пользователя
-#                 sql = """
-#                     INSERT INTO users (username, password_hash, registration_date, position, access_rights)
-#                     VALUES (%s, %s, %s, %s, %s)
-#                 """
-#                 cursor.execute(sql, (username, password, registration_date, position, access_rights))
-#                 conn.commit()
-#
-#                 return jsonify({"success": True, "message": "Пользователь успешно добавлен"}), 201
-#         except Exception as e:
-#             print("Ошибка при добавлении пользователя:", e)
-#             return jsonify({"success": False, "message": "Ошибка базы данных"}), 500
-#         finally:
-#             conn.close()
-#     except Exception as e:
-#         print("Общая ошибка:", e)
-#         return jsonify({"success": False, "message": str(e)}), 500
-#
-# @app.route('/log_action', methods=['POST'])
-# def log_action():
-#     try:
-#         data = request.json
-#         username = data.get('username')
-#         action = data.get('action')
-#         page = data.get('page')
-#         timestamp = data.get('timestamp')
-#
-#         if not username or not action or not page or not timestamp:
-#             return jsonify({"success": False, "message": "Missing required fields"}), 400
-#
-#
-#         timestamp = datetime.fromisoformat(timestamp.replace("Z", "+00:00")).strftime('%Y-%m-%d %H:%M:%S')
-#         # Подключаемся к базе данных
-#         conn = get_db_connection()
-#         if not conn:
-#             return jsonify({"success": False, "message": "Database connection error"}), 500
-#
-#         try:
-#             with conn.cursor() as cursor:
-#                 # Вставляем данные о действии в таблицу
-#                 sql = """
-#                     INSERT INTO user_action (username, action, page, timestamp)
-#                     VALUES (%s, %s, %s, %s)
-#                 """
-#                 cursor.execute(sql, (username, action, page, timestamp))
-#                 conn.commit()
-#                 return jsonify({"success": True, "message": "Action logged successfully"}), 200
-#         except Exception as e:
-#             print("Error logging action:", e)
-#             return jsonify({"success": False, "message": "Database error"}), 500
-#         finally:
-#             conn.close()
-#
-#     except Exception as e:
-#         print("Error:", e)
-#         return jsonify({"success": False, "message": "Server error"}), 500
-# @app.route('/get_users', methods=['GET'])
-# def get_users():
-#     try:
-#         conn = get_db_connection()
-#         if not conn:
-#             return jsonify([]), 500
-#
-#         with conn.cursor() as cursor:
-#             cursor.execute("SELECT username, position, registration_date, access_rights FROM users")
-#             users = cursor.fetchall()
-#             return jsonify(users), 200
-#     except Exception as e:
-#         print("Ошибка получения пользователей:", e)
-#         return jsonify([]), 500
-#
-# @app.route('/get_user_actions', methods=['GET'])
-# def get_user_actions():
-#     try:
-#         conn = get_db_connection()
-#         if not conn:
-#             return jsonify([]), 500
-#
-#         with conn.cursor() as cursor:
-#             cursor.execute("SELECT username, action, page, timestamp FROM user_action ORDER BY timestamp DESC")
-#             actions = cursor.fetchall()
-#             return jsonify(actions), 200
-#     except Exception as e:
-#         print("Ошибка получения действий:", e)
-#         return jsonify([]), 500
+
+@app.route('/')
+def home():
+    return "Welcome to the Flask API!"
 # Функция для сжатия изображения в буфер
 def compress_image_to_buffer(image, quality):
     buffer = io.BytesIO()  # Создаем буфер в памяти
@@ -267,7 +146,7 @@ def segment_and_find_contours(image):
     gray_image = cv2.cvtColor(image_cv, cv2.COLOR_BGR2GRAY)
 
     # Применяем пороговую сегментацию
-    _, binary_mask = cv2.threshold(gray_image, 128, 255, cv2.THRESH_BINARY)
+    _, binary_mask = cv2.threshold(gray_image, 135, 255, cv2.THRESH_BINARY)
 
     # Находим контуры
     contours, _ = cv2.findContours(binary_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -408,9 +287,84 @@ def lightness_hls():
         return "Нет файла", 400
     return handle_channel_processing(request.files['file'], process_lightness_hls)
 
+# Функция для обработки изображения и поиска похожих областей
+def find_similar_regions(image, template):
+    # Преобразуем изображения в формат для OpenCV
+    image_gray = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2GRAY)
+    template_gray = cv2.cvtColor(np.array(template), cv2.COLOR_RGB2GRAY)
+
+    # Используем метод matchTemplate для поиска похожих областей
+    result = cv2.matchTemplate(image_gray, template_gray, cv2.TM_CCOEFF_NORMED)
+
+    # Задаем порог для выделения совпадений
+    threshold = 0.6
+    locations = np.where(result >= threshold)
+
+    matched_regions = []
+    for pt in zip(*locations[::-1]):
+        matched_regions.append({
+            "x": int(pt[0]),
+            "y": int(pt[1]),
+            "width": int(template.width),
+            "height": int(template.height)
+        })
+
+    # Фильтрация близко расположенных областей
+    def is_close(region1, region2, distance_threshold=10):
+        """Проверяет, находятся ли области слишком близко друг к другу."""
+        center1 = (region1["x"] + region1["width"] / 2, region1["y"] + region1["height"] / 2)
+        center2 = (region2["x"] + region2["width"] / 2, region2["y"] + region2["height"] / 2)
+        distance = ((center1[0] - center2[0]) ** 2 + (center1[1] - center2[1]) ** 2) ** 0.5
+        return distance < distance_threshold
+
+    filtered_regions = []
+    for region in matched_regions:
+        # Добавляем область только если она не слишком близка к уже добавленным
+        if not any(is_close(region, filtered) for filtered in filtered_regions):
+            filtered_regions.append(region)
+
+    return filtered_regions
 
 
+# Маршрут для поиска похожих частей на изображении
+@app.route('/process_region', methods=['POST'])
+def process_region():
+    data = request.json
 
+    # Получаем изображение и выделенную область (шаблон)
+    image_data = data.get('image')  # Это должно быть изображение в base64
+
+    template_data = data.get('template')  # Шаблон также должен быть передан как base64
+
+
+    if not image_data or not template_data:
+        return jsonify({"error": "Image and template are required"}), 400
+
+    # Декодируем изображения из base64
+    try:
+        # Декодируем из base64
+        image_base64 = image_data.split(",")[1] if "," in image_data else image_data
+        template_base64 = template_data.split(",")[1] if "," in template_data else template_data
+
+        # Декодируем base64 в байты
+        image_bytes = base64.b64decode(image_base64)
+        template_bytes = base64.b64decode(template_base64)
+
+        # Преобразуем байты в изображения
+        image = Image.open(io.BytesIO(image_bytes))
+        template = Image.open(io.BytesIO(template_bytes))
+
+        # Находим похожие области
+        similar_regions = find_similar_regions(image, template)
+        print(similar_regions)
+        #print(similar_regions)
+        return jsonify({"similarRegions": similar_regions})
+
+
+    except Exception as e:
+        print("Error:", e)
+        print(traceback.format_exc())
+        return jsonify({"error": "Error processing data"}), 500
 # Запуск приложения
 if __name__ == "__main__":
     app.run(debug=True)  # Запускаем сервер в режиме отладки

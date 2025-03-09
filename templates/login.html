@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Авторизация</title>
+  <style>
+    .login-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: linear-gradient(to bottom right, #2d2d2d, #1c1c1c);
+      font-family: 'Roboto', sans-serif;
+    }
+    .login-box {
+      background-color: #444;
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+    .login-title {
+      color: #fff;
+      font-size: 32px;
+      margin-bottom: 20px;
+    }
+    .login-input {
+      width: calc(100% - 30px);
+      height: 45px;
+      margin: 10px 0;
+      padding: 0 15px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 8px;
+      background-color: #444;
+      color: #FEFBFB;
+      font-size: 16px;
+      outline: none;
+    }
+    .login-input::placeholder {
+      color: rgba(255, 255, 255, 0.3);
+    }
+    .login-actions {
+      margin-top: 20px;
+    }
+    .login-button {
+      width: 100%;
+      height: 45px;
+      background-color: #FB9C9C;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-bottom: 15px;
+      transition: background-color 0.3s ease, transform 0.1s ease;
+    }
+    .login-button:hover {
+      background-color: #85CAFF;
+    }
+    .login-button:active {
+      transform: translateY(4px);
+      background-color: #85CAFF;
+    }
+    .register-link {
+      display: block;
+      color: #f5c4bf;
+      font-size: 16px;
+      font-weight: 700;
+      margin-top: 20px;
+      text-decoration: none;
+      transition: color 0.3s ease;
+      cursor: pointer;
+    }
+    .register-link:hover {
+      color: #ff8a80;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: #444;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      width: 100%;
+      max-width: 350px;
+      text-align: center;
+      position: relative;
+    }
+    .close-button {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 20px;
+      color: white;
+      cursor: pointer;
+    }
+    .error-message {
+      color: red;
+      display: none;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-container">
+    <div class="login-box">
+      <h1 class="login-title">Вход</h1>
+      <form class="login-form-wrapper">
+        <input type="text" id="loginInput" class="login-input" placeholder="Логин или телефон" required />
+        <input type="password" id="passwordInput" class="login-input" placeholder="Пароль" required />
+        <div class="login-actions">
+          <button type="button" id="loginButton" class="login-button">Войти</button>
+          <a class="register-link" id="openRegisterModal">Регистрация</a>
+        </div>
+      </form>
+      <p id="errorMessage" class="error-message"></p>
+    </div>
+  </div>
+
+  <div class="modal" id="registerModal">
+    <div class="modal-content">
+      <span class="close-button" id="closeRegisterModal">&times;</span>
+      <h2 style="color: white;">Регистрация</h2>
+      <input type="text" id="registerLogin" class="login-input" placeholder="Логин" required />
+      <input type="password" id="registerPassword" class="login-input" placeholder="Пароль" required />
+      <input type="text" id="registerRole" class="login-input" value="Сотрудник" readonly />
+      <input type="text" id="registerRights" class="login-input" value="Тест" readonly />
+      <button type="button" class="login-button" id="registerButton">Зарегистрироваться</button>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('openRegisterModal').addEventListener('click', () => {
+      document.getElementById('registerModal').style.display = 'flex';
+    });
+
+    document.getElementById('closeRegisterModal').addEventListener('click', () => {
+      document.getElementById('registerModal').style.display = 'none';
+    });
+
+    document.getElementById('registerButton').addEventListener('click', async () => {
+      const username = document.getElementById('registerLogin').value;
+      const password = document.getElementById('registerPassword').value;
+      const position = document.getElementById('registerRole').value;
+      const accessRights = document.getElementById('registerRights').value;
+
+      if (!username || !password) {
+        alert('Пожалуйста, заполните все поля!');
+        return;
+      }
+
+      const payload = { username, password, position, accessRights };
+
+      try {
+        const response = await fetch('http://localhost:5000/add_user', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+          alert('Регистрация успешна!');
+          document.getElementById('registerModal').style.display = 'none';
+
+          // Возвращаемся на предыдущую страницу
+          if (document.referrer) {
+            window.location.href = document.referrer;
+          } else {
+            window.location.href = 'compress.html'; // Укажите страницу по умолчанию
+          }
+        } else {
+          alert('Ошибка регистрации. Попробуйте снова.');
+        }
+      } catch (error) {
+        alert('Ошибка подключения к серверу!');
+        console.error('Ошибка:', error);
+      }
+    });
+  </script>
+
+</body>
+</html>
