@@ -1,4 +1,5 @@
 <html lang="en" xmlns="http://www.w3.org/1999/html">
+
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
@@ -13,6 +14,60 @@
         font-family: Roboto, sans-serif;
         background-color: #f5f5f5;
         min-height: 100vh;
+      }
+       /* Добавляем новые стили для кнопок */
+      .nav-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .nav-actions button {
+        background-color: transparent;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 10px;
+        color: white;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background-color 0.3s;
+      }
+
+      .nav-actions button:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+          transform: translateY(2px); /* Смещение вниз на 2px */
+      }
+
+      .nav-actions .btn-primary {
+        background-color: #FB9C9C;
+        padding: 12px 12px;
+        border-radius: 10px;
+        color: white;
+        text-decoration: none;
+        font-size: 16px;
+        transition: background-color 0.3s;
+
+      }
+
+      .nav-actions .btn-primary:hover {
+        background-color: #e68a8a;
+         transform: translateY(2px); /* Смещение вниз на 2px */
+      }
+
+      .nav-actions .btn-secondary {
+        background-color: #FB9C9C;
+        padding: 12px 12px;
+        border-radius: 10px;
+        color: white;
+        text-decoration: none;
+        font-size: 16px;
+        transition: background-color 0.3s;
+          position: relative; /* Для анимации смещения */
+      }
+
+      .nav-actions .btn-secondary:hover {
+        background-color: #5a5a5a;
+          transform: translateY(2px); /* Смещение вниз на 2px */
       }
 
       .main-wrapper {
@@ -62,17 +117,30 @@
       }
 
       .search-box {
-        border: 2px solid white;
-        border-radius: 15px;
-        height: 35px;
-        width: 200px;
-        padding: 5px;
-        font-size: 14px;
-       position: absolute; /* Используем абсолютное позиционирование */
-    left: 50%; /* Сдвигаем на 50% от левого края */
+    border: 2px solid white;
+    border-radius: 15px;
+    height: 35px;
+    width: 200px;
+    padding: 5px;
+    font-size: 14px;
+    position: absolute;
+    left: 50%;
     transform: translateX(-50%);
+    background-color: #676767;
+    color: white;
+    appearance: none; /* Убираем стандартный вид выпадающего списка */
+    -webkit-appearance: none; /* Для Safari */
+    -moz-appearance: none; /* Для Firefox */
+    background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="white" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>'); /* Стрелка вниз */
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 12px;
+}
 
-      }
+.search-box:focus {
+    outline: none;
+    border-color: #FB9C9C;
+}
 
       .nav-actions button:nth-child(1),
       .nav-actions button:nth-child(2) {
@@ -96,11 +164,18 @@
       }
 
       .page-title {
-        text-align: center;
-        margin: 20px 0;
-        font-size: 2.5rem; /* Используем относительные единицы */
-        color: #676767;
-      }
+    text-align: center;
+    margin: 5px 0 10 0; /* 20px сверху, 0 по остальным сторонам */
+    font-size: 2.5rem;
+    color: #676767;
+}
+
+.user-greeting {
+    text-align: center;
+    margin: 20px -15 0; /* 10px сверху и снизу, 0 по бокам */
+    font-size: 1rem;
+    color: #676767;
+}
 
       .canvas-container {
         display: flex;
@@ -111,6 +186,7 @@
         height: auto;
         margin-bottom: 4px;
         flex-wrap: wrap;
+        position: relative;
       }
 
       .upload-section, .result-section {
@@ -118,12 +194,14 @@
         text-align: center;
         min-width: 280px; /* Минимальная ширина для мобильных устройств */
       }
-
+/* Когда добавляется класс .auto-height — высота становится авто */
+.result-area.auto-height {
+    height: auto;
+}
       .upload-area, .result-area {
         background-color: #D9D9D9;
         width: auto;
-        height: auto; /* Фиксированная высота */
-
+       height: 300px; /* Фиксированная стартовая высота */
         display: flex;
         align-items: center;
         justify-content: center;
@@ -134,46 +212,69 @@
         transition: background-color 0.3s ease; /* Плавное изменение цвета */
       }
 
-      /* Обновленный стиль для кнопок */
-      .controls-container {
+      /* Новый стиль для боковых кнопок */
+      .side-controls {
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
         display: flex;
-        justify-content: space-between; /* Размещаем элементы по краям */
-        align-items: center;
-        flex-wrap: wrap;
-        width: 100%;
-        margin-top: 20px;
+        flex-direction: column;
+        gap: 10px;
+        padding: 10px;
+        background: rgba(255, 255, 255, 0.8);
+        border-radius: 10px 0 0 10px;
+        z-index: 5;
       }
 
-      .controls-container button {
-        border: none;
-        padding: 12px 24px;
-        border-radius: 10px;
-        color: white;
-        cursor: pointer;
-        font-size: 16px;
-      }
-
-      .controls-container button:nth-child(1),
-      .controls-container button:nth-child(2) {
-        background-color: #FB9C9C; /* "Импортировать" и "Выбрать контур" */
-        margin-left: 4.5%; /* Слегка сдвигаем вправо */
-      }
-      .nav-actions button:nth-child(1):hover,
-      .nav-actions button:nth-child(2):hover,
-      .nav-actions button:nth-child(3):hover,
-      .controls-container button:nth-child(1):hover,
-      .controls-container button:nth-child(2):hover,
-      .controls-container button:nth-child(3):hover {
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08); /* Создаем тень для эффекта углубления */
-    transform: translateY(2px); /* Немного смещаем кнопку вниз, создавая эффект углубления */
+      .side-controls button {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 5px;
+    color: white;
+    cursor: pointer;
+    font-size: 12px;
+    background-color: #FB9C9C;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    position: relative; /* Необходимо для позиционирования тултипа */
+    transition: transform 0.15s ease; /* Ускоряем анимацию кнопки */
 }
 
-      .controls-container button:nth-child(3) {
-        background-color: #FB9C9C; /* "Сохранить" */
-        margin-left: auto; /* Отправляем кнопку "Сохранить" вправо */
-        margin-right: 4.5%; /* Слегка сдвигаем вправо */
-      }
+      side-controls button:hover {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+    transform: translateY(2px);
+}
+      /* Стили для быстрых всплывающих подсказок */
+.side-controls button::after {
+    content: attr(title);
+    position: absolute;
+    bottom: calc(100% + 8px); /* Отступ от кнопки */
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.1s ease-in;
+    width: max-content;
+    max-width: 200px;
+    text-align: center;
+    font-family: 'Roboto', sans-serif;
+    z-index: 10;
+}
 
+.side-controls button:hover::after {
+    opacity: 1;
+    transition-delay: 0.05s; /* Минимальная задержка */
+}
 
       .info-container {
         width: 100%;
@@ -252,15 +353,14 @@
           padding: 10px;
         }
 
-        .controls-container {
-          flex-direction: column;
-          align-items: center;
-        }
-
-        .controls-container button {
+        .side-controls {
+          position: static;
+          transform: none;
+          flex-direction: row;
+          justify-content: center;
           width: 100%;
-          text-align: center;
-          margin: 5px 0;
+          margin-top: 10px;
+          background: transparent;
         }
 
         .info-panel {
@@ -343,40 +443,206 @@
     opacity: 0;
     transition: opacity 0.3s ease;
 }
+#progress-container {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.9);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    z-index: 1000;
+    text-align: center;
+    width: 400px;
+}
+#progress-bar {
+    height: 20px;
+    width: 0%;
+    background-color: #FB9C9C;
+    border-radius: 10px;
+    transition: width 0.3s ease;
+}
+#progress-text {
+    margin-top: 10px;
+    font-weight: bold;
+}
+.preview-container {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 9999;
+    display: none;
+    background:none;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    cursor: move;
+}
+
+.preview-inner {
+    position: relative;
+}
+
+.close-preview {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: transparent;
+
+    color: #FB9C9C;
+    border: none;
+    border-radius: 0;
+    width: 24px;
+    height: 24px;
+    font-size: 20px;
+    font-weight: bold;
+    line-height: 24px;
+    cursor: pointer;
+    padding: 0;
+    z-index: 10000;
+}
+
+.preview-image {
+    max-width: 200px;
+    border-radius: 8px;
+}
+/* Стили для блока HSV-компонент */
+#hs-components {
+    width: 100%;
+    margin-top: 30px;
+    padding: 20px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border: 1px solid #e0e0e0;
+}
+
+.hs-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.hs-header h3 {
+    color: #676767;
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+}
+
+.hs-header p {
+    color: #888;
+    font-size: 0.9rem;
+}
+
+.hs-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.hs-item {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
+    background: #f5f5f5;
+}
+
+.hs-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.hs-image {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.hs-label {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(103, 103, 103, 0.8);
+    color: white;
+    padding: 10px;
+    text-align: center;
+    font-weight: bold;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .hs-grid {
+        grid-template-columns: 1fr;
+    }
+}
 
     </style>
 </head>
+
+<div id="progress-container">
+    <div id="progress-bar"></div>
+    <div id="progress-text">0%</div>
+</div>
+<div id="preview-container" class="preview-container">
+    <div class="preview-inner">
+        <button id="close-preview" class="close-preview">&times;</button>
+
+        <img id="preview-image" class="preview-image" />
+    </div>
+</div>
 <body>
 
     <div class="main-wrapper">
+
         <div class="content-container">
             <nav class="header-nav">
                 <img src="logo.png" alt="Site Logo" class="logo" />
                 <div class="tools-container">
-
-                    <input type="text" class="search-box" placeholder="Все инструменты...">
+                    <select class="search-box" onchange="handlePageSelection(this)">
+                        <option value="">Поиск однородностей...</option>
+                        <option value="compress">Compress</option>
+                        <option value="select_area">Select Area</option>
+                        <option value="test">Test</option>
+                    </select>
                 </div>
                 <div class="nav-actions">
                     <button>Помощь</button>
                     <button>Информация</button>
-                    <button>Вход и регистрация</button>
+
+{% if 'user' in session %}
+    <a href="{{ url_for('pages.profile') }}" class="btn btn-primary">Кабинет</a>
+    <a href="{{ url_for('auth.logout') }}" class="btn btn-secondary">Выйти</a>
+{% else %}
+    <a href="{{ url_for('auth.login_page') }}" class="btn btn-primary">Вход и регистрация</a>
+{% endif %}
+
                 </div>
             </nav>
-
+             {% if 'user_data' in session %}
+                <div class="user-greeting">
+                   {{ user.full_name if user.full_name else user.last_name ~ ' ' ~ user.first_name ~ ' ' ~ user.middle_name}}
+                </div>
+            {% endif %}
             <h1 class="page-title">Поиск однородностей</h1>
 
             <div class="canvas-container">
-
                 <section class="result-section">
                     <div class="result-area" onclick="openPopup()">Результат обработки</div>
+                    <div class="side-controls">
+                        <button id="import-button" title="Импортировать">↓</button>
+                        <button id="select-contour-button" title="Выбрать контур">□</button>
+                        <button id="save-button" title="Сохранить">💾</button>
+                        <button id="draw-mode-button" title="Рисовать">✏️</button>
+                        <button id="reset-button" title="Сбросить изображение">↺</button>
+                        <button id="clear-button" title="Очистить">×</button>
+                    </div>
                 </section>
-            </div>
-
-            <div class="controls-container">
-                <button id="import-button">Импортировать</button>
-                <button id="select-contour-button">Выбрать контур</button>
-                <button id="clear-button">Очистить</button>
-                <button id="save-button">Сохранить</button>
             </div>
 
             <div class="info-container">
@@ -388,13 +654,19 @@
                         <p id="resolution">Оригинальное разрешение: 00x00</p>
                         <p id="image-format">Формат изображения:</p>
                     </div>
-                    <div class="image-info">
-                        <h3>Дополнительные данные</h3>
-                        <p id="file-size1">Размер, кб: 0,00</p>
-                        <p id="aspect-ratio1">Соотношение сторон: 0:0</p>
-                        <p id="resolution1">Оригинальное разрешение: 00x00</p>
-                        <p id="image-format1">Формат изображения:</p>
+                    <div id="region-info" class="image-info">
+        <h3>Информация о найденных областях</h3>
+    </div>
+                    <div id="hs-components" style="display: none;">
+                        <div class="hs-header">
+                            <h3>Анализ цветовых компонент (HSV)</h3>
+                            <p>Нажмите на изображение для увеличения</p>
+                        </div>
+                        <div class="hs-grid">
+                            <!-- Будет заполняться JavaScript -->
+                        </div>
                     </div>
+
                 </div>
             </div>
         </div>
@@ -408,13 +680,106 @@
         </div>
     </div>
     <script src="{{ url_for('static', filename='js/findarea.js') }}"></script>
+
+    <script>
+      function handlePageSelection(selectElement) {
+        const selectedPage = selectElement.value.trim();
+
+        let pageUrl = '';
+
+        // Логика для выбора нужной страницы
+        switch (selectedPage) {
+          case 'select_area':
+            pageUrl = '/select_area';
+            break;
+          case 'compress':
+            pageUrl = '/compress';
+            break;
+          case 'test':
+            pageUrl = '/test';
+            break;
+          default:
+            alert('Страница не найдена!');
+            return;
+        }
+
+        window.location.href = pageUrl; // Перенаправление на нужную страницу
+      }
+    </script>
+
     <script>
 
-    </script>
-   <!-- обработчик загрузки изображений-->
-    <script>
+        document.querySelector('.nav-actions button:nth-child(3)').addEventListener('click', function () {
+    window.location.href = 'login_user'; // Переход на страницу входа/регистрации
+});
 
     </script>
+
+   <script>
+    // Функция для перетаскивания элементов
+    function makeElementDraggable(el) {
+        let isMouseDown = false;
+        let offsetX = 0;
+        let offsetY = 0;
+
+        el.addEventListener('mousedown', function(e) {
+            isMouseDown = true;
+            offsetX = e.clientX - el.getBoundingClientRect().left;
+            offsetY = e.clientY - el.getBoundingClientRect().top;
+            el.style.cursor = 'grabbing';
+        });
+
+        document.addEventListener('mousemove', function(e) {
+            if (!isMouseDown) return;
+            el.style.left = (e.clientX - offsetX) + 'px';
+            el.style.top = (e.clientY - offsetY) + 'px';
+        });
+
+        document.addEventListener('mouseup', function() {
+            isMouseDown = false;
+            el.style.cursor = 'move';
+        });
+    }
+
+    // Обработка закрытия превью
+    document.addEventListener('DOMContentLoaded', function() {
+        const closePreviewBtn = document.getElementById('close-preview');
+        if (closePreviewBtn) {
+            closePreviewBtn.addEventListener('click', function() {
+                document.getElementById('preview-container').style.display = 'none';
+            });
+        }
+
+        // Инициализация перетаскивания превью
+        const previewContainer = document.getElementById('preview-container');
+        if (previewContainer) {
+            makeElementDraggable(previewContainer);
+        }
+
+        // Обработка кнопки входа/выхода
+        const authButton = document.querySelector('.auth-button');
+        if (authButton) {
+            authButton.addEventListener('click', function() {
+                if (this.dataset.loggedIn === 'true') {
+                    // Выход - переход по GET /logout
+                    window.location.href = "{{ url_for('auth.logout') }}";
+                } else {
+                    // Вход - переход на страницу с формой /login_user
+                    window.location.href = "{{ url_for('auth.login_page') }}";
+                }
+            });
+        }
+
+        // Обработка показа превью (если есть такая кнопка)
+        const showPreviewBtn = document.getElementById('show-preview');
+        if (showPreviewBtn) {
+            showPreviewBtn.addEventListener('click', function() {
+                document.getElementById('preview-container').style.display = 'block';
+                this.style.display = 'none';
+            });
+        }
+    });
+</script>
 
 </body>
 </html>

@@ -3,221 +3,295 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel</title>
+    <title>Административная панель</title>
     <style>
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+            font-family: 'Arial', sans-serif;
         }
 
         body {
-            font-family: Roboto, sans-serif;
             background-color: #f5f5f5;
-            min-height: 100vh;
+            color: #333;
         }
 
         .main-wrapper {
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 5%;
             min-height: 100vh;
         }
 
         .content-container {
-            background-color: #fff;
-            width: 100%;
-            max-width: 1200px;
-            border-radius: 10px;
+            flex: 1;
             padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
         }
 
         .header-nav {
-            background-color: #676767;
-            color: white;
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            padding: 10px 20px;
-            border-radius: 10px;
-            width: 100%;
-        }
-
-        .search-input {
-            padding: 8px;
-            border-radius: 8px;
-            border: 1px solid #ddd;
-            font-size: 16px;
-            width: 200px;
-            margin-right: auto;
+            align-items: center;
+            padding: 10px 0;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #ddd;
         }
 
         .logo {
             height: 50px;
         }
 
-        .nav-actions {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
         .nav-actions button {
-            background-color: #FB9C9C;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 10px;
+            padding: 8px 15px;
+            margin-left: 10px;
+            background-color: #4a76a8;
             color: white;
+            border: none;
+            border-radius: 4px;
             cursor: pointer;
-            font-size: 16px;
+            transition: background-color 0.3s;
         }
 
-        .user-list-container {
-            width: 100%;
-            overflow-x: auto;
-            white-space: nowrap;
-            padding: 10px 0;
+        .nav-actions button:hover {
+            background-color: #3a5f8a;
         }
 
-        .user-list {
+        .page-title {
+            margin-bottom: 30px;
+            color: #2c3e50;
+        }
+
+        .admin-container {
             display: flex;
-            gap: 20px;
-            width: max-content;
-            padding-bottom: 10px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
 
-        .user-card {
-            background-color: #D9D9D9;
-            padding: 20px;
-            border-radius: 10px;
+        .admin-sidebar {
             width: 250px;
-            height: 250px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            text-align: center;
+            padding: 20px;
+            background-color: #2c3e50;
+            color: white;
+            border-radius: 8px 0 0 8px;
         }
 
-        .user-card h4 {
-            margin-bottom: 10px;
+        .user-avatar {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 20px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 3px solid white;
+        }
+
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .user-name {
+            text-align: center;
+            margin-bottom: 5px;
             font-size: 18px;
+        }
+
+        .user-email {
+            text-align: center;
+            font-size: 14px;
+            color: #bdc3c7;
+            margin-bottom: 20px;
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-menu li {
+            margin-bottom: 10px;
+        }
+
+        .nav-menu a {
+            display: block;
+            padding: 8px 10px;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        .nav-menu a:hover, .nav-menu a.active {
+            background-color: #34495e;
+        }
+
+        .admin-content {
+            flex: 1;
+            padding: 20px;
+        }
+
+        .section-title {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .btn-primary {
+            padding: 8px 15px;
+            background-color: #4a76a8;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .btn-primary:hover {
+            background-color: #3a5f8a;
+        }
+
+        .users-table {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        .action-btn {
+            padding: 5px 10px;
+            margin-right: 5px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .edit-btn {
+            background-color: #f39c12;
+            color: white;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 500px;
+            max-width: 90%;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        .close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #aaa;
+        }
+
+        .close:hover {
             color: #333;
         }
 
-        .user-card p {
-            font-size: 14px;
-            color: #555;
-            margin-bottom: 8px;
+        .form-group {
+            margin-bottom: 15px;
         }
 
-        .user-card button {
-            background-color: #6A85FA;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 8px;
-            color: white;
-            cursor: pointer;
-            font-size: 14px;
-            margin-top: 10px;
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
         }
 
-        .add-user-form {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-top: 30px;
-            justify-content: center;
+        .form-group input, .form-group select {
             width: 100%;
-        }
-
-        .add-user-form input,
-        .add-user-form select {
-            padding: 10px;
+            padding: 8px 10px;
             border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-            width: 250px;
+            border-radius: 4px;
         }
 
-        .add-user-wrapper {
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-            margin-top: 10px;
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #4a76a8;
         }
 
-        .add-user-message {
+        .required-field::after {
+            content: " *";
             color: red;
-            font-size: 14px;
-            margin-left: 10px;
+        }
+        /* Search styles */
+        .search-container {
+            display: flex;
+            margin-bottom: 20px;
+            gap: 10px;
         }
 
-        .add-user-button {
-            background-color: #4CAF50;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
-            color: white;
-            cursor: pointer;
+        .search-input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
             font-size: 16px;
-            margin-right: 10px;
         }
 
-        .edit-user-form {
+        .search-input:focus {
+            outline: none;
+            border-color: #4a76a8;
+        }
+
+        .search-btn {
+            padding: 10px 20px;
+            background-color: #4a76a8;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .search-btn:hover {
+            background-color: #3a5f8a;
+        }
+
+        .input-error {
+            border-color: #e74c3c !important;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            font-size: 12px;
+            margin-top: 5px;
             display: none;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-top: 30px;
-            justify-content: center;
-            width: 100%;
-        }
-
-        .edit-user-form input,
-        .edit-user-form select {
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-            width: 250px;
-        }
-
-        .edit-user-wrapper {
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-            margin-top: 10px;
-        }
-
-        .edit-user-message {
-            color: red;
-            font-size: 14px;
-            margin-left: 10px;
-        }
-
-        .edit-user-button {
-            background-color: #4CAF50;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
-            color: white;
-            cursor: pointer;
-            font-size: 16px;
-            margin-right: 10px;
-        }
-
-        .cancel-edit-button {
-            background-color: #FF6347;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
-            color: white;
-            cursor: pointer;
-            font-size: 16px;
         }
     </style>
 </head>
@@ -225,154 +299,650 @@
     <div class="main-wrapper">
         <div class="content-container">
             <nav class="header-nav">
-                <input type="text" id="searchInput" class="search-input" placeholder="Поиск пользователей..." />
-                <img src="logo.png" alt="Site Logo" class="logo" />
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="Site Logo" class="logo" />
                 <div class="nav-actions">
-                    <button id="logoutButton">Выход</button>
+                    <button onclick="window.location.href='/'">На главную</button>
+                    <button onclick="window.location.href='/logout'">Выйти</button>
                 </div>
             </nav>
-            <h1 class="page-title">Панель администратора</h1>
 
-            <div class="user-list-container">
-                <div class="user-list" id="userCards">
-                    <!-- Карточки пользователей будут загружаться сюда -->
+            <h1 class="page-title">Административная панель</h1>
+
+            <div class="admin-container">
+                <div class="admin-sidebar">
+                    <div class="user-avatar">
+                        <img src="{{ user.get('avatar_url', 'https://via.placeholder.com/150') }}" alt="Аватар администратора">
+                    </div>
+                    <h2 class="user-name">
+                        {{ user.last_name }} {{ user.first_name }} {{ user.middle_name if user.middle_name }}
+                    </h2>
+                    <p class="user-email">{{ user.get('email', 'admin@example.com') }}</p>
+
+                    <ul class="nav-menu">
+                        <li><a href="#" class="active">Пользователи</a></li>
+                        <li><a href="/stats">Статистика</a></li>
+
+                        <li><a href="/logout">Выйти</a></li>
+                    </ul>
                 </div>
-            </div>
 
-            <!-- Форма добавления пользователя -->
-            <div class="add-user-form">
-                <input type="text" id="username" placeholder="Имя пользователя" />
-                <input type="text" id="password" placeholder="Пароль" />  <!-- Здесь заменили на type="text" -->
-                <select id="position">
-                    <option value="Сотрудник">Сотрудник</option>
-                    <option value="Администратор">Администратор</option>
-                </select>
-                <input type="text" id="accessRights" placeholder="Права доступа" />
-            </div>
+                <div class="admin-content">
+                    <div class="users-section">
+                        <h3 class="section-title">Управление пользователями</h3>
+                        <div class="search-container">
+                            <input type="text" id="user-search" class="search-input" placeholder="Поиск по ФИО, email или телефону">
+                            <button id="search-btn" class="search-btn">Найти</button>
+                            <button id="reset-search" class="btn-primary" style="margin-bottom: 0;">Сбросить</button>
+                        </div>
+                        <button id="add-user-btn" class="btn-primary">Добавить пользователя</button>
 
-            <div class="add-user-wrapper">
-                <p id="message" class="add-user-message"></p>
-                <button id="addUserButton" class="add-user-button">Добавить пользователя</button>
-                <button id="cancelEditButton" class="cancel-edit-button" style="display: none;">Отменить редактирование</button>
+                        <div class="users-table">
+                            <table>
+                                <thead>
+                                   <tr>
+            <th>ID</th>
+            <th>ФИО</th>
+            <th>Email</th>
+            <th>Телефон</th>
+            <th>Дата рождения</th>
+            <th>Должность</th>
+            <th>Дата регистрации</th>
+            <th>Права доступа</th>
+            <th>Действия</th>
+        </tr>
+                                </thead>
+                                <tbody>
+                                    {% for user in users %}
+                                    <tr data-user-id="{{ user.id }}"
+            data-phone="{{ user.phone if user.phone else '' }}"
+            data-birth-date="{{ user.birth_date if user.birth_date else '' }}">
+            <td>{{ user.id }}</td>
+            <td>{{ user.last_name }} {{ user.first_name }} {{ user.middle_name if user.middle_name }}</td>
+            <td>{{ user.email }}</td>
+            <td>{{ user.phone if user.phone else 'Не указан' }}</td>
+            <td>{{ user.birth_date if user.birth_date else 'Не указана' }}</td>
+            <td>{{ user.position }}</td>
+            <td>{{ user.registration_date }}</td>
+            <td>{{ user.access_rights }}</td>
+            <td>
+                <button class="action-btn edit-btn" data-user-id="{{ user.id }}">Изменить</button>
+            </td>
+        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- Модальное окно добавления пользователя -->
+    <div class="modal" id="add-user-modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('add-user-modal')">&times;</span>
+            <h3>Добавить нового пользователя</h3>
+            <form id="add-user-form">
+                <div class="form-group">
+                    <label for="add-full-name" class="required-field">ФИО</label>
+                    <input type="text" id="add-full-name" name="full_name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="add-email" class="required-field">Email</label>
+                    <input type="email" id="add-email" name="email" required>
+                    <div class="error-message" id="add-email-error">Введите корректный email</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="add-password" class="required-field">Пароль</label>
+                    <input type="password" id="add-password" name="password" required minlength="6">
+                    <div class="error-message" id="add-password-error">Пароль должен содержать минимум 6 символов</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="add-position" class="required-field">Должность</label>
+                    <input type="text" id="add-position" name="position" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="add-phone" class="optional-field">Телефон</label>
+                    <input type="tel" id="add-phone" name="phone" placeholder="+7 (XXX) XXX-XX-XX">
+                    <div class="error-message" id="add-phone-error">Введите телефон в формате +7 (XXX) XXX-XX-XX</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="add-birth-date" class="optional-field">Дата рождения</label>
+                    <input type="text" id="add-birth-date" name="birth_date" placeholder="дд.мм.гггг">
+                    <div class="error-message" id="add-birth-date-error">Введите дату в формате дд.мм.гггг</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="add-access-rights">Права доступа</label>
+                    <select id="add-access-rights" name="access_rights">
+                        <option value="user">Обычный пользователь</option>
+                        <option value="admin">Администратор</option>
+                        <option value="moderator">Модератор</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn-primary">Добавить пользователя</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Модальное окно редактирования пользователя -->
+    <div class="modal" id="edit-user-modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('edit-user-modal')">&times;</span>
+            <h3>Редактировать пользователя</h3>
+            <form id="edit-user-form">
+                <input type="hidden" id="edit-user-id" name="user_id" value="">
+
+                <div class="form-group">
+                    <label for="edit-full-name">ФИО</label>
+                    <input type="text" id="edit-full-name" name="full_name">
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-email">Email</label>
+                    <input type="email" id="edit-email" name="email">
+                    <div class="error-message" id="edit-email-error">Введите корректный email</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-password">Новый пароль</label>
+                    <input type="password" id="edit-password" name="password" placeholder="Оставьте пустым, чтобы не изменять">
+                    <div class="error-message" id="edit-password-error">Пароль должен содержать минимум 6 символов</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-position">Должность</label>
+                    <input type="text" id="edit-position" name="position">
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-phone">Телефон</label>
+                    <input type="tel" id="edit-phone" name="phone" placeholder="+7 (XXX) XXX-XX-XX">
+                    <div class="error-message" id="edit-phone-error">Введите телефон в формате +7 (XXX) XXX-XX-XX</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-birth-date">Дата рождения</label>
+                    <input type="text" id="edit-birth-date" name="birth_date" placeholder="дд.мм.гггг">
+                    <div class="error-message" id="edit-birth-date-error">Введите дату в формате дд.мм.гггг</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-access-rights">Права доступа</label>
+                    <select id="edit-access-rights" name="access_rights">
+                        <option value="user">Обычный пользователь</option>
+                        <option value="admin">Администратор</option>
+                        <option value="moderator">Модератор</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn-primary">Сохранить изменения</button>
+            </form>
+        </div>
+    </div>
+
     <script>
-    async function fetchUsers() {
-        const response = await fetch('http://localhost:5000/get_users');
-        const users = await response.json();
-        const userCards = document.getElementById('userCards');
-        userCards.innerHTML = '';
-
-        users.forEach(user => {
-            const card = `<div class="user-card" data-username="${user.username.toLowerCase()}" id="user-${user.username}">
-                            <h4>${user.username}</h4>
-                            <p><strong>Роль:</strong> ${user.position}</p>
-                            <p><strong>Дата:</strong> ${user.registration_date}</p>
-                            <p><strong>Права:</strong> ${user.access_rights}</p>
-                            <button onclick="openJournal('${user.username}')">Открыть журнал</button>
-                            <button onclick="editUser('${user.username}', '${user.password}', '${user.position}', '${user.access_rights}')">Редактировать</button>
-                        </div>`;
-            userCards.insertAdjacentHTML('beforeend', card);
-        });
+        document.addEventListener('DOMContentLoaded', function() {
+    // Общие функции для работы с модальными окнами
+    function openModal(modalId) {
+        document.getElementById(modalId).style.display = 'block';
     }
 
-    function openJournal(username) {
-        alert(`Открытие журнала пользователя: ${username}`);
+    function closeModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
     }
 
-    function editUser(username, password, position, accessRights) {
-        // Убедитесь, что данные правильно передаются в поля
-        document.getElementById('username').value = username;
-        document.getElementById('password').value = password;  // Пароль теперь будет виден
-        document.getElementById('position').value = position;
-        document.getElementById('accessRights').value = accessRights;
+    window.closeModal = closeModal; // Делаем доступной глобально для onclick
 
-        // Скрываем кнопку "Добавить пользователя"
-        document.getElementById('addUserButton').style.display = 'none';
-        document.getElementById('cancelEditButton').style.display = 'block';  // Показываем кнопку "Отменить редактирование"
-        document.getElementById('editUserButton').style.display = 'block';  // Показываем кнопку "Редактировать"
-        document.getElementById('editUserButton').onclick = function() {
-            updateUser(username);
-        };
+    // Валидация телефона
+    function validatePhone(phone) {
+        if (!phone) return true; // Поле не обязательно
+        const regex = /^\+7\s?\(\d{3}\)\s?\d{3}-\d{2}-\d{2}$/;
+        return regex.test(phone);
     }
 
-    async function updateUser(originalUsername) {
-        const username = document.getElementById('username').value.trim();
-        const password = document.getElementById('password').value.trim();
-        const position = document.getElementById('position').value;
-        const accessRights = document.getElementById('accessRights').value.trim();
+    // Валидация даты
+    function validateDate(date) {
+        if (!date) return true; // Поле не обязательно
+        const regex = /^(0[1-9]|[12][0-9]|3[01])\.(0[1-9]|1[0-2])\.\d{4}$/;
+        if (!regex.test(date)) return false;
 
-        if (!username || !password || !position || !accessRights) {
-            document.getElementById('message').textContent = 'Заполните все поля';
-            return;
+        const parts = date.split('.');
+        const day = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10);
+        const year = parseInt(parts[2], 10);
+
+        const dateObj = new Date(year, month - 1, day);
+        return dateObj.getDate() === day &&
+               dateObj.getMonth() === month - 1 &&
+               dateObj.getFullYear() === year;
+    }
+
+    // Форматирование телефона
+    function formatPhone(input, prefixId) {
+        let value = input.value.replace(/\D/g, '');
+        if (value.length > 0) value = '+7' + value;
+        if (value.length > 2) value = value.substring(0, 2) + ' (' + value.substring(2);
+        if (value.length > 7) value = value.substring(0, 7) + ') ' + value.substring(7);
+        if (value.length > 12) value = value.substring(0, 12) + '-' + value.substring(12);
+        if (value.length > 15) value = value.substring(0, 15) + '-' + value.substring(15);
+        input.value = value.substring(0, 18);
+
+        // Валидация
+        const errorElement = document.getElementById(`${prefixId}-phone-error`);
+        if (input.value && !validatePhone(input.value)) {
+            input.classList.add('input-error');
+            errorElement.style.display = 'block';
+        } else {
+            input.classList.remove('input-error');
+            errorElement.style.display = 'none';
         }
-
-        const response = await fetch('http://localhost:5000/update_user', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ originalUsername, username, password, position, accessRights }),
-        });
-
-        const result = await response.json();
-        document.getElementById('message').textContent = result.success ? 'Пользователь обновлен!' : `Ошибка: ${result.message}`;
-        if (result.success) fetchUsers();
     }
 
-    document.getElementById('cancelEditButton').addEventListener('click', cancelEdit);
+    // Форматирование даты
+    function formatDate(input, prefixId) {
+        let value = input.value.replace(/\D/g, '');
+        if (value.length > 2) value = value.substring(0, 2) + '.' + value.substring(2);
+        if (value.length > 5) value = value.substring(0, 5) + '.' + value.substring(5);
+        input.value = value.substring(0, 10);
 
-    function cancelEdit() {
-        document.getElementById('username').value = '';
-        document.getElementById('password').value = '';  // Пароль очищаем, если отмена
-        document.getElementById('position').value = 'Сотрудник';
-        document.getElementById('accessRights').value = '';
-
-        document.getElementById('addUserButton').style.display = 'block'; // вернуть кнопку "Добавить пользователя"
-        document.getElementById('cancelEditButton').style.display = 'none'; // скрыть кнопку "Отменить редактирование"
-        document.getElementById('editUserButton').style.display = 'none'; // скрыть кнопку "Редактировать"
-    }
-
-    document.getElementById('addUserButton').addEventListener('click', async () => {
-        const username = document.getElementById('username').value.trim();
-        const password = document.getElementById('password').value.trim();
-        const position = document.getElementById('position').value;
-        const accessRights = document.getElementById('accessRights').value.trim();
-
-        if (!username || !password || !position || !accessRights) {
-            document.getElementById('message').textContent = 'Заполните все поля';
-            return;
+        // Валидация
+        const errorElement = document.getElementById(`${prefixId}-birth-date-error`);
+        if (input.value && !validateDate(input.value)) {
+            input.classList.add('input-error');
+            errorElement.style.display = 'block';
+        } else {
+            input.classList.remove('input-error');
+            errorElement.style.display = 'none';
         }
+    }
 
-        const response = await fetch('http://localhost:5000/add_user', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password, position, accessRights }),
-        });
+    // Функция для поиска пользователей
+    function searchUsers() {
+        const searchTerm = document.getElementById('user-search').value.toLowerCase();
+       const rows = document.querySelectorAll('.users-table tbody tr');
 
-        const result = await response.json();
-        document.getElementById('message').textContent = result.success ? 'Пользователь добавлен!' : `Ошибка: ${result.message}`;
-        if (result.success) fetchUsers();
-    });
+        rows.forEach(row => {
+            const name = row.cells[1].textContent.toLowerCase();
+            const email = row.cells[2].textContent.toLowerCase();
+            const phone = row.cells[3].textContent.toLowerCase();
 
-    document.getElementById('logoutButton').addEventListener('click', () => {
-        window.location.href = 'site_picedit.html';
-    });
-
-    document.getElementById('searchInput').addEventListener('input', (e) => {
-        const query = e.target.value.toLowerCase();
-        const userCards = document.querySelectorAll('.user-card');
-        userCards.forEach(card => {
-            const username = card.getAttribute('data-username');
-            if (username.includes(query)) {
-                card.style.display = '';
+            if (name.includes(searchTerm) || email.includes(searchTerm) || phone.includes(searchTerm)) {
+                row.style.display = '';
             } else {
-                card.style.display = 'none';
+                row.style.display = 'none';
             }
         });
+    }
+
+    // Обработчик поиска при нажатии кнопки
+    document.getElementById('search-btn').addEventListener('click', searchUsers);
+
+    // Обработчик поиска при нажатии Enter в поле поиска
+    document.getElementById('user-search').addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') {
+            searchUsers();
+        }
     });
 
-    fetchUsers();  // Загружаем пользователей при запуске
-</script>
+    // Обработчик сброса поиска
+    document.getElementById('reset-search').addEventListener('click', function() {
+        document.getElementById('user-search').value = '';
+        const rows = document.querySelectorAll('.users-table tbody tr');
+        rows.forEach(row => {
+            row.style.display = '';
+        });
+    });
+
+    // Настройка масок и валидации для формы добавления
+    const addPhoneInput = document.getElementById('add-phone');
+    if (addPhoneInput) {
+        addPhoneInput.addEventListener('input', function() {
+            formatPhone(this, 'add');
+        });
+    }
+
+    const addBirthDateInput = document.getElementById('add-birth-date');
+    if (addBirthDateInput) {
+        addBirthDateInput.addEventListener('input', function() {
+            formatDate(this, 'add');
+        });
+    }
+
+    // Настройка масок и валидации для формы редактирования
+    const editPhoneInput = document.getElementById('edit-phone');
+    if (editPhoneInput) {
+        editPhoneInput.addEventListener('input', function() {
+            formatPhone(this, 'edit');
+        });
+    }
+
+    const editBirthDateInput = document.getElementById('edit-birth-date');
+    if (editBirthDateInput) {
+        editBirthDateInput.addEventListener('input', function() {
+            formatDate(this, 'edit');
+        });
+    }
+
+    // Валидация email для добавления
+    const addEmailInput = document.getElementById('add-email');
+    if (addEmailInput) {
+        addEmailInput.addEventListener('blur', function() {
+            const errorElement = document.getElementById('add-email-error');
+            if (!this.value.includes('@') || !this.value.includes('.')) {
+                this.classList.add('input-error');
+                errorElement.style.display = 'block';
+            } else {
+                this.classList.remove('input-error');
+                errorElement.style.display = 'none';
+            }
+        });
+    }
+
+    // Валидация email для редактирования
+    const editEmailInput = document.getElementById('edit-email');
+    if (editEmailInput) {
+        editEmailInput.addEventListener('blur', function() {
+            const errorElement = document.getElementById('edit-email-error');
+            if (this.value && (!this.value.includes('@') || !this.value.includes('.'))) {
+                this.classList.add('input-error');
+                errorElement.style.display = 'block';
+            } else {
+                this.classList.remove('input-error');
+                errorElement.style.display = 'none';
+            }
+        });
+    }
+
+    // Валидация пароля для добавления
+    const addPasswordInput = document.getElementById('add-password');
+    if (addPasswordInput) {
+        addPasswordInput.addEventListener('blur', function() {
+            const errorElement = document.getElementById('add-password-error');
+            if (this.value.length < 6) {
+                this.classList.add('input-error');
+                errorElement.style.display = 'block';
+            } else {
+                this.classList.remove('input-error');
+                errorElement.style.display = 'none';
+            }
+        });
+    }
+
+    // Валидация пароля для редактирования
+    const editPasswordInput = document.getElementById('edit-password');
+    if (editPasswordInput) {
+        editPasswordInput.addEventListener('blur', function() {
+            const errorElement = document.getElementById('edit-password-error');
+            if (this.value && this.value.length < 6) {
+                this.classList.add('input-error');
+                errorElement.style.display = 'block';
+            } else {
+                this.classList.remove('input-error');
+                errorElement.style.display = 'none';
+            }
+        });
+    }
+
+    // Обработка кнопки добавления пользователя
+    const addBtn = document.getElementById('add-user-btn');
+    if (addBtn) {
+        addBtn.addEventListener('click', function() {
+            document.getElementById('add-user-form').reset();
+            openModal('add-user-modal');
+        });
+    }
+
+    // Обработка кнопок редактирования
+    document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const userId = this.getAttribute('data-user-id');
+            const row = this.closest('tr');
+
+            // Получаем данные из строки таблицы
+            const cells = row.querySelectorAll('td');
+            document.getElementById('edit-user-id').value = userId;
+
+            // Заполняем поля и сохраняем исходные значения
+            const fields = [
+                {id: 'edit-full-name', value: cells[1].textContent.trim()},
+                {id: 'edit-email', value: cells[2].textContent.trim()},
+                {id: 'edit-position', value: cells[5].textContent.trim()},
+                {id: 'edit-access-rights', value: cells[7].textContent.trim()},
+                {id: 'edit-phone', value: row.dataset.phone || ''},
+                {id: 'edit-birth-date', value: row.dataset.birthDate || ''}
+            ];
+
+            fields.forEach(field => {
+                const element = document.getElementById(field.id);
+                element.value = field.value;
+                element.setAttribute('data-original', field.value);
+            });
+
+            // Очищаем пароль
+            document.getElementById('edit-password').value = '';
+            document.getElementById('edit-password').setAttribute('data-original', '');
+
+            openModal('edit-user-modal');
+        });
+    });
+
+    // Обработка отправки формы добавления
+    const addUserForm = document.getElementById('add-user-form');
+    if (addUserForm) {
+        addUserForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            // Валидация перед отправкой
+            let isValid = true;
+
+            // Проверка обязательных полей
+            if (!addEmailInput.value.includes('@') || !addEmailInput.value.includes('.')) {
+                addEmailInput.classList.add('input-error');
+                document.getElementById('add-email-error').style.display = 'block';
+                isValid = false;
+            }
+
+            if (addPasswordInput.value.length < 6) {
+                addPasswordInput.classList.add('input-error');
+                document.getElementById('add-password-error').style.display = 'block';
+                isValid = false;
+            }
+
+            // Проверка необязательных полей (если заполнены)
+            if (addPhoneInput.value && !validatePhone(addPhoneInput.value)) {
+                addPhoneInput.classList.add('input-error');
+                document.getElementById('add-phone-error').style.display = 'block';
+                isValid = false;
+            }
+
+            if (addBirthDateInput.value && !validateDate(addBirthDateInput.value)) {
+                addBirthDateInput.classList.add('input-error');
+                document.getElementById('add-birth-date-error').style.display = 'block';
+                isValid = false;
+            }
+
+            if (!isValid) {
+                alert('Пожалуйста, исправьте ошибки в форме');
+                return;
+            }
+
+            // Собираем данные формы
+            const formData = {
+                full_name: document.getElementById('add-full-name').value,
+                email: document.getElementById('add-email').value,
+                password: document.getElementById('add-password').value,
+                position: document.getElementById('add-position').value,
+                phone: document.getElementById('add-phone').value || null,
+                birth_date: document.getElementById('add-birth-date').value || null,
+                access_rights: document.getElementById('add-access-rights').value
+            };
+
+            try {
+                // Отправляем запрос
+                const response = await fetch('/add_user', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('Пользователь успешно добавлен');
+                    closeModal('add-user-modal');
+                    location.reload();
+                } else {
+                    alert('Ошибка: ' + result.message);
+                }
+            } catch (error) {
+                alert('Ошибка сети: ' + error.message);
+            }
+        });
+    }
+
+    // Обработка отправки формы редактирования
+    const editUserForm = document.getElementById('edit-user-form');
+    if (editUserForm) {
+        editUserForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            // Валидация перед отправкой
+            let isValid = true;
+
+            // Проверка email (только если поле было изменено и не пустое)
+            if (editEmailInput.value && editEmailInput.value !== editEmailInput.getAttribute('data-original')) {
+                if (!editEmailInput.value.includes('@') || !editEmailInput.value.includes('.')) {
+                    editEmailInput.classList.add('input-error');
+                    document.getElementById('edit-email-error').style.display = 'block';
+                    isValid = false;
+                } else {
+                    editEmailInput.classList.remove('input-error');
+                    document.getElementById('edit-email-error').style.display = 'none';
+                }
+            }
+
+            // Проверка пароля (только если введен новый)
+            if (editPasswordInput.value) {
+                if (editPasswordInput.value.length < 6) {
+                    editPasswordInput.classList.add('input-error');
+                    document.getElementById('edit-password-error').style.display = 'block';
+                    isValid = false;
+                } else {
+                    editPasswordInput.classList.remove('input-error');
+                    document.getElementById('edit-password-error').style.display = 'none';
+                }
+            }
+
+            // Проверка телефона (только если поле было изменено)
+            if (editPhoneInput.value && editPhoneInput.value !== editPhoneInput.getAttribute('data-original')) {
+                if (!validatePhone(editPhoneInput.value)) {
+                    editPhoneInput.classList.add('input-error');
+                    document.getElementById('edit-phone-error').style.display = 'block';
+                    isValid = false;
+                } else {
+                    editPhoneInput.classList.remove('input-error');
+                    document.getElementById('edit-phone-error').style.display = 'none';
+                }
+            }
+
+            // Проверка даты (только если поле было изменено)
+            if (editBirthDateInput.value && editBirthDateInput.value !== editBirthDateInput.getAttribute('data-original')) {
+                if (!validateDate(editBirthDateInput.value)) {
+                    editBirthDateInput.classList.add('input-error');
+                    document.getElementById('edit-birth-date-error').style.display = 'block';
+                    isValid = false;
+                } else {
+                    editBirthDateInput.classList.remove('input-error');
+                    document.getElementById('edit-birth-date-error').style.display = 'none';
+                }
+            }
+
+            if (!isValid) {
+                alert('Пожалуйста, исправьте ошибки в форме');
+                return;
+            }
+
+            // Собираем только измененные данные
+            const formData = {
+                user_id: document.getElementById('edit-user-id').value
+            };
+
+            // Проверяем, какие поля были изменены
+            const fieldsToCheck = [
+                {id: 'edit-full-name', name: 'full_name'},
+                {id: 'edit-email', name: 'email'},
+                {id: 'edit-password', name: 'password'},
+                {id: 'edit-position', name: 'position'},
+                {id: 'edit-access-rights', name: 'access_rights'},
+                {id: 'edit-phone', name: 'phone'},
+                {id: 'edit-birth-date', name: 'birth_date'}
+            ];
+
+            fieldsToCheck.forEach(field => {
+                const input = document.getElementById(field.id);
+                const currentValue = input.value;
+                const originalValue = input.getAttribute('data-original') || '';
+
+                // Для пароля учитываем только если введен новый
+                if (field.name === 'password') {
+                    if (currentValue && currentValue.length > 0) {
+                        formData[field.name] = currentValue;
+                    }
+                }
+                // Для остальных полей - если значение изменилось
+                else if (currentValue !== originalValue) {
+                    formData[field.name] = currentValue === '' ? null : currentValue;
+                }
+            });
+
+            // Если ничего не изменилось
+            if (Object.keys(formData).length <= 1) {
+                alert('Нет изменений для сохранения');
+                return;
+            }
+
+            try {
+                // Отправляем запрос
+                const response = await fetch('/update_profile', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('Изменения сохранены');
+                    closeModal('edit-user-modal');
+                    location.reload();
+                } else {
+                    alert('Ошибка: ' + result.message);
+                }
+            } catch (error) {
+                alert('Ошибка сети: ' + error.message);
+            }
+        });
+    }
+
+    // Закрытие при клике вне модального окна
+    window.addEventListener('click', function(event) {
+        if (event.target.classList.contains('modal')) {
+            event.target.style.display = 'none';
+        }
+    });
+});
+    </script>
 </body>
 </html>

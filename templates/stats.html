@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Статистика сервера</title>
+    <style>
+        /* Скопируйте сюда все стили из вашего основного HTML */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+        }
+        /* ... остальные стили ... */
+        
+        /* Добавьте специфичные стили для статистики */
+        .metrics-container {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+        .metric-chart {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .metric-chart h3 {
+            margin-top: 0;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-wrapper">
+        <div class="content-container">
+            <nav class="header-nav">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="Site Logo" class="logo" />
+                <div class="nav-actions">
+                    <button onclick="window.location.href='/'">На главную</button>
+                    <button onclick="window.location.href='/logout'">Выйти</button>
+                </div>
+            </nav>
+
+            <h1 class="page-title">Статистика сервера</h1>
+
+            <div class="admin-container">
+                <div class="admin-sidebar">
+                    <div class="user-avatar">
+                        <img src="{{ user.get('avatar_url', 'https://via.placeholder.com/150') }}" alt="Аватар администратора">
+                    </div>
+                    <h2 class="user-name">
+                        {{ user.last_name }} {{ user.first_name }} {{ user.middle_name if user.middle_name }}
+                    </h2>
+                    <p class="user-email">{{ user.get('email', 'admin@example.com') }}</p>
+
+                    <ul class="nav-menu">
+                        <li><a href="/admin">Пользователи</a></li>
+                        <li><a href="/stats" class="active">Статистика</a></li>
+                        <li><a href="/logout">Выйти</a></li>
+                    </ul>
+                </div>
+
+                <div class="admin-content">
+                    <div class="metrics-container">
+                        <div class="metric-chart">
+                            <h3>Загрузка CPU (%)</h3>
+                            <canvas id="cpuChart" width="800" height="400"></canvas>
+                        </div>
+                        
+                        <div class="metric-chart">
+                            <h3>Использование памяти (%)</h3>
+                            <canvas id="memoryChart" width="800" height="400"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Ваш JavaScript код для графиков
+        document.addEventListener('DOMContentLoaded', function() {
+            const metrics = {{ metrics|tojson|safe }};
+            
+            new Chart(document.getElementById('cpuChart'), {
+                /* ... конфигурация графика CPU ... */
+            });
+            
+            new Chart(document.getElementById('memoryChart'), {
+                /* ... конфигурация графика памяти ... */
+            });
+        });
+    </script>
+</body>
+</html>
