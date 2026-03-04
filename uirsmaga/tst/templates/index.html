@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAM2 Mask Propagation</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        .step {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .step h2 {
+            margin-bottom: 15px;
+            color: #444;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 5px;
+        }
+
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.3s;
+            margin-bottom: 15px;
+        }
+
+        .upload-area:hover {
+            border-color: #4CAF50;
+        }
+
+        .upload-area.drag-over {
+            border-color: #4CAF50;
+            background-color: #f8fff8;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .image-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .image-wrapper {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .image-wrapper img {
+            width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: crosshair;
+        }
+
+        .image-info {
+            margin-top: 5px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .result-item {
+            background: white;
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .result-item img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .result-item p {
+            padding: 10px;
+            font-size: 14px;
+            color: #666;
+            word-break: break-all;
+        }
+
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        .status.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+            display: block;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .instructions {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+        }
+
+        .instructions h3 {
+            margin-bottom: 10px;
+        }
+
+        .instructions ul {
+            margin-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 5px;
+        }
+
+        .point-info {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .point-info span {
+            margin-right: 15px;
+        }
+
+        .point-info .positive {
+            color: #4CAF50;
+        }
+
+        .point-info .negative {
+            color: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SAM2 Mask Propagation Tool</h1>
+
+        <!-- Step 1: Upload -->
+        <div class="step" id="step-upload">
+            <h2>Step 1: Upload ZIP with Images</h2>
+            <div class="upload-area" id="dropArea">
+                <p>Drag and drop a ZIP file containing images here, or click to select</p>
+                <p><small>Supported formats: .jpg, .jpeg, .png, .bmp, .tiff</small></p>
+                <input type="file" id="fileInput" accept=".zip" style="display: none;">
+            </div>
+            <div class="controls">
+                <button onclick="document.getElementById('fileInput').click()">Select ZIP File</button>
+            </div>
+            <div class="status" id="uploadStatus"></div>
+        </div>
+
+        <!-- Step 2: Select Points -->
+        <div class="step" id="step-points" style="display: none;">
+            <h2>Step 2: Select Points on Reference Image</h2>
+            <div class="instructions">
+                <h3>Instructions:</h3>
+                <ul>
+                    <li><strong>Left Click</strong>: Add positive point (object to segment)</li>
+                    <li><strong>Right Click</strong>: Add negative point (background)</li>
+                    <li>Add as many points as needed to define the object</li>
+                    <li>Click "Generate Mask" when done</li>
+                    <li>Click "Clear Points" to start over</li>
+                </ul>
+            </div>
+
+            <div class="image-container">
+                <div class="image-wrapper">
+                    <h3>Reference Image</h3>
+                    <div id="imageContainer" style="position: relative;">
+                        <img id="refImage" src="" alt="Reference Image">
+                        <canvas id="pointsCanvas" style="position: absolute; top: 0; left: 0; pointer-events: none;"></canvas>
+                    </div>
+                    <div class="point-info">
+                        <span><span class="positive">●</span> Positive Points: <span id="positiveCount">0</span></span>
+                        <span><span class="negative">●</span> Negative Points: <span id="negativeCount">0</span></span>
+                        <span>Total Points: <span id="totalPoints">0</span></span>
+                    </div>
+                </div>
+
+                <div class="image-wrapper">
+                    <h3>Generated Mask</h3>
+                    <img id="maskImage" src="" alt="Generated Mask" style="display: none;">
+                    <div id="maskPlaceholder" style="text-align: center; padding: 50px; color: #999; border: 1px dashed #ccc;">
+                        Mask will appear here after generation
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button onclick="generateMask()" id="generateBtn">Generate Mask</button>
+                <button onclick="clearPoints()" id="clearBtn">Clear Points</button>
+                <button onclick="proceedToPropagation()" id="proceedBtn" style="display: none;">Proceed to Propagation</button>
+            </div>
+            <div class="status" id="maskStatus"></div>
+        </div>
+
+        <!-- Step 3: Propagation -->
+        <div class="step" id="step-propagation" style="display: none;">
+            <h2>Step 3: Propagate Mask to All Images</h2>
+            <p>Click the button below to propagate the mask from the reference image to all other images in the ZIP file.</p>
+
+            <div class="controls">
+                <button onclick="propagateMask()" id="propagateBtn">Propagate Mask</button>
+                <button onclick="downloadResults()" id="downloadBtn" style="display: none;">Download Masks as ZIP</button>
+            </div>
+
+            <div class="status" id="propagationStatus"></div>
+
+            <div id="resultsContainer" style="display: none;">
+                <h3>Results</h3>
+                <div class="results-grid" id="resultsGrid"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let sessionId = null;
+        let currentPoints = [];
+        let currentLabels = [];
+        let refImageData = null;
+        let imageKeys = [];
+
+        // DOM Elements
+        const fileInput = document.getElementById('fileInput');
+        const dropArea = document.getElementById('dropArea');
+        const refImage = document.getElementById('refImage');
+        const maskImage = document.getElementById('maskImage');
+        const maskPlaceholder = document.getElementById('maskPlaceholder');
+        const pointsCanvas = document.getElementById('pointsCanvas');
+        const ctx = pointsCanvas.getContext('2d');
+
+        // Status elements
+        const uploadStatus = document.getElementById('uploadStatus');
+        const maskStatus = document.getElementById('maskStatus');
+        const propagationStatus = document.getElementById('propagationStatus');
+
+        // Step containers
+        const stepUpload = document.getElementById('step-upload');
+        const stepPoints = document.getElementById('step-points');
+        const stepPropagation = document.getElementById('step-propagation');
+
+        // Drag and drop handlers
+        dropArea.addEventListener('click', () => fileInput.click());
+        dropArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropArea.classList.add('drag-over');
+        });
+        dropArea.addEventListener('dragleave', () => {
+            dropArea.classList.remove('drag-over');
+        });
+        dropArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropArea.classList.remove('drag-over');
+            if (e.dataTransfer.files.length > 0) {
+                handleFileUpload(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileUpload(e.target.files[0]);
+            }
+        });
+
+        function handleFileUpload(file) {
+            if (!file.name.toLowerCase().endsWith('.zip')) {
+                showStatus(uploadStatus, 'Please upload a ZIP file', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            showStatus(uploadStatus, 'Uploading and processing ZIP file...', 'info');
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    sessionId = data.session_id;
+                    refImageData = data.ref_image;
+                    imageKeys = data.image_keys;
+
+                    // Set reference image
+                    refImage.src = data.ref_image;
+                    refImage.onload = () => {
+                        pointsCanvas.width = refImage.width;
+                        pointsCanvas.height = refImage.height;
+                    };
+
+                    // Show next step
+                    stepUpload.style.display = 'none';
+                    stepPoints.style.display = 'block';
+
+                    showStatus(uploadStatus, `Successfully loaded ${data.image_count} images`, 'success');
+                    setTimeout(() => {
+                        uploadStatus.style.display = 'none';
+                    }, 3000);
+                } else {
+                    showStatus(uploadStatus, data.error || 'Upload failed', 'error');
+                }
+            })
+            .catch(error => {
+                showStatus(uploadStatus, 'Upload failed: ' + error.message, 'error');
+            });
+        }
+
+        // Image click handler for points
+        refImage.addEventListener('click', (e) => {
+            const rect = refImage.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            // Convert to image coordinates
+            const imgX = (x / rect.width) * refImage.naturalWidth;
+            const imgY = (y / rect.height) * refImage.naturalHeight;
+
+            // Left click = positive (1), Right click = negative (0)
+            const isPositive = e.button === 0; // 0 = left click
+
+            if (isPositive) {
+                currentPoints.push([imgX, imgY]);
+                currentLabels.push(1);
+                drawPoint(imgX, imgY, 'green');
+            } else if (e.button === 2) {
+                currentPoints.push([imgX, imgY]);
+                currentLabels.push(0);
+                drawPoint(imgX, imgY, 'red');
+            }
+
+            updatePointCounts();
+        });
+
+        // Prevent context menu on right click
+        refImage.addEventListener('contextmenu', (e) => e.preventDefault());
+
+        function drawPoint(x, y, color) {
+            const scaleX = pointsCanvas.width / refImage.naturalWidth;
+            const scaleY = pointsCanvas.height / refImage.naturalHeight;
+
+            ctx.beginPath();
+            ctx.arc(x * scaleX, y * scaleY, 8, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+
+        function updatePointCounts() {
+            const positiveCount = currentLabels.filter(l => l === 1).length;
+            const negativeCount = currentLabels.filter(l => l === 0).length;
+
+            document.getElementById('positiveCount').textContent = positiveCount;
+            document.getElementById('negativeCount').textContent = negativeCount;
+            document.getElementById('totalPoints').textContent = currentPoints.length;
+        }
+
+        function clearPoints() {
+            currentPoints = [];
+            currentLabels = [];
+            ctx.clearRect(0, 0, pointsCanvas.width, pointsCanvas.height);
+            updatePointCounts();
+        }
+
+        function generateMask() {
+            if (currentPoints.length === 0) {
+                showStatus(maskStatus, 'Please add at least one point', 'error');
+                return;
+            }
+
+            showStatus(maskStatus, 'Generating mask...', 'info');
+
+            fetch('/set_points', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    session_id: sessionId,
+                    points: currentPoints,
+                    labels: currentLabels
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    maskImage.src = data.mask_image;
+                    maskImage.style.display = 'block';
+                    maskPlaceholder.style.display = 'none';
+
+                    document.getElementById('proceedBtn').style.display = 'inline-block';
+
+                    showStatus(maskStatus, 'Mask generated successfully!', 'success');
+                    setTimeout(() => {
+                        maskStatus.style.display = 'none';
+                    }, 3000);
+                } else {
+                    showStatus(maskStatus, data.error || 'Failed to generate mask', 'error');
+                }
+            })
+            .catch(error => {
+                showStatus(maskStatus, 'Failed to generate mask: ' + error.message, 'error');
+            });
+        }
+
+        function proceedToPropagation() {
+            stepPoints.style.display = 'none';
+            stepPropagation.style.display = 'block';
+        }
+
+        function propagateMask() {
+            showStatus(propagationStatus, 'Propagating mask to all images...', 'info');
+
+            fetch('/propagate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    session_id: sessionId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showStatus(propagationStatus, `Successfully processed ${data.processed_count} images`, 'success');
+
+                    // Display results
+                    const resultsGrid = document.getElementById('resultsGrid');
+                    resultsGrid.innerHTML = '';
+
+                    for (const [key, imgData] of Object.entries(data.visualizations)) {
+                        const div = document.createElement('div');
+                        div.className = 'result-item';
+                        div.innerHTML = `
+                            <img src="${imgData}" alt="${key}">
+                            <p>${key}</p>
+                        `;
+                        resultsGrid.appendChild(div);
+                    }
+
+                    document.getElementById('resultsContainer').style.display = 'block';
+                    document.getElementById('downloadBtn').style.display = 'inline-block';
+                } else {
+                    showStatus(propagationStatus, data.error || 'Propagation failed', 'error');
+                }
+            })
+            .catch(error => {
+                showStatus(propagationStatus, 'Propagation failed: ' + error.message, 'error');
+            });
+        }
+
+        function downloadResults() {
+            if (!sessionId) return;
+
+            window.location.href = `/download?session_id=${sessionId}`;
+        }
+
+        function showStatus(element, message, type) {
+            element.textContent = message;
+            element.className = 'status ' + type;
+            element.style.display = 'block';
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (sessionId) {
+                fetch('/cleanup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ session_id: sessionId })
+                });
+            }
+        });
+    </script>
+</body>
+</html>

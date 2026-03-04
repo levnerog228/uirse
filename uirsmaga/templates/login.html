@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Авторизация · Image Mask Tool</title>
+  <!-- Подключаем шрифт Inter и Font Awesome для иконок (используется в оригинальном CSS) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    /* ---------- Импортируем цветовую схему и базовые стили из вашего основного CSS ---------- */
+    :root {
+      --primary: #3a86ff;
+      --primary-dark: #2667cc;
+      --primary-light: #e6f0ff;
+      --secondary: #8338ec;
+      --success: #38b000;
+      --warning: #ff9e00;
+      --danger: #ff006e;
+      --background: #f8fafc;
+      --surface: #ffffff;
+      --surface-dark: #f1f5f9;
+      --text: #1e293b;
+      --text-light: #64748b;
+      --text-lighter: #94a3b8;
+      --border: #e2e8f0;
+      --border-light: #f1f5f9;
+      --shadow: rgba(58, 134, 255, 0.08);
+      --shadow-hover: rgba(58, 134, 255, 0.12);
+      --radius: 12px;
+      --radius-sm: 8px;
+      --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--background);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ---------- Стили для страницы логина, адаптированные под общий дизайн ---------- */
+    .login-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: var(--background);
+      padding: 20px;
+    }
+
+    .login-box {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 40px;
+      box-shadow: 0 4px 12px var(--shadow);
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+      border: 1px solid var(--border);
+      transition: var(--transition);
+    }
+
+    .login-box:hover {
+      box-shadow: 0 8px 24px var(--shadow-hover);
+      border-color: var(--primary-light);
+    }
+
+    .login-title {
+      color: var(--text);
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 24px;
+      letter-spacing: -0.01em;
+    }
+
+    .login-title::after {
+      content: '';
+      display: block;
+      width: 60px;
+      height: 4px;
+      background: var(--primary);
+      margin: 12px auto 0;
+      border-radius: 2px;
+    }
+
+    .login-form-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .login-input {
+      width: 100%;
+      height: 48px;
+      padding: 0 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background-color: var(--surface);
+      color: var(--text);
+      font-size: 15px;
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      transition: var(--transition);
+    }
+
+    .login-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-light);
+    }
+
+    .login-input::placeholder {
+      color: var(--text-lighter);
+      font-weight: 400;
+    }
+
+    .login-actions {
+      margin-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .login-button {
+      width: 100%;
+      height: 48px;
+      background: var(--primary);
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: var(--transition);
+      font-family: 'Inter', sans-serif;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .login-button i {
+      font-size: 18px;
+    }
+
+    .login-button:hover {
+      background: var(--primary-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(58, 134, 255, 0.3);
+    }
+
+    .login-button:active {
+      transform: translateY(0);
+    }
+
+    .register-link {
+      color: var(--primary);
+      font-size: 15px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: var(--transition);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px;
+    }
+
+    .register-link i {
+      font-size: 14px;
+      opacity: 0.8;
+    }
+
+    .register-link:hover {
+      color: var(--primary-dark);
+      gap: 10px;
+    }
+
+    .error-message {
+      color: var(--danger);
+      background: rgba(255, 0, 110, 0.08);
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      margin-top: 20px;
+      font-size: 14px;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid rgba(255, 0, 110, 0.2);
+    }
+
+    .error-message i {
+      font-size: 16px;
+    }
+
+    /* ---------- Модальное окно в стиле основного приложения ---------- */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(5px);
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 30px;
+      max-width: 450px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+      animation: modalFadeIn 0.3s ease;
+      border: 1px solid var(--border);
+      position: relative;
+    }
+
+    @keyframes modalFadeIn {
+      from {
+        opacity: 0;
+        transform: scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .modal-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 24px;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .modal-title i {
+      color: var(--primary);
+      font-size: 28px;
+    }
+
+    .close-button {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      font-size: 24px;
+      color: var(--text-light);
+      cursor: pointer;
+      transition: var(--transition);
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+    }
+
+    .close-button:hover {
+      color: var(--danger);
+      background: var(--surface-dark);
+      transform: rotate(90deg);
+    }
+
+    /* ---------- Дополнительные элементы формы в модалке ---------- */
+    .modal-content .login-input {
+      margin-bottom: 12px;
+    }
+
+    /* ---------- Адаптивность ---------- */
+    @media (max-width: 480px) {
+      .login-box {
+        padding: 30px 20px;
+      }
+
+      .login-title {
+        font-size: 24px;
+      }
+
+      .modal-content {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-box">
+      <h1 class="login-title">Вход в систему</h1>
+      <form class="login-form-wrapper" action="/login" method="POST">
+        <input type="email" id="loginInput" name="username" class="login-input" placeholder="Email" required />
+        <input type="password" id="passwordInput" name="password" class="login-input" placeholder="Пароль" required />
+        <div class="login-actions">
+          <button type="submit" id="loginButton" class="login-button">
+            <i class="fas fa-sign-in-alt"></i> Войти
+          </button>
+          <a class="register-link" id="openRegisterModal">
+            <i class="fas fa-user-plus"></i> Создать аккаунт
+          </a>
+        </div>
+      </form>
+      <!-- Пример отображения ошибки, если она есть (стилизовано под дизайн) -->
+      <!-- <div class="error-message"><i class="fas fa-exclamation-circle"></i> Неверный email или пароль</div> -->
+    </div>
+  </div>
+
+  <!-- Модальное окно регистрации -->
+  <div class="modal" id="registerModal">
+    <div class="modal-content">
+      <span class="close-button" id="closeRegisterModal">&times;</span>
+      <h2 class="modal-title"><i class="fas fa-user-edit"></i> Регистрация</h2>
+      <input type="text" id="registerFullName" class="login-input" placeholder="Фамилия Имя Отчество" required />
+      <input type="email" id="registerEmail" class="login-input" placeholder="Email" required />
+      <input type="password" id="registerPassword" class="login-input" placeholder="Пароль" required />
+      <input type="text" id="registerPhone" class="login-input" placeholder="Телефон (необязательно)" />
+      <input type="text" id="registerPosition" class="login-input" placeholder="Должность" required />
+      <button type="button" class="login-button" id="registerButton">
+        <i class="fas fa-check-circle"></i> Зарегистрироваться
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Логика открытия/закрытия модального окна
+    document.getElementById('openRegisterModal').addEventListener('click', () => {
+      document.getElementById('registerModal').classList.add('active');
+    });
+
+    document.getElementById('closeRegisterModal').addEventListener('click', () => {
+      document.getElementById('registerModal').classList.remove('active');
+    });
+
+    // Закрытие по клику вне модального окна (опционально)
+    window.addEventListener('click', (e) => {
+      const modal = document.getElementById('registerModal');
+      if (e.target === modal) {
+        modal.classList.remove('active');
+      }
+    });
+
+    // Обработка регистрации (ваш исходный код с небольшими улучшениями)
+    document.getElementById('registerButton').addEventListener('click', async () => {
+      const fullName = document.getElementById('registerFullName').value.trim();
+      const password = document.getElementById('registerPassword').value;
+      const email = document.getElementById('registerEmail').value.trim();
+      const phone = document.getElementById('registerPhone').value.trim();
+      const position = document.getElementById('registerPosition').value.trim();
+
+      // Валидация
+      if (!fullName || !password || !email || !position) {
+        alert('Пожалуйста, заполните все обязательные поля!');
+        return;
+      }
+
+      const nameParts = fullName.split(/\s+/);
+      if (nameParts.length < 2) {
+        alert('Пожалуйста, введите фамилию и имя (можно также отчество)');
+        return;
+      }
+
+      if (!email.includes('@') || !email.includes('.')) {
+        alert('Пожалуйста, введите корректный email адрес');
+        return;
+      }
+
+      const payload = {
+        full_name: fullName,
+        password: password,
+        email: email,
+        phone: phone || null,
+        position: position
+      };
+
+      try {
+        const response = await fetch(`${window.location.origin}/add_user`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+          alert('Регистрация успешна!');
+          document.getElementById('registerModal').classList.remove('active');
+          window.location.href = '/profile';
+        } else {
+          alert(result.message || 'Ошибка регистрации. Попробуйте снова.');
+        }
+      } catch (error) {
+        alert('Ошибка подключения к серверу!');
+        console.error('Ошибка:', error);
+      }
+    });
+  </script>
+</body>
+</html>
