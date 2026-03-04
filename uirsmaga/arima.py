@@ -14,7 +14,7 @@ from werkzeug.utils import secure_filename
 from skimage.morphology import remove_small_objects
 import tempfile
 import shutil
-import matplotlib
+
 # Определяем базовую директорию SAM2
 SAM2_BASE = "/Users/user/PycharmProjects/PycharmProjects/sam2"
 SAM2_DIR = os.path.join(SAM2_BASE, "sam2")  # Директория с кодом SAM2
