@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Авторизация</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f9;
+        }
+
+        .login-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            text-align: center;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            font-size: 1em;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+
+        .login-btn:hover {
+            background-color: #0056b3;
+        }
+
+        .error-message {
+            color: red;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="login-container">
+        <h2>Вход</h2>
+        <input type="text" id="username" placeholder="Логин">
+        <input type="password" id="password" placeholder="Пароль">
+        <button class="login-btn" id="loginButton">Войти</button>
+        <div class="error-message" id="errorMessage" style="display: none;">Неверный логин или пароль!</div>
+    </div>
+<script>
+   document.getElementById('loginButton').addEventListener('click', async () => {
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+
+    if (!username || !password) {
+        displayError('Пожалуйста, заполните все поля!');
+        return;
+    }
+
+    const payload = { username, password };
+
+    try {
+        const response = await fetch('http://localhost:5000/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        localStorage.setItem('username', username);
+        if (response.ok) {
+            const result = await response.json();
+            if (result.success) {
+
+                // Логика перенаправления на основе имени пользователя
+                if (username === 'admin') {
+                    window.location.href = 'administration.html';
+                } else {
+                    window.location.href = 'site_picedit.html';
+                }
+            } else {
+                displayError('Неверный логин или пароль!');
+            }
+        } else {
+            displayError('Ошибка сервера! Попробуйте позже.');
+        }
+    } catch (error) {
+        displayError('Ошибка подключения к серверу!');
+        console.error('Ошибка:', error);
+    }
+});
+
+function displayError(message) {
+    const errorMessage = document.getElementById('errorMessage');
+    errorMessage.textContent = message;
+    errorMessage.style.display = 'block';
+}
+
+    </script>
+</body>
+</html>
+

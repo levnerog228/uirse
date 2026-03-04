@@ -1,0 +1,1365 @@
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-validate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Личный кабинет</title>
+   <style>
+        :root {
+            --primary: #3a86ff;
+            --primary-dark: #2667cc;
+            --primary-light: #e6f0ff;
+            --secondary: #8338ec;
+            --success: #38b000;
+            --warning: #ff9e00;
+            --danger: #ff006e;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --surface-dark: #f1f5f9;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --text-lighter: #94a3b8;
+            --border: #e2e8f0;
+            --border-light: #f1f5f9;
+            --shadow: rgba(58, 134, 255, 0.08);
+            --shadow-hover: rgba(58, 134, 255, 0.12);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --aspect-ratio: 16/9;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--background);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .main-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 5%;
+            min-height: 100vh;
+        }
+
+        .content-container {
+            background: var(--surface);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 12px var(--shadow);
+            width: 100%;
+            max-width: 2200px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-grow: 1;
+        }
+
+        .header-nav {
+            background: var(--surface-dark);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 25px;
+            width: 100%;
+            position: sticky;
+            top: 20px;
+            z-index: 10;
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        .logo {
+            height: 46px;
+            max-width: 150px;
+            object-fit: contain;
+        }
+
+        .nav-actions button {
+            background: var(--primary);
+            border: none;
+            padding: 12px 24px;
+            border-radius: var(--radius-sm);
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-actions button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px var(--shadow-hover);
+        }
+
+        .page-title {
+            text-align: center;
+            margin: 30px 0;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text);
+            position: relative;
+            display: inline-block;
+        }
+
+        .page-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 4px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+
+        .profile-container {
+            display: flex;
+            width: 100%;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .profile-sidebar {
+            width: 300px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 25px;
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .profile-content {
+            flex: 1;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 25px;
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .user-avatar {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: var(--surface-dark);
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: 4px solid var(--primary-light);
+            box-shadow: 0 4px 12px var(--shadow-hover);
+        }
+
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .user-avatar:hover img {
+            transform: scale(1.1);
+        }
+
+        .user-name {
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text);
+        }
+
+        .user-email {
+            text-align: center;
+            color: var(--text-light);
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-menu li {
+            margin-bottom: 10px;
+        }
+
+        .nav-menu a {
+            display: block;
+            padding: 12px 15px;
+            color: var(--text);
+            text-decoration: none;
+            border-radius: var(--radius-sm);
+            transition: var(--transition);
+            font-weight: 500;
+        }
+
+        .nav-menu a:hover {
+            background: var(--surface-dark);
+            color: var(--primary);
+            transform: translateX(5px);
+        }
+
+        .nav-menu a.active {
+            background: var(--primary-light);
+            color: var(--primary);
+            border-left: 4px solid var(--primary);
+            font-weight: 600;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+
+        .user-info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .info-item {
+            background: var(--surface-dark);
+            border-radius: var(--radius-sm);
+            padding: 15px;
+            border: 1px solid var(--border);
+            transition: var(--transition);
+        }
+
+        .info-item:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: var(--text-light);
+            margin-bottom: 8px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value {
+            padding: 10px;
+            background: var(--surface);
+            border-radius: var(--radius-sm);
+            min-height: 45px;
+            display: flex;
+            align-items: center;
+            border: 1px solid var(--border-light);
+            font-size: 16px;
+            color: var(--text);
+            transition: var(--transition);
+        }
+
+        .info-value.editing {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+            outline: none;
+        }
+
+        .edit-btn {
+            background: var(--primary);
+            border: none;
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            color: white;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            margin-top: 10px;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .edit-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(58, 134, 255, 0.3);
+        }
+
+        .edit-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .save-btn, .cancel-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .save-btn {
+            background: var(--success);
+            color: white;
+        }
+
+        .save-btn:hover {
+            background: #2d9500;
+            transform: scale(1.1);
+        }
+
+        .cancel-btn {
+            background: var(--danger);
+            color: white;
+        }
+
+        .cancel-btn:hover {
+            background: #d0005e;
+            transform: scale(1.1);
+        }
+
+        .images-section {
+            margin-top: 40px;
+        }
+
+        .images-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        .image-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            box-shadow: 0 4px 12px var(--shadow);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .image-card:hover {
+            transform: translateY(-6px);
+            border-color: var(--primary);
+            box-shadow: 0 12px 24px var(--shadow-hover);
+        }
+
+        .image-thumbnail {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+            border-bottom: 1px solid var(--border);
+            transition: transform 0.3s ease;
+            pointer-events: none;
+        }
+
+        .image-card:hover .image-thumbnail {
+            transform: scale(1.05);
+        }
+
+        .image-info {
+            padding: 15px;
+            pointer-events: none;
+        }
+
+        .image-date {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .image-date::before {
+            content: '📅';
+            font-size: 12px;
+        }
+
+        .image-actions {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            pointer-events: auto;
+        }
+
+        .image-actions button {
+            flex: 1;
+            background: var(--surface-dark);
+            border: 1px solid var(--border);
+            padding: 8px 10px;
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            pointer-events: auto;
+        }
+
+        .image-actions button:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .view-all-container {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .view-all-link {
+            display: inline-block;
+            padding: 12px 30px;
+            background: var(--primary-light);
+            color: var(--primary);
+            text-decoration: none;
+            border-radius: 40px;
+            font-weight: 600;
+            transition: var(--transition);
+            border: 1px solid var(--primary);
+            cursor: pointer;
+        }
+
+        .view-all-link:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(58, 134, 255, 0.3);
+        }
+
+        .no-images {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-light);
+            font-size: 16px;
+            background: var(--surface-dark);
+            border-radius: var(--radius);
+            border: 2px dashed var(--border);
+        }
+
+        .no-images::before {
+            content: '📷';
+            display: block;
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        /* Модальное окно для всех изображений */
+        .images-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            backdrop-filter: blur(10px);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .images-popup.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .images-popup-content {
+            background: var(--surface);
+            width: 95%;
+            max-width: 1600px;
+            height: 90vh;
+            border-radius: var(--radius);
+            position: relative;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .images-popup.active .images-popup-content {
+            transform: scale(1);
+        }
+
+        .images-popup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--primary);
+        }
+
+        .images-popup-header h2 {
+            font-size: 1.8rem;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .images-popup-header h2::before {
+            content: '🖼️';
+            font-size: 24px;
+        }
+
+        .popup-close {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--surface-dark);
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .popup-close:hover {
+            background: var(--danger);
+            color: white;
+            transform: rotate(90deg);
+        }
+
+        .popup-images-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            overflow-y: auto;
+            padding: 15px;
+            flex: 1;
+        }
+
+        .popup-image-card {
+            background: var(--surface-dark);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+            height: fit-content;
+        }
+
+        .popup-image-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--primary);
+            box-shadow: 0 8px 16px var(--shadow-hover);
+        }
+
+        .popup-image-thumbnail {
+            width: 100%;
+            height: 220px;
+            object-fit: contain;
+            background: #2d2d2d;
+            border-bottom: 1px solid var(--border);
+            pointer-events: none;
+            padding: 10px;
+        }
+
+        .popup-image-info {
+            padding: 15px;
+            pointer-events: none;
+        }
+
+        .popup-image-date {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+
+        .popup-image-actions {
+            display: flex;
+            gap: 10px;
+            pointer-events: auto;
+        }
+
+        .popup-image-actions button {
+            flex: 1;
+            padding: 10px 8px;
+            font-size: 13px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            pointer-events: auto;
+            font-weight: 500;
+        }
+
+        .popup-image-actions button:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        /* Модальное окно для просмотра изображений */
+        .image-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2100;
+            backdrop-filter: blur(10px);
+        }
+
+        .image-modal-content {
+            position: relative;
+            max-width: 90vw;
+            max-height: 90vh;
+        }
+
+        .image-modal-content img {
+            max-width: 100%;
+            max-height: 80vh;
+            object-fit: contain;
+            border-radius: var(--radius);
+            border: 2px solid var(--primary-light);
+        }
+
+        .image-modal-close {
+            position: absolute;
+            top: -40px;
+            right: -40px;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .image-modal-close:hover {
+            background: var(--danger);
+            transform: scale(1.1);
+        }
+
+        /* Responsive */
+        @media (max-width: 991px) {
+            .profile-container {
+                flex-direction: column;
+            }
+
+            .profile-sidebar {
+                width: 100%;
+            }
+
+            .user-info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header-nav {
+                flex-direction: column;
+                align-items: center;
+                gap: 15px;
+                padding: 15px;
+            }
+
+            .logo {
+                height: 36px;
+            }
+
+            .page-title {
+                font-size: 2rem;
+            }
+
+            .image-modal-close {
+                top: -40px;
+                right: 0;
+            }
+
+            .images-popup-content {
+                padding: 15px;
+                width: 98%;
+            }
+
+            .popup-images-grid {
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+                gap: 15px;
+            }
+
+            .popup-image-thumbnail {
+                height: 180px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main-wrapper {
+                padding: 10px;
+            }
+
+            .page-title {
+                font-size: 1.8rem;
+            }
+
+            .image-actions {
+                flex-direction: column;
+            }
+
+            .image-actions button {
+                width: 100%;
+            }
+
+            .images-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .images-popup-content {
+                padding: 10px;
+            }
+
+            .popup-images-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .popup-image-thumbnail {
+                height: 250px;
+            }
+        }
+
+        /* Анимации */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .profile-sidebar, .profile-content {
+            animation: fadeIn 0.5s ease;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="main-wrapper">
+        <div class="content-container">
+            <nav class="header-nav">
+                <img src="logo.png" alt="Site Logo" class="logo" />
+                <div class="nav-actions">
+                    <button onclick="window.location.href='/'">На главную</button>
+                </div>
+            </nav>
+
+            <h1 class="page-title">Личный кабинет</h1>
+
+            <div class="profile-container">
+                <div class="profile-sidebar">
+                    <div class="user-avatar">
+                        <img src="{{ user.get('avatar_url', 'https://via.placeholder.com/150') }}" alt="Аватар пользователя">
+                    </div>
+                   <h2 class="user-name">
+     {{ user.last_name }} {{ user.first_name }} {{ user.middle_name if user.middle_name }}
+</h2>
+                    <p class="user-email">{{ user.get('email', 'user@example.com') }}</p>
+
+                    <ul class="nav-menu">
+                        <li><a href="#" class="active">Личные данные</a></li>
+                        <li><a href="#">Мои изображения</a></li>
+                        <li><a href="#">История действий</a></li>
+                        <li><a href="/logout">Выйти</a></li>
+                    </ul>
+                </div>
+
+                <div class="profile-content">
+                    <div class="personal-info-section">
+                        <h3 class="section-title">Личные данные</h3>
+
+                        <div class="user-info-grid">
+                            <div class="info-item">
+                                <div class="info-label">Имя</div>
+                                <div class="info-value">{{ user.get('first_name', 'Иван') }}</div>
+                                <button class="edit-btn">Изменить</button>
+                            </div>
+
+                            <div class="info-item">
+                                <div class="info-label">Фамилия</div>
+                                <div class="info-value">{{ user.get('last_name', 'Иванов') }}</div>
+                                <button class="edit-btn">Изменить</button>
+                            </div>
+
+                            <div class="info-item">
+                                <div class="info-label">Электронная почта</div>
+                                <div class="info-value">{{ user.get('email', 'user@example.com') }}</div>
+                                <button class="edit-btn">Изменить</button>
+                            </div>
+
+                            <div class="info-item">
+                                <div class="info-label">Телефон</div>
+                                <div class="info-value">{{ user.get('phone', '+7 (123) 456-78-90') }}</div>
+                                <button class="edit-btn">Изменить</button>
+                            </div>
+
+                            <div class="info-item">
+                                <div class="info-label">Дата рождения</div>
+                                <div class="info-value">{{ user.get('birth_date', '01.01.1990') }}</div>
+                                <button class="edit-btn">Изменить</button>
+                            </div>
+
+                            <div class="info-item">
+                                <div class="info-label">Дата регистрации</div>
+                                <div class="info-value">{{ user.get('registration_date', '15.05.2025') }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                   <div class="images-section">
+                        <h3 class="section-title">Последние загруженные изображения</h3>
+
+                        <div class="images-grid" id="recentImagesGrid">
+                            <!-- Здесь будут отображаться последние 6 изображений через JavaScript -->
+                        </div>
+
+                        <div class="view-all-container" id="viewAllContainer" style="display: none;">
+                            <a class="view-all-link" id="showAllImagesBtn">Показать все изображения</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Попап для всех изображений -->
+    <div class="images-popup" id="imagesPopup">
+        <div class="images-popup-content">
+            <div class="images-popup-header">
+                <h2>Все изображения</h2>
+                <button class="popup-close" id="closePopupBtn">&times;</button>
+            </div>
+            <div class="popup-images-grid" id="popupImagesGrid">
+                <!-- Здесь будут загружаться все изображения -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Данные изображений (в реальном приложении они будут приходить с сервера)
+    // Здесь я создаю массив с данными для примера
+    const imagesData = [
+        {% for image in images %}
+        {
+            id: "{{ image.id }}",
+            filename: "{{ image.filename }}",
+            upload_date: "{% if image.upload_date is string %}{{ image.upload_date }}{% else %}{{ image.upload_date.strftime('%d.%m.%Y') }}{% endif %}",
+            url: "{{ url_for('static', filename='uploads/' + image.filename) }}"
+        },
+        {% endfor %}
+    ];
+
+    // Функция для отображения последних 6 изображений
+    function displayRecentImages() {
+        const recentGrid = document.getElementById('recentImagesGrid');
+        const viewAllContainer = document.getElementById('viewAllContainer');
+
+        if (!imagesData || imagesData.length === 0) {
+            recentGrid.innerHTML = '<p class="no-images">Вы еще не сохраняли изображений</p>';
+            viewAllContainer.style.display = 'none';
+            return;
+        }
+
+        // Берем последние 6 изображений (или меньше, если всего меньше 6)
+        const recentImages = imagesData.slice(-6).reverse(); // reverse для отображения самых новых первыми
+
+        let html = '';
+        recentImages.forEach(image => {
+            html += `
+                <div class="image-card" data-image-id="${image.id}" data-image-url="${image.url}">
+                    <img src="${image.url}" alt="Обработанное изображение" class="image-thumbnail" onclick="event.stopPropagation(); viewImage('${image.url}')">
+                    <div class="image-info">
+                        <div class="image-date">${image.upload_date}</div>
+                        <div class="image-actions">
+                            <button class="view-btn" onclick="event.stopPropagation(); viewImage('${image.url}')">Просмотр</button>
+                            <button class="delete-btn" onclick="event.stopPropagation(); deleteImage('${image.id}')">Удалить</button>
+                            <button class="download-btn" onclick="event.stopPropagation(); downloadImage('${image.url}', '${image.filename}')">Скачать</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        recentGrid.innerHTML = html;
+
+        // Показываем кнопку "Показать все", если изображений больше 6
+        if (imagesData.length > 6) {
+            viewAllContainer.style.display = 'block';
+        } else {
+            viewAllContainer.style.display = 'none';
+        }
+
+        // Добавляем обработчик клика на всю карточку для просмотра
+        document.querySelectorAll('.image-card').forEach(card => {
+            card.addEventListener('click', function(e) {
+                // Не открываем просмотр, если клик был по кнопке
+                if (!e.target.closest('button')) {
+                    const imageUrl = this.dataset.imageUrl;
+                    viewImage(imageUrl);
+                }
+            });
+        });
+    }
+
+    // Функция для просмотра изображения
+    function viewImage(imageUrl) {
+        const modal = document.createElement('div');
+        modal.className = 'image-modal';
+
+        modal.innerHTML = `
+            <div class="image-modal-content">
+                <img src="${imageUrl}" alt="Просмотр изображения">
+                <button class="image-modal-close">&times;</button>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        modal.querySelector('.image-modal-close').addEventListener('click', () => {
+            modal.remove();
+        });
+
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+    }
+
+    // Функция для удаления изображения
+    async function deleteImage(imageId) {
+        if (!confirm('Вы уверены, что хотите удалить это изображение?')) return;
+
+        try {
+            const response = await fetch(`/delete_image/${imageId}`, {
+                method: 'DELETE',
+                credentials: 'include'
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                // Удаляем изображение из массива данных
+                const index = imagesData.findIndex(img => img.id === imageId);
+                if (index !== -1) {
+                    imagesData.splice(index, 1);
+                }
+
+                // Обновляем отображение последних изображений
+                displayRecentImages();
+
+                // Удаляем из попапа, если он открыт
+                const popupImageCard = document.querySelector(`#popupImagesGrid .popup-image-card[data-image-id="${imageId}"]`);
+                if (popupImageCard) {
+                    popupImageCard.remove();
+
+                    // Если в попапе не осталось изображений, показываем сообщение
+                    if (document.querySelectorAll('#popupImagesGrid .popup-image-card').length === 0) {
+                        document.getElementById('popupImagesGrid').innerHTML = '<p class="no-images">У вас нет сохраненных изображений</p>';
+                    }
+                }
+            } else {
+                alert('Ошибка при удалении: ' + (result.message || 'Неизвестная ошибка'));
+            }
+        } catch (error) {
+            alert('Ошибка сети: ' + error.message);
+        }
+    }
+
+    // Функция для скачивания изображения
+    function downloadImage(imageUrl, filename) {
+        const link = document.createElement('a');
+        link.href = imageUrl;
+        link.download = filename || 'image.png';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    // Функция для загрузки всех изображений в попап
+    function loadAllImages() {
+        const popupGrid = document.getElementById('popupImagesGrid');
+
+        // Очищаем сетку
+        popupGrid.innerHTML = '';
+
+        if (imagesData.length === 0) {
+            popupGrid.innerHTML = '<p class="no-images">У вас нет сохраненных изображений</p>';
+            return;
+        }
+
+        // Сортируем изображения по дате (новые сверху)
+        const sortedImages = [...imagesData].reverse();
+
+        sortedImages.forEach(image => {
+            const popupCard = document.createElement('div');
+            popupCard.className = 'popup-image-card';
+            popupCard.dataset.imageId = image.id;
+            popupCard.dataset.imageUrl = image.url;
+
+            popupCard.innerHTML = `
+                <img src="${image.url}" alt="Изображение" class="popup-image-thumbnail" onclick="event.stopPropagation(); viewImage('${image.url}')">
+                <div class="popup-image-info">
+                    <div class="popup-image-date">${image.upload_date}</div>
+                    <div class="popup-image-actions">
+                        <button class="popup-view-btn" onclick="event.stopPropagation(); viewImage('${image.url}')">Просмотр</button>
+                        <button class="popup-delete-btn" onclick="event.stopPropagation(); deleteImage('${image.id}')">Удалить</button>
+                        <button class="popup-download-btn" onclick="event.stopPropagation(); downloadImage('${image.url}', '${image.filename}')">Скачать</button>
+                    </div>
+                </div>
+            `;
+
+            popupGrid.appendChild(popupCard);
+        });
+
+        // Добавляем обработчик клика на всю карточку в попапе
+        document.querySelectorAll('.popup-image-card').forEach(card => {
+            card.addEventListener('click', function(e) {
+                // Не открываем просмотр, если клик был по кнопке
+                if (!e.target.closest('button')) {
+                    const imageUrl = this.dataset.imageUrl;
+                    viewImage(imageUrl);
+                }
+            });
+        });
+    }
+
+    // Инициализация при загрузке страницы
+    document.addEventListener('DOMContentLoaded', function() {
+        // Отображаем последние 6 изображений
+        displayRecentImages();
+
+        // Обработчик для кнопки "На главную"
+        document.querySelector('.nav-actions button').addEventListener('click', function() {
+            window.location.href = '/';
+        });
+
+        // Обработчики для меню
+        document.querySelectorAll('.nav-menu a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                // Удаляем класс active у всех ссылок
+                document.querySelectorAll('.nav-menu a').forEach(item => {
+                    item.classList.remove('active');
+                });
+
+                // Добавляем класс active текущей ссылке
+                this.classList.add('active');
+
+                // Здесь можно добавить логику загрузки соответствующего раздела
+                const sectionName = this.textContent.trim();
+            });
+        });
+
+        // Обработчик для кнопки "Показать все изображения"
+        const showAllBtn = document.getElementById('showAllImagesBtn');
+        if (showAllBtn) {
+            showAllBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                loadAllImages();
+                document.getElementById('imagesPopup').classList.add('active');
+            });
+        }
+
+        // Закрытие попапа
+        document.getElementById('closePopupBtn').addEventListener('click', function() {
+            document.getElementById('imagesPopup').classList.remove('active');
+        });
+
+        // Закрытие попапа при клике вне контента
+        document.getElementById('imagesPopup').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.remove('active');
+            }
+        });
+
+        // Закрытие по клавише ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.getElementById('imagesPopup').classList.remove('active');
+
+                // Также закрываем модальное окно просмотра, если оно открыто
+                const imageModal = document.querySelector('.image-modal');
+                if (imageModal) {
+                    imageModal.remove();
+                }
+            }
+        });
+    });
+
+    // Обработчики для кнопок редактирования (оставляем как есть)
+    document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const infoItem = this.closest('.info-item');
+            const infoLabel = infoItem.querySelector('.info-label').textContent;
+            const infoValue = infoItem.querySelector('.info-value');
+
+            // Пропускаем поля, которые нельзя редактировать (дата регистрации)
+            if (infoLabel === 'Дата регистрации') return;
+
+            // Сохраняем оригинальное значение
+            const originalValue = infoValue.textContent;
+
+            // Делаем поле редактируемым
+            infoValue.contentEditable = true;
+            infoValue.focus();
+
+            // Добавляем класс для стилизации
+            infoValue.classList.add('editing');
+
+            // Скрываем кнопку редактирования
+            this.style.display = 'none';
+
+            // Создаем кнопки сохранения/отмены
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'edit-actions';
+            actionsDiv.innerHTML = `
+                <button class="save-btn">✓</button>
+                <button class="cancel-btn">✕</button>
+            `;
+
+            infoItem.appendChild(actionsDiv);
+
+            // Обработчик сохранения
+            actionsDiv.querySelector('.save-btn').addEventListener('click', async function() {
+                const newValue = infoValue.textContent.trim();
+
+                // Валидация
+                if (infoLabel === 'Электронная почта' && !validateEmail(newValue)) {
+                    alert('Пожалуйста, введите корректный email');
+                    infoValue.focus();
+                    return;
+                }
+
+                // Для даты приводим к формату DD.MM.YYYY
+                let dbValue = newValue;
+                if (infoLabel === 'Дата рождения') {
+                    if (!isValidDate(newValue)) {
+                        alert('Пожалуйста, введите дату в формате ДД.ММ.ГГГГ');
+                        infoValue.focus();
+                        return;
+                    }
+                    dbValue = formatDateForDB(newValue);
+                }
+
+                try {
+                    // Отправка данных на сервер
+                    const response = await updateUserInfo(infoLabel, dbValue);
+
+                    if (response.success) {
+                       if (response.user) {
+                            updateRelatedFields(infoLabel, newValue, response.user);
+                        }
+                    } else {
+                        // Восстанавливаем оригинальное значение при ошибке
+                        infoValue.textContent = originalValue;
+                        alert('Ошибка при обновлении: ' + response.message);
+                    }
+                } catch (error) {
+                    infoValue.textContent = originalValue;
+                    alert('Ошибка сети: ' + error.message);
+                }
+
+                // Восстанавливаем исходное состояние
+                resetEditingState(infoItem, infoValue, btn);
+            });
+
+            // Обработчик отмены
+            actionsDiv.querySelector('.cancel-btn').addEventListener('click', function() {
+                infoValue.textContent = originalValue;
+                resetEditingState(infoItem, infoValue, btn);
+            });
+
+            // Отмена при потере фокуса
+            infoValue.addEventListener('blur', function() {
+                setTimeout(() => {
+                    if (!infoItem.contains(document.activeElement)) {
+                        infoValue.textContent = originalValue;
+                        resetEditingState(infoItem, infoValue, btn);
+                    }
+                }, 100);
+            });
+        });
+    });
+
+    // Функция валидации email
+    function validateEmail(email) {
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return re.test(email);
+    }
+
+    // Функция валидации даты
+    function isValidDate(dateString) {
+        const parts = dateString.split('.');
+        if (parts.length !== 3) return false;
+
+        const day = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10);
+        const year = parseInt(parts[2], 10);
+
+        if (isNaN(day) || isNaN(month) || isNaN(year)) return false;
+
+        const date = new Date(year, month - 1, day);
+        return date.getFullYear() === year &&
+               date.getMonth() === month - 1 &&
+               date.getDate() === day;
+    }
+
+    // Форматирование даты для БД (YYYY-MM-DD)
+    function formatDateForDB(dateString) {
+        const parts = dateString.split('.');
+        return `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+
+    // Обновление связанных полей
+    function updateRelatedFields(fieldName, newValue, userData) {
+        if (!userData) return;
+
+        // Обновляем полное имя в сайдбаре
+        const fullName = `${userData.last_name || ''} ${userData.first_name || ''} ${userData.middle_name || ''}`.trim();
+        document.querySelector('.user-name').textContent = fullName;
+
+        // Обновляем отдельные поля в профиле
+        const fieldSelectorsSafe = {
+            'Имя': '.info-item:nth-child(1) .info-value',
+            'Фамилия': '.info-item:nth-child(2) .info-value',
+            'Электронная почта': '.info-item:nth-child(3) .info-value'
+        };
+
+        if (fieldSelectorsSafe[fieldName]) {
+            const element = document.querySelector(fieldSelectorsSafe[fieldName]);
+            if (element) {
+                element.textContent = newValue;
+            }
+        }
+
+        // Обновляем email в сайдбаре
+        if (fieldName === 'Электронная почта') {
+            const emailElement = document.querySelector('.user-email');
+            if (emailElement) {
+                emailElement.textContent = userData.email;
+            }
+        }
+    }
+
+    // Восстановление исходного состояния
+    function resetEditingState(infoItem, infoValue, editBtn) {
+        infoValue.contentEditable = false;
+        infoValue.classList.remove('editing');
+
+        const actionsDiv = infoItem.querySelector('.edit-actions');
+        if (actionsDiv) {
+            actionsDiv.remove();
+        }
+
+        editBtn.style.display = '';
+    }
+
+    // Функция обновления данных пользователя на сервере
+    async function updateUserInfo(fieldName, newValue) {
+        const fieldMap = {
+            'Имя': 'first_name',
+            'Фамилия': 'last_name',
+            'Электронная почта': 'email',
+            'Телефон': 'phone',
+            'Дата рождения': 'birth_date'
+        };
+
+        const fieldKey = fieldMap[fieldName];
+        if (!fieldKey) return { success: false, message: 'Неизвестное поле' };
+
+        try {
+            const response = await fetch('/update_profile', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    field: fieldKey,
+                    value: newValue
+                }),
+                credentials: 'include'
+            });
+
+            return await response.json();
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    }
+    </script>
+</body>
+</html>

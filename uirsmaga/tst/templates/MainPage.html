@@ -1,0 +1,1652 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Image Uniformity Analyzer</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --primary: #9fb7c2;
+            --primary-dark: #7a99a8;
+            --secondary: #c4a8c6;
+            --background: #f5f7f6;
+            --surface: #ffffff;
+            --surface-light: #fafbfb;
+            --text: #3a4a54;
+            --text-light: #6b7d87;
+            --text-lighter: #8f9ea7;
+            --border: #e1e6e9;
+            --shadow: rgba(58, 74, 84, 0.06);
+            --shadow-hover: rgba(58, 74, 84, 0.1);
+            --success: #a8c4a8;
+            --processing: #9fb7c2;
+            --analysis: #c4a8c6;
+            --accent-1: #f5d6c6;
+            --accent-2: #d8e6d8;
+            --accent-3: #e8e0d2;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--background);
+            min-height: 100vh;
+            color: var(--text);
+            line-height: 1.6;
+            font-weight: 400;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .main-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1% 1%;
+            min-height: 100vh;
+            width: 100%;
+            max-width: none;
+        }
+
+        .content-container {
+            background: var(--surface);
+            width: 100%;
+            max-width: none;
+            border-radius: 16px;
+            padding: 20px 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-grow: 1;
+            box-shadow: 0 4px 20px var(--shadow), 0 1px 3px rgba(0, 0, 0, 0.02);
+            border: 1px solid var(--border);
+            margin: 0 auto;
+        }
+
+        .header-nav {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 20px;
+            width: 100%;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 12px var(--shadow);
+        }
+
+        .logo {
+            height: 32px;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--primary);
+        }
+
+        .tools-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+        }
+
+        .search-box {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            height: 42px;
+            width: 300px;
+            padding: 0 16px;
+            font-size: 15px;
+            font-family: inherit;
+            background: var(--surface-light);
+            color: var(--text);
+            transition: all 0.2s ease;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: var(--surface);
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-btn {
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            padding: 8px 14px;
+            border-radius: 10px;
+            color: var(--text);
+            cursor: pointer;
+            font-size: 13px;
+            font-family: inherit;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .nav-btn:hover {
+            background: var(--surface);
+            border-color: var(--primary);
+        }
+
+        .nav-btn.primary {
+            background: var(--primary);
+            color: white;
+            border: 1px solid var(--primary-dark);
+        }
+
+        .nav-btn.primary:hover {
+            background: var(--primary-dark);
+        }
+
+        #finish-btn {
+            background: var(--success);
+            color: white;
+            border: 1px solid var(--success);
+        }
+
+        #finish-btn:hover {
+            background: #8ab38a;
+            border-color: #8ab38a;
+        }
+
+        .page-title {
+            text-align: center;
+            margin: 0 0 8px 0;
+            font-size: 2.2rem;
+            font-weight: 600;
+            color: var(--text);
+            letter-spacing: -0.02em;
+            width: 100%;
+        }
+
+        .page-subtitle {
+            text-align: center;
+            margin: 0 0 30px 0;
+            font-size: 1rem;
+            color: var(--text-light);
+            max-width: 900px;
+            line-height: 1.6;
+            font-weight: 400;
+        }
+
+        .canvas-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            width: 100%;
+            margin-bottom: 30px;
+        }
+
+        .section-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: 0 2px 12px var(--shadow);
+            transition: all 0.2s ease;
+            height: fit-content;
+        }
+
+        .section-card:hover {
+            box-shadow: 0 4px 20px var(--shadow-hover);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .section-badge {
+            background: var(--surface-light);
+            color: var(--text-light);
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            border: 1px solid var(--border);
+            white-space: nowrap;
+        }
+
+        .canvas-area {
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            height: 600px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+
+        .canvas-area.active {
+            border-color: var(--primary);
+        }
+
+        #source-canvas, #result-canvas {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .floating-controls {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 5;
+        }
+
+        .control-btn {
+            width: 36px;
+            height: 36px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text);
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            position: relative;
+            border-radius: 10px;
+            box-shadow: 0 1px 4px var(--shadow);
+        }
+
+        .control-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .control-btn::after {
+            content: attr(title);
+            position: absolute;
+            right: calc(100% + 10px);
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--text);
+            color: white;
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.2s ease;
+        }
+
+        .control-btn:hover::after {
+            opacity: 1;
+            right: calc(100% + 12px);
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 25px;
+            width: 100%;
+            margin-top: 30px;
+        }
+
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: 0 2px 12px var(--shadow);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .panel-icon {
+            width: 34px;
+            height: 34px;
+            background: var(--primary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: white;
+            font-weight: 600;
+        }
+
+        .panel-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .parameters-panel {
+            padding: 12px;
+        }
+
+        .param-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            gap: 8px;
+        }
+
+        .param-group label {
+            min-width: 130px;
+            font-weight: 500;
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+
+        .param-slider {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--border);
+            outline: none;
+        }
+
+        .param-checkboxes {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 12px;
+        }
+
+        .param-checkboxes label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .results-panel {
+            padding: 12px;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+
+        .result-label {
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .result-value {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .region-list {
+            max-height: 180px;
+            overflow-y: auto;
+            margin-top: 12px;
+        }
+
+        .region-item {
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px;
+            margin-bottom: 6px;
+            font-size: 0.8rem;
+        }
+
+        .region-item div {
+            margin-top: 3px;
+            font-size: 0.75rem;
+            color: var(--text-light);
+        }
+
+        .visualization-section {
+            width: 100%;
+            margin-top: 30px;
+        }
+
+        .visualization-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+
+        .viz-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .viz-card:hover {
+            background: var(--surface-light);
+            border-color: var(--primary);
+            box-shadow: 0 4px 16px var(--shadow);
+        }
+
+        .viz-placeholder {
+            height: 120px;
+            background: var(--surface-light);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+            border: 1px solid var(--border);
+            font-size: 1.8rem;
+            color: var(--primary);
+            font-weight: 600;
+            transition: all 0.2s ease;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .viz-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+        }
+
+        .viz-card.has-image .viz-placeholder {
+            font-size: 0;
+            padding: 0;
+        }
+
+        .viz-card.has-image .viz-image {
+            display: block;
+        }
+
+        .viz-card:hover .viz-placeholder {
+            color: var(--primary-dark);
+            background: var(--surface);
+        }
+
+        .viz-label {
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 3px;
+            font-size: 0.9rem;
+        }
+
+        .viz-desc {
+            font-size: 0.75rem;
+            color: var(--text-light);
+            font-weight: 400;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: var(--surface);
+            margin: 3% auto;
+            padding: 20px;
+            border-radius: 12px;
+            width: 85%;
+            max-width: 900px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .close {
+            color: var(--text-light);
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: var(--text);
+        }
+
+        .hsv-visualization {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .hsv-image {
+            max-width: 100%;
+            max-height: 500px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeInUp 0.4s ease forwards;
+            opacity: 0;
+        }
+
+        @media (max-width: 1200px) {
+            .canvas-grid,
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .canvas-area {
+                height: 500px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .content-container {
+                padding: 15px;
+            }
+
+            .header-nav {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .search-box {
+                width: 100%;
+            }
+
+            .canvas-area {
+                height: 400px;
+            }
+
+            .visualization-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .page-title {
+                font-size: 1.8rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .visualization-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .canvas-area {
+                height: 350px;
+            }
+
+            .main-wrapper {
+                padding: 0.5%;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="main-wrapper">
+    <div class="content-container wide-layout">
+        <nav class="header-nav fade-in">
+            <div class="logo">Название</div>
+            <div class="tools-container expanded">
+                <select class="search-box" id="algorithm-select">
+                    <option value="">Выберите алгоритм анализа...</option>
+                    <option value="statistical">Статистический анализ</option>
+                    <option value="morphological">Морфологический анализ</option>
+                    <option value="spectral">Спектральный анализ</option>
+                    <option value="cluster">Кластерный анализ</option>
+                    <option value="texture">Текстурный анализ</option>
+                    <option value="frequency">Частотный анализ</option>
+                </select>
+            </div>
+            <div class="nav-actions">
+                <button class="nav-btn" onclick="showHSVAnalysis()">Анализ HSV</button>
+                <button class="nav-btn" onclick="showSettings()">Настройки</button>
+                <button class="nav-btn primary" onclick="uploadImage()">Загрузить изображение</button>
+            </div>
+        </nav>
+
+        <h1 class="page-title matte-text fade-in">Поиск однородностей</h1>
+        <p class="page-subtitle matte-text fade-in"> Платформа для анализа текстурных характеристик изображений</p>
+
+        <div class="canvas-grid fade-in">
+            <div class="section-card expanded">
+                <div class="section-header">
+                    <h3 class="section-title matte-text">Исходное изображение</h3>
+                    <div class="section-badge" id="image-status">Ожидание загрузки</div>
+                </div>
+                <div class="canvas-area" id="upload-container">
+                    <canvas id="source-canvas"></canvas>
+                    <div class="floating-controls">
+                        <button class="control-btn icon-upload" title="Загрузить изображение" onclick="uploadImage()">📁</button>
+                        <input type="file" id="upload" accept="image/*" style="display:none" onchange="handleImageUpload(this.files[0])">
+                        <button class="control-btn icon-undo" title="Отменить действие" onclick="undoSelection()">↶</button>
+                        <button class="control-btn icon-clear" title="Очистить холст" onclick="clearSelection()">✕</button>
+                        <button class="control-btn icon-settings" title="Настройки" onclick="showSettings()">⚙</button>
+                    </div>
+                </div>
+                <div style="margin-top: 12px; text-align: center;">
+                    <button class="nav-btn" onclick="analyzeSelection()" id="analyze-btn" disabled>🔍 Начать анализ</button>
+                    <button class="nav-btn" onclick="finishSelection()" id="finish-btn">✅ Завершить фигуру</button>
+                    <button class="nav-btn" onclick="clearAll()">🗑️ Очистить все</button>
+                </div>
+            </div>
+
+            <div class="section-card expanded">
+                <div class="section-header">
+                    <h3 class="section-title matte-text">Результат анализа</h3>
+                    <div class="section-badge" id="analysis-status">Ожидание данных</div>
+                </div>
+                <div class="canvas-area" id="result-container">
+                    <canvas id="result-canvas"></canvas>
+                </div>
+                <div style="margin-top: 12px; text-align: center;">
+                    <button class="nav-btn" onclick="addPositiveFeedback()" id="positive-btn" disabled>👍 Регионы верны</button>
+                    <button class="nav-btn" onclick="addNegativeFeedback()" id="negative-btn" disabled>👎 Регионы неверны</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard fade-in">
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-icon">P</div>
+                    <h3 class="panel-title matte-text">Параметры анализа</h3>
+                </div>
+                <div class="parameters-panel" id="parameters-panel">
+                    <div class="param-group">
+                        <label>Порог тона (Hue):</label>
+                        <input type="range" id="hue-threshold" min="5" max="40" value="15" class="param-slider">
+                        <span id="hue-value">15</span>
+                    </div>
+                    <div class="param-group">
+                        <label>Порог насыщенности:</label>
+                        <input type="range" id="sat-threshold" min="10" max="50" value="25" class="param-slider">
+                        <span id="sat-value">25</span>
+                    </div>
+                    <div class="param-group">
+                        <label>Порог яркости:</label>
+                        <input type="range" id="light-threshold" min="10" max="80" value="30" class="param-slider">
+                        <span id="light-value">30</span>
+                    </div>
+                    <div class="param-group">
+                        <label>Порог схожести:</label>
+                        <input type="range" id="sim-threshold" min="30" max="90" value="70" class="param-slider">
+                        <span id="sim-value">0.7</span>
+                    </div>
+                    <div class="param-checkboxes">
+                        <label><input type="checkbox" id="adaptive-threshold" checked> Адаптивные пороги</label>
+                        <label><input type="checkbox" id="edge-preservation" checked> Сохранение границ</label>
+                        <label><input type="checkbox" id="fill-gaps" checked> Заполнение промежутков</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel expanded">
+                <div class="panel-header">
+                    <div class="panel-icon">R</div>
+                    <h3 class="panel-title matte-text">Результаты анализа</h3>
+                </div>
+                <div class="results-panel" id="results-panel">
+                    <div class="result-item">
+                        <span class="result-label">Найдено регионов:</span>
+                        <span class="result-value" id="regions-count">0</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Среднее качество:</span>
+                        <span class="result-value" id="avg-quality">0.0</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Общий размер:</span>
+                        <span class="result-value" id="total-size">0</span>
+                    </div>
+                    <div class="region-list" id="region-list">
+                        <!-- Список регионов будет добавляться здесь -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="visualization-section fade-in">
+            <div class="section-header" style="margin-bottom: 20px;">
+                <h3 class="section-title matte-text">Визуализация компонентов и метрик</h3>
+                <div class="section-badge">HSV Analysis & Metrics</div>
+            </div>
+            <div class="visualization-grid">
+                <div class="viz-card" id="hue-card" onclick="showHSVComponent('hue')">
+                    <div class="viz-placeholder">H
+                        <img src="" alt="Hue Component" class="viz-image" id="hue-image">
+                    </div>
+                    <div class="viz-label matte-text">Тон (Hue)</div>
+                    <div class="viz-desc">Цветовая компонента HSV</div>
+                </div>
+                <div class="viz-card" id="saturation-card" onclick="showHSVComponent('saturation')">
+                    <div class="viz-placeholder">S
+                        <img src="" alt="Saturation Component" class="viz-image" id="saturation-image">
+                    </div>
+                    <div class="viz-label matte-text">Насыщенность</div>
+                    <div class="viz-desc">Saturation channel</div>
+                </div>
+                <div class="viz-card" id="lightness-card" onclick="showHSVComponent('lightness')">
+                    <div class="viz-placeholder">V
+                        <img src="" alt="Lightness Component" class="viz-image" id="lightness-image">
+                    </div>
+                    <div class="viz-label matte-text">Яркость</div>
+                    <div class="viz-desc">Value/Brightness</div>
+                </div>
+                <div class="viz-card" onclick="showHSVAnalysis()">
+                    <div class="viz-placeholder">Г</div>
+                    <div class="viz-label matte-text">Гистограмма</div>
+                    <div class="viz-desc">Distribution Analysis</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для HSV визуализации -->
+<div id="hsv-modal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('hsv-modal')">&times;</span>
+        <h2 id="modal-title">Визуализация HSV</h2>
+        <div class="hsv-visualization" id="hsv-visualization">
+            <!-- Контент будет добавляться динамически -->
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для настроек -->
+<div id="settings-modal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('settings-modal')">&times;</span>
+        <h2>Настройки системы</h2>
+        <div id="settings-content">
+            <!-- Настройки будут добавляться динамически -->
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_BASE = 'http://localhost:8000/api';
+let currentImage = null;
+let selectionVertices = [];
+let currentRegions = [];
+let isDrawing = false;
+let tempVertex = null;
+let hsvComponents = {
+    hue: null,
+    saturation: null,
+    lightness: null
+};
+
+// Элементы DOM
+const sourceCanvas = document.getElementById('source-canvas');
+const resultCanvas = document.getElementById('result-canvas');
+const sourceCtx = sourceCanvas.getContext('2d');
+const resultCtx = resultCanvas.getContext('2d');
+const analyzeBtn = document.getElementById('analyze-btn');
+const positiveBtn = document.getElementById('positive-btn');
+const negativeBtn = document.getElementById('negative-btn');
+const imageStatus = document.getElementById('image-status');
+const analysisStatus = document.getElementById('analysis-status');
+const regionsCount = document.getElementById('regions-count');
+const avgQuality = document.getElementById('avg-quality');
+const totalSize = document.getElementById('total-size');
+const regionList = document.getElementById('region-list');
+
+// Элементы для HSV компонентов
+const hueCard = document.getElementById('hue-card');
+const saturationCard = document.getElementById('saturation-card');
+const lightnessCard = document.getElementById('lightness-card');
+const hueImage = document.getElementById('hue-image');
+const saturationImage = document.getElementById('saturation-image');
+const lightnessImage = document.getElementById('lightness-image');
+
+// Инициализация слайдеров
+document.getElementById('hue-threshold').addEventListener('input', updateParamValue);
+document.getElementById('sat-threshold').addEventListener('input', updateParamValue);
+document.getElementById('light-threshold').addEventListener('input', updateParamValue);
+document.getElementById('sim-threshold').addEventListener('input', updateParamValue);
+
+function updateParamValue(e) {
+    const value = e.target.value;
+    const id = e.target.id;
+
+    if (id === 'sim-threshold') {
+        document.getElementById('sim-value').textContent = (value / 100).toFixed(1);
+    } else {
+        document.getElementById(id.replace('threshold', 'value')).textContent = value;
+    }
+}
+
+function uploadImage() {
+    document.getElementById('upload').click();
+}
+
+async function handleImageUpload(file) {
+    if (!file) return;
+
+    try {
+        imageStatus.textContent = 'Загрузка...';
+        analyzeBtn.disabled = true;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch(`${API_BASE}/upload-image`, {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            const img = new Image();
+            img.onload = function() {
+                // Сохраняем оригинальные размеры
+                const originalWidth = img.naturalWidth;
+                const originalHeight = img.naturalHeight;
+
+                // Получаем размеры контейнера
+                const container = document.getElementById('upload-container');
+                const maxWidth = container.clientWidth - 20;
+                const maxHeight = container.clientHeight - 20;
+
+                // Рассчитываем новые размеры с сохранением пропорций
+                let newWidth = originalWidth;
+                let newHeight = originalHeight;
+
+                const availableWidth = maxWidth * 0.95;
+                const availableHeight = maxHeight * 0.95;
+
+                if (newWidth > availableWidth) {
+                    const ratio = availableWidth / newWidth;
+                    newWidth = availableWidth;
+                    newHeight = newHeight * ratio;
+                }
+
+                if (newHeight > availableHeight) {
+                    const ratio = availableHeight / newHeight;
+                    newHeight = availableHeight;
+                    newWidth = newWidth * ratio;
+                }
+
+                // Устанавливаем рассчитанные размеры
+                sourceCanvas.width = newWidth;
+                sourceCanvas.height = newHeight;
+                resultCanvas.width = newWidth;
+                resultCanvas.height = newHeight;
+
+                // Рисуем изображение с масштабированием
+                sourceCtx.drawImage(img, 0, 0, newWidth, newHeight);
+                resultCtx.drawImage(img, 0, 0, newWidth, newHeight);
+
+                currentImage = img;
+                imageStatus.textContent = `Загружено: ${originalWidth}x${originalHeight} → ${Math.round(newWidth)}x${Math.round(newHeight)}`;
+                analyzeBtn.disabled = false;
+
+                // Загружаем HSV компоненты
+                loadHSVComponents();
+
+                enableDrawing();
+            };
+            img.src = result.image_data;
+        } else {
+            throw new Error(result.detail || 'Ошибка загрузки');
+        }
+    } catch (error) {
+        alert('Ошибка загрузки изображения: ' + error.message);
+        imageStatus.textContent = 'Ошибка загрузки';
+    }
+}
+
+async function loadHSVComponents() {
+    if (!currentImage) return;
+
+    try {
+        const components = ['hue', 'saturation', 'lightness'];
+
+        for (const component of components) {
+            const response = await fetch(`${API_BASE}/hsv-component/${component}`);
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                hsvComponents[component] = result.image_data;
+                updateHSVComponentDisplay(component, result.image_data);
+            }
+        }
+    } catch (error) {
+        console.error('Ошибка загрузки HSV компонентов:', error);
+    }
+}
+
+function updateHSVComponentDisplay(component, imageData) {
+    const card = document.getElementById(`${component}-card`);
+    const image = document.getElementById(`${component}-image`);
+
+    if (card && image) {
+        image.src = imageData;
+        card.classList.add('has-image');
+    }
+}
+
+function enableDrawing() {
+    sourceCanvas.addEventListener('mousedown', startDrawing);
+    sourceCanvas.addEventListener('mousemove', draw);
+    sourceCanvas.addEventListener('mouseup', stopDrawing);
+    sourceCanvas.addEventListener('dblclick', function(e) {
+        if (selectionVertices.length >= 3) {
+            finishSelection();
+        }
+    });
+    sourceCanvas.style.cursor = 'crosshair';
+}
+
+function disableDrawing() {
+    sourceCanvas.removeEventListener('mousedown', startDrawing);
+    sourceCanvas.removeEventListener('mousemove', draw);
+    sourceCanvas.removeEventListener('mouseup', stopDrawing);
+    sourceCanvas.style.cursor = 'default';
+}
+
+function startDrawing(e) {
+    isDrawing = true;
+    const rect = sourceCanvas.getBoundingClientRect();
+    const scaleX = sourceCanvas.width / rect.width;
+    const scaleY = sourceCanvas.height / rect.height;
+
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+
+    // Если это первая точка или мы далеко от первой точки, добавляем новую вершину
+    if (selectionVertices.length === 0 ||
+        distance(selectionVertices[0], [x, y]) > 15) {
+        selectionVertices.push([x, y]);
+    }
+
+    drawCurrentState();
+}
+
+function draw(e) {
+    if (!isDrawing) return;
+
+    const rect = sourceCanvas.getBoundingClientRect();
+    const scaleX = sourceCanvas.width / rect.width;
+    const scaleY = sourceCanvas.height / rect.height;
+
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+
+    // Сохраняем временную позицию для предпросмотра
+    tempVertex = [x, y];
+    drawCurrentState();
+}
+
+function stopDrawing(e) {
+    if (!isDrawing) return;
+
+    const rect = sourceCanvas.getBoundingClientRect();
+    const scaleX = sourceCanvas.width / rect.width;
+    const scaleY = sourceCanvas.height / rect.height;
+
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+
+    // Если близко к первой точке и есть хотя бы 2 другие точки - завершаем фигуру
+    if (selectionVertices.length >= 3 &&
+        distance(selectionVertices[0], [x, y]) < 15) {
+        finishSelection();
+    }
+
+    tempVertex = null;
+    isDrawing = false;
+}
+
+// Функция для расчета расстояния между точками
+function distance(point1, point2) {
+    return Math.sqrt(Math.pow(point1[0] - point2[0], 2) + Math.pow(point1[1] - point2[1], 2));
+}
+
+// Функция для отрисовки текущего состояния
+function drawCurrentState() {
+    sourceCtx.clearRect(0, 0, sourceCanvas.width, sourceCanvas.height);
+    sourceCtx.drawImage(currentImage, 0, 0, sourceCanvas.width, sourceCanvas.height);
+
+    // Рисуем все вершины
+    selectionVertices.forEach(vertex => drawVertex(vertex[0], vertex[1]));
+
+    // Рисуем линии между вершинами
+    if (selectionVertices.length > 1) {
+        drawSelectionPolygon();
+    }
+
+    // Рисуем временную линию к текущей позиции мыши
+    if (tempVertex && selectionVertices.length > 0) {
+        const lastVertex = selectionVertices[selectionVertices.length - 1];
+        drawTemporaryLine(lastVertex, tempVertex);
+
+        // Если близко к первой точке, показываем индикатор завершения
+        if (selectionVertices.length >= 3 && distance(selectionVertices[0], tempVertex) < 15) {
+            drawCompletionIndicator(selectionVertices[0]);
+        }
+    }
+}
+
+// Функция для рисования временной линии
+function drawTemporaryLine(from, to) {
+    sourceCtx.strokeStyle = 'rgba(255, 0, 0, 0.7)';
+    sourceCtx.lineWidth = 2;
+    sourceCtx.setLineDash([5, 5]);
+    sourceCtx.beginPath();
+    sourceCtx.moveTo(from[0], from[1]);
+    sourceCtx.lineTo(to[0], to[1]);
+    sourceCtx.stroke();
+    sourceCtx.setLineDash([]);
+}
+
+// Функция для рисования индикатора завершения
+function drawCompletionIndicator(point) {
+    sourceCtx.fillStyle = 'rgba(0, 255, 0, 0.5)';
+    sourceCtx.beginPath();
+    sourceCtx.arc(point[0], point[1], 8, 0, Math.PI * 2);
+    sourceCtx.fill();
+
+    sourceCtx.strokeStyle = 'green';
+    sourceCtx.lineWidth = 2;
+    sourceCtx.beginPath();
+    sourceCtx.arc(point[0], point[1], 8, 0, Math.PI * 2);
+    sourceCtx.stroke();
+}
+
+// Обновленная функция завершения выделения
+function finishSelection() {
+    if (selectionVertices.length >= 3) {
+        // Замыкаем полигон
+        selectionVertices.push(selectionVertices[0]);
+
+        // Перерисовываем с заполнением
+        drawCurrentState();
+
+        // Заливаем область
+        sourceCtx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+        sourceCtx.beginPath();
+        sourceCtx.moveTo(selectionVertices[0][0], selectionVertices[0][1]);
+
+        for (let i = 1; i < selectionVertices.length; i++) {
+            sourceCtx.lineTo(selectionVertices[i][0], selectionVertices[i][1]);
+        }
+
+        sourceCtx.closePath();
+        sourceCtx.fill();
+
+        analyzeBtn.disabled = false;
+        imageStatus.textContent += ' - Фигура завершена';
+
+        // Отключаем рисование после завершения фигуры
+        disableDrawing();
+    }
+}
+
+// Обновленная функция отрисовки вершин
+function drawVertex(x, y, isTemporary = false) {
+    const radius = isTemporary ? 3 : 4;
+    const color = isTemporary ? 'rgba(255, 0, 0, 0.5)' : 'red';
+
+    sourceCtx.fillStyle = color;
+    sourceCtx.beginPath();
+    sourceCtx.arc(x, y, radius, 0, Math.PI * 2);
+    sourceCtx.fill();
+
+    // Обводка для лучшей видимости
+    sourceCtx.strokeStyle = 'white';
+    sourceCtx.lineWidth = 1;
+    sourceCtx.stroke();
+}
+
+// Обновленная функция отрисовки полигона
+function drawSelectionPolygon() {
+    if (selectionVertices.length < 2) return;
+
+    sourceCtx.strokeStyle = 'red';
+    sourceCtx.lineWidth = 2;
+    sourceCtx.setLineDash([]);
+    sourceCtx.beginPath();
+    sourceCtx.moveTo(selectionVertices[0][0], selectionVertices[0][1]);
+
+    for (let i = 1; i < selectionVertices.length; i++) {
+        sourceCtx.lineTo(selectionVertices[i][0], selectionVertices[i][1]);
+    }
+
+    sourceCtx.stroke();
+}
+
+function addDoubleClickSupport() {
+    let clickCount = 0;
+    let clickTimer;
+
+    sourceCanvas.addEventListener('click', function(e) {
+        clickCount++;
+
+        if (clickCount === 1) {
+            clickTimer = setTimeout(function() {
+                clickCount = 0;
+            }, 300);
+        } else if (clickCount === 2) {
+            clearTimeout(clickTimer);
+            clickCount = 0;
+            // Завершаем фигуру при двойном клике
+            if (selectionVertices.length >= 3) {
+                finishSelection();
+            }
+        }
+    });
+}
+
+async function analyzeSelection() {
+    if (selectionVertices.length < 3) {
+        alert('Сначала выделите область для анализа');
+        return;
+    }
+
+    try {
+        analysisStatus.textContent = 'Анализ...';
+        analyzeBtn.disabled = true;
+
+        // ПОЛУЧАЕМ РАЗМЕРЫ ОРИГИНАЛЬНОГО ИЗОБРАЖЕНИЯ
+        const originalWidth = currentImage.naturalWidth;
+        const originalHeight = currentImage.naturalHeight;
+        const displayWidth = sourceCanvas.width;
+        const displayHeight = sourceCanvas.height;
+
+        // ВЫЧИСЛЯЕМ МАСШТАБ
+        const scaleX = originalWidth / displayWidth;
+        const scaleY = originalHeight / displayHeight;
+
+        // МАСШТАБИРУЕМ КООРДИНАТЫ В ОРИГИНАЛЬНЫЙ РАЗМЕР
+        const originalVertices = selectionVertices.map(vertex => [
+            Math.round(vertex[0] * scaleX),
+            Math.round(vertex[1] * scaleY)
+        ]);
+
+        console.log('Отправляемые координаты:', {
+            display: selectionVertices,
+            original: originalVertices,
+            scale: { scaleX, scaleY },
+            displaySize: { displayWidth, displayHeight },
+            originalSize: { originalWidth, originalHeight }
+        });
+
+        const params = {
+            hue_threshold: parseInt(document.getElementById('hue-threshold').value),
+            saturation_threshold: parseInt(document.getElementById('sat-threshold').value),
+            lightness_threshold: parseInt(document.getElementById('light-threshold').value),
+            similarity_threshold: parseFloat(document.getElementById('sim-threshold').value) / 100,
+            adaptive_threshold: document.getElementById('adaptive-threshold').checked,
+            edge_preservation: document.getElementById('edge-preservation').checked,
+            fill_gaps: document.getElementById('fill-gaps').checked,
+            fast_mode: true // Добавляем быстрый режим
+        };
+
+        const requestData = {
+            vertices: originalVertices, // Отправляем масштабированные координаты
+            params: params
+        };
+
+        const response = await fetch(`${API_BASE}/analyze-selection`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestData)
+        });
+
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            currentRegions = result.regions;
+
+            // МАСШТАБИРУЕМ КООРДИНАТЫ РЕГИОНОВ ОБРАТНО ДЛЯ ОТОБРАЖЕНИЯ
+            const scaledRegions = scaleRegionsForDisplay(result.regions, scaleX, scaleY);
+            displayRegions(scaledRegions);
+            updateResultsPanel(result.regions);
+
+            analysisStatus.textContent = `Найдено регионов: ${result.regions_count}`;
+            positiveBtn.disabled = false;
+            negativeBtn.disabled = false;
+        } else {
+            throw new Error(result.detail || 'Ошибка анализа');
+        }
+    } catch (error) {
+        alert('Ошибка анализа: ' + error.message);
+        analysisStatus.textContent = 'Ошибка анализа';
+    } finally {
+        analyzeBtn.disabled = false;
+    }
+}
+
+// Функция для масштабирования регионов обратно для отображения
+function scaleRegionsForDisplay(regions, scaleX, scaleY) {
+    return regions.map(region => {
+        if (!region.contour || !Array.isArray(region.contour)) {
+            console.warn('Некорректный контур региона:', region);
+            return region;
+        }
+
+        const scaledContour = region.contour.map(point => {
+            if (!point || !Array.isArray(point) || point.length === 0) {
+                console.warn('Некорректная точка контура:', point);
+                return [[0, 0]];
+            }
+
+            const pointData = point[0];
+            if (!Array.isArray(pointData) || pointData.length < 2) {
+                console.warn('Некорректные координаты точки:', pointData);
+                return [[0, 0]];
+            }
+
+            return [[
+                Math.round(pointData[0] / scaleX),
+                Math.round(pointData[1] / scaleY)
+            ]];
+        });
+
+        return {
+            ...region,
+            contour: scaledContour
+        };
+    });
+}
+
+function displayRegions(regions) {
+    resultCtx.clearRect(0, 0, resultCanvas.width, resultCanvas.height);
+    resultCtx.drawImage(currentImage, 0, 0, resultCanvas.width, resultCanvas.height);
+
+    if (!regions || !Array.isArray(regions)) {
+        console.error('Некорректные данные регионов:', regions);
+        return;
+    }
+
+    regions.forEach((region, index) => {
+        if (!region.contour || !Array.isArray(region.contour) || region.contour.length === 0) {
+            console.warn('Пропуск региона с некорректным контуром:', region);
+            return;
+        }
+
+        const contour = region.contour;
+        const isFilled = region.is_filled || false;
+
+        resultCtx.strokeStyle = isFilled ? 'blue' : 'green';
+        resultCtx.lineWidth = isFilled ? 1 : 2;
+        resultCtx.setLineDash(isFilled ? [5, 5] : []);
+
+        resultCtx.beginPath();
+
+        // Проверяем первую точку
+        const firstPoint = contour[0];
+        if (!firstPoint || !Array.isArray(firstPoint) || firstPoint.length === 0) {
+            console.warn('Некорректная первая точка контура:', firstPoint);
+            return;
+        }
+
+        const firstPointData = firstPoint[0];
+        if (!Array.isArray(firstPointData) || firstPointData.length < 2) {
+            console.warn('Некорректные координаты первой точки:', firstPointData);
+            return;
+        }
+
+        resultCtx.moveTo(firstPointData[0], firstPointData[1]);
+
+        for (let i = 1; i < contour.length; i++) {
+            const point = contour[i];
+            if (!point || !Array.isArray(point) || point.length === 0) {
+                console.warn('Пропуск некорректной точки:', point);
+                continue;
+            }
+
+            const pointData = point[0];
+            if (!Array.isArray(pointData) || pointData.length < 2) {
+                console.warn('Пропуск точки с некорректными координатами:', pointData);
+                continue;
+            }
+
+            resultCtx.lineTo(pointData[0], pointData[1]);
+        }
+
+        resultCtx.closePath();
+        resultCtx.stroke();
+
+        const alpha = isFilled ? 0.2 : (0.3 + 0.3 * (region.quality_score || 0.5));
+        resultCtx.fillStyle = isFilled ? 'rgba(0, 0, 255, 0.1)' : `rgba(0, 255, 0, ${alpha})`;
+        resultCtx.fill();
+
+        const centroid = calculateCentroid(contour);
+        if (centroid) {
+            resultCtx.fillStyle = 'white';
+            resultCtx.font = 'bold 12px Arial';
+            resultCtx.fillText((index + 1).toString(), centroid[0] - 5, centroid[1] + 5);
+        }
+    });
+}
+
+function calculateCentroid(contour) {
+    if (!contour || !Array.isArray(contour) || contour.length === 0) {
+        return null;
+    }
+
+    let sumX = 0, sumY = 0;
+    let validPoints = 0;
+
+    contour.forEach(point => {
+        if (!point || !Array.isArray(point) || point.length === 0) {
+            return;
+        }
+
+        const pointData = point[0];
+        if (Array.isArray(pointData) && pointData.length >= 2) {
+            sumX += pointData[0];
+            sumY += pointData[1];
+            validPoints++;
+        }
+    });
+
+    if (validPoints === 0) {
+        return null;
+    }
+
+    return [sumX / validPoints, sumY / validPoints];
+}
+
+function updateResultsPanel(regions) {
+    if (!regions || !Array.isArray(regions)) {
+        regionsCount.textContent = '0';
+        avgQuality.textContent = '0.0';
+        totalSize.textContent = '0';
+        regionList.innerHTML = '';
+        return;
+    }
+
+    regionsCount.textContent = regions.length;
+
+    const totalQuality = regions.reduce((sum, region) => sum + (region.quality_score || 0), 0);
+    avgQuality.textContent = regions.length > 0 ? (totalQuality / regions.length).toFixed(2) : '0.0';
+
+    const totalRegionSize = regions.reduce((sum, region) => sum + (region.size || 0), 0);
+    totalSize.textContent = totalRegionSize.toLocaleString();
+
+    regionList.innerHTML = '';
+    regions.forEach((region, index) => {
+        const regionItem = document.createElement('div');
+        regionItem.className = 'region-item';
+        regionItem.innerHTML = `
+            <strong>Регион ${index + 1}</strong>
+            <div>Качество: ${(region.quality_score || 0).toFixed(2)}</div>
+            <div>Размер: ${region.size || 0} пикселей</div>
+            <div>Компактность: ${(region.compactness || 0).toFixed(2)}</div>
+        `;
+        regionList.appendChild(regionItem);
+    });
+}
+
+async function addPositiveFeedback() {
+    await sendFeedback(true);
+}
+
+async function addNegativeFeedback() {
+    await sendFeedback(false);
+}
+
+async function sendFeedback(isPositive) {
+    if (!currentRegions || currentRegions.length === 0) {
+        alert('Нет регионов для обратной связи');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/feedback`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                regions: currentRegions,
+                is_positive: isPositive
+            })
+        });
+
+        const result = await response.json();
+        alert(result.message);
+    } catch (error) {
+        alert('Ошибка отправки обратной связи: ' + error.message);
+    }
+}
+
+async function showHSVAnalysis() {
+    try {
+        const response = await fetch(`${API_BASE}/hsv-analysis`);
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            const analysis = result.analysis;
+            const modal = document.getElementById('hsv-modal');
+            const content = document.getElementById('hsv-visualization');
+            const title = document.getElementById('modal-title');
+
+            title.textContent = 'Анализ HSV характеристик';
+            content.innerHTML = `
+                <h3>Статистика изображения</h3>
+                <div style="text-align: left; margin: 20px 0;">
+                    <div><strong>Тон (Hue):</strong> μ=${analysis.hue.mean.toFixed(1)}°, σ=${analysis.hue.std.toFixed(1)}°</div>
+                    <div><strong>Насыщенность:</strong> μ=${analysis.saturation.mean.toFixed(1)}%, σ=${analysis.saturation.std.toFixed(1)}%</div>
+                    <div><strong>Яркость:</strong> μ=${analysis.lightness.mean.toFixed(1)}%, σ=${analysis.lightness.std.toFixed(1)}%</div>
+                    <div><strong>Контраст яркости:</strong> ${analysis.lightness.contrast.toFixed(1)}%</div>
+                </div>
+                <p>Для детальной визуализации выберите конкретную компоненту из панели ниже.</p>
+            `;
+
+            modal.style.display = 'block';
+        }
+    } catch (error) {
+        alert('Ошибка получения анализа HSV: ' + error.message);
+    }
+}
+
+async function showHSVComponent(component) {
+    try {
+        const response = await fetch(`${API_BASE}/hsv-component/${component}`);
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            const modal = document.getElementById('hsv-modal');
+            const content = document.getElementById('hsv-visualization');
+            const title = document.getElementById('modal-title');
+
+            const componentNames = {
+                'hue': 'Тон (Hue)',
+                'saturation': 'Насыщенность (Saturation)',
+                'lightness': 'Яркость (Lightness)'
+            };
+
+            title.textContent = `Визуализация: ${componentNames[component]}`;
+            content.innerHTML = `
+                <img src="${result.image_data}" alt="${component}" class="hsv-image">
+                <div style="margin-top: 15px;">
+                    <strong>Компонента:</strong> ${componentNames[component]}
+                </div>
+            `;
+
+            modal.style.display = 'block';
+        }
+    } catch (error) {
+        alert('Ошибка загрузки компоненты: ' + error.message);
+    }
+}
+
+async function showSettings() {
+    try {
+        const response = await fetch(`${API_BASE}/settings`);
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            const modal = document.getElementById('settings-modal');
+            const content = document.getElementById('settings-content');
+
+            let settingsHtml = '<h3>Текущие настройки</h3><div style="text-align: left; margin: 20px 0;">';
+
+            for (const [key, value] of Object.entries(result.settings)) {
+                settingsHtml += `<div><strong>${key}:</strong> ${value}</div>`;
+            }
+
+            settingsHtml += '</div><p>Настройки можно изменить в панели параметров анализа.</p>';
+            content.innerHTML = settingsHtml;
+            modal.style.display = 'block';
+        }
+    } catch (error) {
+        alert('Ошибка загрузки настроек: ' + error.message);
+    }
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+}
+
+function clearSelection() {
+    selectionVertices = [];
+    tempVertex = null;
+    sourceCtx.clearRect(0, 0, sourceCanvas.width, sourceCanvas.height);
+    sourceCtx.drawImage(currentImage, 0, 0, sourceCanvas.width, sourceCanvas.height);
+    analyzeBtn.disabled = true;
+    enableDrawing(); // Включаем рисование заново
+}
+
+function clearAll() {
+    clearSelection();
+    resultCtx.clearRect(0, 0, resultCanvas.width, resultCanvas.height);
+    resultCtx.drawImage(currentImage, 0, 0, resultCanvas.width, resultCanvas.height);
+    currentRegions = [];
+    updateResultsPanel([]);
+    analysisStatus.textContent = 'Ожидание данных';
+    positiveBtn.disabled = true;
+    negativeBtn.disabled = true;
+
+    // Очищаем HSV компоненты
+    clearHSVComponents();
+}
+
+function clearHSVComponents() {
+    hsvComponents = {
+        hue: null,
+        saturation: null,
+        lightness: null
+    };
+
+    const cards = [hueCard, saturationCard, lightnessCard];
+    cards.forEach(card => {
+        if (card) card.classList.remove('has-image');
+    });
+
+    const images = [hueImage, saturationImage, lightnessImage];
+    images.forEach(image => {
+        if (image) image.src = '';
+    });
+}
+
+function undoSelection() {
+    if (selectionVertices.length > 0) {
+        selectionVertices.pop();
+        tempVertex = null;
+        drawCurrentState();
+        analyzeBtn.disabled = selectionVertices.length < 3;
+    }
+}
+
+// Инициализация
+document.addEventListener('DOMContentLoaded', function() {
+    const elements = document.querySelectorAll('.fade-in');
+    elements.forEach((el, index) => {
+        el.style.animationDelay = `${index * 0.08}s`;
+    });
+
+    checkServerConnection();
+    addDoubleClickSupport(); // Добавляем поддержку двойного клика
+});
+
+async function checkServerConnection() {
+    try {
+        const response = await fetch(`${API_BASE}/health`);
+        const result = await response.json();
+        console.log('Сервер доступен:', result);
+    } catch (error) {
+        console.error('Сервер недоступен:', error);
+        alert('Сервер анализа недоступен. Убедитесь, что сервер запущен на localhost:8000');
+    }
+}
+
+// Закрытие модальных окон при клике вне их
+window.onclick = function(event) {
+    const modals = document.getElementsByClassName('modal');
+    for (let modal of modals) {
+        if (event.target == modal) {
+            modal.style.display = 'none';
+        }
+    }
+}
+</script>
+</body>
+</html>

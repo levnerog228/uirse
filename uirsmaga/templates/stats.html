@@ -1,0 +1,55 @@
+{% extends "administration.html" %}
+
+{% block content %}
+<div class="stats-section">
+    <h3 class="section-title">Загруженность системы</h3>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h4>Использование CPU</h4>
+            <div class="progress-bar">
+                <div class="progress" style="width: {{ cpu_usage }}%"></div>
+                <span>{{ cpu_usage }}%</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <h4>Использование памяти</h4>
+            <div class="progress-bar">
+                <div class="progress" style="width: {{ memory_usage }}%"></div>
+                <span>{{ memory_usage }}%</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <h4>Использование диска</h4>
+            <div class="progress-bar">
+                <div class="progress" style="width: {{ disk_usage }}%"></div>
+                <span>{{ disk_usage }}%</span>
+            </div>
+        </div>
+    </div>
+
+    <h3 class="section-title" style="margin-top: 30px;">Топ процессов</h3>
+    <table class="processes-table">
+        <thead>
+            <tr>
+                <th>PID</th>
+                <th>Имя</th>
+                <th>CPU %</th>
+                <th>Память %</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for proc in processes %}
+            <tr>
+                <td>{{ proc.pid }}</td>
+                <td>{{ proc.name }}</td>
+                <td>{{ proc.cpu|round(1) }}</td>
+                <td>{{ proc.memory|round(1) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

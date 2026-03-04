@@ -1,0 +1,6214 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Поиск однородностей</title>
+<style>
+    :root {
+    --primary: #3a86ff;
+    --primary-dark: #2667cc;
+    --primary-light: #e6f0ff;
+    --secondary: #8338ec;
+    --success: #38b000;
+    --warning: #ff9e00;
+    --danger: #ff006e;
+    --background: #f8fafc;
+    --surface: #ffffff;
+    --surface-dark: #f1f5f9;
+    --text: #1e293b;
+    --text-light: #64748b;
+    --text-lighter: #94a3b8;
+    --border: #e2e8f0;
+    --border-light: #f1f5f9;
+    --shadow: rgba(58, 134, 255, 0.08);
+    --shadow-hover: rgba(58, 134, 255, 0.12);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --aspect-ratio: 16/9;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--background);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.app-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding: 20px;
+    gap: 20px;
+    max-width: 1800px;
+    margin: 0 auto;
+}
+
+/* Header */
+.header {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 20px 30px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 12px var(--shadow);
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo-icon {
+    width: 46px;
+    height: 46px;
+    background: var(--primary-light);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.logo-icon img {
+    width: 150%;
+    height: 150%;
+    object-fit: contain;
+    padding: 5px;
+}
+
+.logo-text {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.header-btn {
+    padding: 10px 20px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.header-btn:hover {
+    background: var(--surface-dark);
+    border-color: var(--primary);
+    transform: translateY(-1px);
+}
+
+.header-btn.primary {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.header-btn.primary:hover {
+    background: var(--primary-dark);
+}
+
+/* Guest Notice */
+.guest-notice {
+    background: linear-gradient(135deg, var(--warning) 0%, #ffb700 100%);
+    color: var(--text);
+    padding: 12px 20px;
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 12px rgba(255, 158, 0, 0.2);
+}
+
+.guest-notice-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+}
+
+.guest-notice-content i {
+    font-size: 18px;
+    color: var(--text);
+}
+
+.guest-notice-content a {
+    color: var(--text);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.guest-notice-close {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 16px;
+    opacity: 0.7;
+    transition: var(--transition);
+}
+
+.guest-notice-close:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* Main Content */
+.content-area {
+    display: grid;
+    grid-template-columns: 0.7fr 1.3fr;
+    gap: 20px;
+    flex: 1;
+}
+
+.panel {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    box-shadow: 0 4px 12px var(--shadow);
+    display: flex;
+    flex-direction: column;
+}
+
+.panel-header {
+    padding: 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-dark);
+}
+
+.panel-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.panel-title::before {
+    content: '';
+    width: 4px;
+    height: 20px;
+    background: var(--primary);
+    border-radius: 2px;
+}
+
+.panel-body {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    flex: 1;
+}
+
+/* Upload Tabs */
+.upload-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 20px;
+}
+
+.tab-btn {
+    padding: 12px 24px;
+    background: none;
+    border: none;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-light);
+    cursor: pointer;
+    transition: var(--transition);
+    border-bottom: 3px solid transparent;
+}
+
+.tab-btn:hover {
+    color: var(--text);
+}
+
+.tab-btn.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+}
+
+/* Upload Zones */
+.upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition);
+    background: var(--surface-dark);
+    margin-bottom: 20px;
+}
+
+.upload-zone:hover {
+    border-color: var(--primary);
+    background: var(--primary-light);
+}
+
+.upload-zone.drag-over {
+    border-color: var(--primary);
+    background: var(--primary-light);
+    transform: scale(1.02);
+}
+
+.upload-icon {
+    font-size: 48px;
+    color: var(--primary);
+    margin-bottom: 16px;
+}
+
+.upload-text {
+    font-size: 16px;
+    color: var(--text);
+    margin-bottom: 8px;
+}
+
+.upload-subtext {
+    font-size: 14px;
+    color: var(--text-light);
+    margin-bottom: 20px;
+}
+
+.upload-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.upload-btn:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+}
+
+.upload-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.upload-option:hover {
+    border-color: var(--primary);
+    background: var(--surface-dark);
+}
+
+.upload-option-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--primary-light);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-size: 20px;
+}
+
+.upload-option-content {
+    flex: 1;
+}
+
+.upload-option-title {
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+}
+
+.upload-option-desc {
+    font-size: 12px;
+    color: var(--text-light);
+}
+
+/* Стили для превью загруженного изображения */
+.uploaded-preview {
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    background: var(--surface);
+    margin-bottom: 20px;
+    animation: fadeIn 0.3s ease;
+}
+
+.uploaded-preview:hover {
+    border-color: var(--primary);
+}
+
+.preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.preview-title {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.preview-title i {
+    font-size: 18px;
+    color: var(--primary);
+}
+
+.preview-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.preview-btn {
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 12px;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.preview-btn:hover {
+    background: var(--surface-dark);
+    border-color: var(--primary);
+}
+
+.preview-btn:first-of-type {
+    color: var(--primary);
+    border-color: var(--primary-light);
+}
+
+.preview-btn:last-of-type {
+    color: var(--danger);
+    border-color: var(--danger);
+}
+
+.preview-btn:last-of-type:hover {
+    background: var(--danger);
+    color: white;
+    border-color: var(--danger);
+}
+
+.preview-image-container {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.preview-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* Изменено с cover на contain */
+    display: block;
+}
+
+.preview-info {
+    font-size: 13px;
+    color: var(--text-light);
+    text-align: center;
+    padding: 5px;
+}
+
+/* Image List */
+.image-list {
+    max-height: 250px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+}
+
+.image-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.image-item:hover {
+    background: var(--surface-dark);
+}
+
+.image-item.active {
+    background: var(--primary-light);
+    border-left: 4px solid var(--primary);
+    border-top: none;
+    border-right: none;
+    border-bottom: none;
+}
+
+.image-thumb {
+    width: 50px;
+    height: 28px;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+}
+
+.image-name {
+    font-size: 14px;
+    color: var(--text);
+    flex: 1;
+}
+
+/* Улучшенные стили для canvas контейнера */
+.canvas-container {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: var(--surface-dark);
+    background-image:
+        linear-gradient(45deg, var(--border) 25%, transparent 25%),
+        linear-gradient(-45deg, var(--border) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, var(--border) 75%),
+        linear-gradient(-45deg, transparent 75%, var(--border) 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+    border-radius: var(--radius);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--border);
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+    min-height: 400px;
+    max-height: 800px;
+    padding: 0;
+    cursor: default;
+    transition: border-color 0.2s ease;
+}
+
+.canvas-container:active {
+    cursor: grabbing;
+}
+
+.canvas-container.dragging {
+    cursor: grabbing;
+}
+
+.canvas-container::after {
+    display: none;
+}
+
+#main-canvas {
+    width: 100%;
+    height: 100%;
+    cursor: crosshair;
+    display: block;
+    object-fit: contain; /* Важно: contain вместо cover */
+    background: transparent;
+}
+
+#main-canvas.point-positive {
+    cursor: crosshair;
+}
+
+#main-canvas.point-negative {
+    cursor: crosshair;
+}
+
+#main-canvas:focus,
+#main-canvas:active {
+    outline: none;
+}
+
+/* Улучшенные контролы */
+.canvas-controls {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 4px; /* Уменьшенный gap */
+    z-index: 20;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 6px 10px; /* Уменьшенные отступы */
+    border-radius: 40px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    white-space: nowrap;
+    width: fit-content;
+}
+
+.canvas-controls .control-btn {
+    width: 32px; /* Уменьшенная ширина */
+    height: 32px; /* Уменьшенная высота */
+    flex-shrink: 0;
+    border: none;
+    background: #f0f0f0;
+    color: #333;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px; /* Уменьшенный шрифт */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.canvas-controls .control-btn:hover {
+    background: var(--primary, #007bff);
+    color: white;
+}
+
+.canvas-controls .control-btn.active {
+    background: var(--primary, #007bff);
+    color: white;
+    box-shadow: 0 0 0 2px rgba(0,123,255,0.3);
+}
+
+.canvas-controls .tool-group,
+.canvas-controls .zoom-group,
+.canvas-controls .action-group {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 2px; /* Минимальный gap между кнопками в группе */
+    flex-shrink: 0;
+}
+
+/* Разделители между группами */
+.canvas-controls .tool-group {
+    border-right: 1px solid rgba(0,0,0,0.1);
+    padding-right: 4px;
+    margin-right: 2px;
+}
+
+.canvas-controls .zoom-group {
+    border-right: 1px solid rgba(0,0,0,0.1);
+    padding-right: 4px;
+    margin-right: 2px;
+}
+
+.control-btn {
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    padding: 10px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    position: relative;
+    overflow: hidden;
+}
+
+.control-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: var(--primary);
+    transform: translate(-50%, -50%);
+    transition: width 0.3s ease, height 0.3s ease;
+    z-index: -1;
+}
+
+.control-btn:hover {
+    color: white;
+    transform: translateY(-2px);
+}
+
+.control-btn:hover::before {
+    width: 100%;
+    height: 100%;
+}
+
+.control-btn:active {
+    transform: translateY(0);
+}
+
+.control-btn.active {
+    background: var(--primary);
+    color: white;
+}
+
+.control-btn i {
+    position: relative;
+    z-index: 1;
+}
+
+/* Индикатор масштаба */
+.zoom-indicator {
+    position: absolute;
+    bottom: 80px;
+    right: 15px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 30px;
+    font-size: 12px;
+    font-weight: 500;
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    z-index: 15;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.zoom-indicator i {
+    font-size: 10px;
+    color: var(--primary);
+}
+
+/* Стили для выделения области маски */
+.mask-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.mask-region {
+    position: absolute;
+    border: 2px solid var(--primary);
+    background: rgba(58, 134, 255, 0.2);
+    pointer-events: none;
+    transition: all 0.1s ease;
+    border-radius: 8px;
+}
+
+/* Переключатель режима заполнения */
+.fill-mode-toggle {
+    position: absolute;
+    bottom: 70px;
+    right: 15px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 30px;
+    padding: 5px;
+    display: flex;
+    gap: 5px;
+    z-index: 10;
+    backdrop-filter: blur(5px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+.fill-mode-btn {
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.fill-mode-btn:hover {
+    background: var(--surface-dark);
+}
+
+.fill-mode-btn.active {
+    background: var(--primary);
+    color: white;
+}
+
+.fill-mode-btn i {
+    font-size: 12px;
+}
+
+/* Улучшенный переключатель точек */
+.point-type-selector {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.98);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 50px;
+    padding: 6px;
+    display: flex;
+    gap: 6px;
+    z-index: 20;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    backdrop-filter: blur(10px);
+    width: auto;
+    min-width: 300px;
+}
+
+.point-btn {
+    padding: 12px 28px;
+    border-radius: 40px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    white-space: nowrap;
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+.point-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 40px;
+    transform: translate(-50%, -50%);
+    transition: width 0.3s ease, height 0.3s ease;
+    z-index: -1;
+}
+
+.point-btn:hover {
+    transform: translateY(-1px);
+}
+
+.point-btn.positive {
+    color: var(--success);
+}
+
+.point-btn.positive:hover {
+    background: rgba(56, 176, 0, 0.1);
+}
+
+.point-btn.positive.active {
+    background: var(--success);
+    color: white;
+    box-shadow: 0 4px 15px rgba(56, 176, 0, 0.4);
+}
+
+.point-btn.negative {
+    color: var(--danger);
+}
+
+.point-btn.negative:hover {
+    background: rgba(255, 0, 110, 0.1);
+}
+
+.point-btn.negative.active {
+    background: var(--danger);
+    color: white;
+    box-shadow: 0 4px 15px rgba(255, 0, 110, 0.4);
+}
+
+/* Сообщение об отсутствии изображения */
+.no-image-message {
+    text-align: center;
+    color: var(--text-light);
+    font-size: 16px;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+}
+
+.no-image-message i {
+    font-size: 64px;
+    margin-bottom: 20px;
+    color: var(--text-lighter);
+    opacity: 0.5;
+}
+
+.no-image-message div:first-of-type {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 10px;
+}
+
+/* Улучшенная информация об изображении */
+#image-info {
+    margin-top: 15px;
+    padding: 15px;
+    background: linear-gradient(135deg, var(--surface), var(--surface-dark));
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 12px var(--shadow);
+}
+
+#image-info > div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+#image-name-display {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 5px 10px;
+    background: var(--surface);
+    border-radius: 30px;
+    border: 1px solid var(--border);
+}
+
+#image-dimensions {
+    font-size: 13px;
+    color: var(--text-light);
+    background: var(--surface);
+    padding: 5px 15px;
+    border-radius: 30px;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+#image-dimensions::before {
+    content: '\f07e';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    font-size: 12px;
+    color: var(--primary);
+}
+
+/* Улучшенная область площади */
+#area-info {
+    margin-top: 15px;
+    animation: slideDown 0.3s ease;
+}
+
+#area-info > div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: linear-gradient(135deg, var(--primary-light), var(--surface));
+    border-radius: var(--radius);
+    border: 1px solid var(--primary);
+    box-shadow: 0 4px 12px rgba(58, 134, 255, 0.15);
+}
+
+#area-info .area-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#area-info .area-label i {
+    font-size: 20px;
+    color: var(--primary);
+    background: white;
+    padding: 8px;
+    border-radius: 50%;
+    box-shadow: 0 4px 8px rgba(58, 134, 255, 0.2);
+}
+
+#area-info .area-label div:first-of-type {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+#area-info .area-label div:last-of-type {
+    font-size: 12px;
+    color: var(--text-light);
+}
+
+#area-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--primary);
+    text-shadow: 0 2px 4px rgba(58, 134, 255, 0.2);
+    transition: all 0.3s ease;
+}
+
+#area-value.updated {
+    transform: scale(1.1);
+    color: var(--success);
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Points List */
+.points-list {
+    max-height: 180px;
+    overflow-y: auto;
+}
+
+.point-item {
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface);
+}
+
+.point-marker {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid;
+}
+
+.point-marker.positive {
+    background: var(--success);
+    border-color: var(--success);
+}
+
+.point-marker.negative {
+    background: var(--danger);
+    border-color: var(--danger);
+}
+
+.point-coords {
+    font-size: 12px;
+    color: var(--text-light);
+    flex: 1;
+}
+
+.point-remove {
+    color: var(--text-lighter);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+}
+
+.point-remove:hover {
+    background: var(--surface-dark);
+    color: var(--danger);
+}
+
+/* Progress */
+.progress-container {
+    margin-top: 15px;
+}
+
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.progress-bar {
+    height: 6px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    border-radius: 4px;
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+/* Actions */
+.actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.action-btn {
+    padding: 12px 8px;
+    border-radius: var(--radius-sm);
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.action-btn i {
+    font-size: 14px;
+}
+
+.action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.action-btn.primary {
+    background: var(--primary);
+    color: white;
+}
+
+.action-btn.primary:hover:not(:disabled) {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(58, 134, 255, 0.3);
+}
+
+.action-btn.secondary {
+    background: var(--surface-dark);
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+.action-btn.secondary:hover:not(:disabled) {
+    background: var(--surface);
+    transform: translateY(-2px);
+    border-color: var(--primary);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.action-btn.success {
+    background: var(--success);
+    color: white;
+}
+
+.action-btn.success:hover:not(:disabled) {
+    background: #2d9500;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(56, 176, 0, 0.3);
+}
+
+/* Results Panel - обновленные стили */
+.results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+    max-height: 500px;
+    overflow-y: auto;
+    padding: 15px;
+    background: var(--surface-dark);
+    border-radius: var(--radius-sm);
+}
+
+.result-item {
+    background: var(--surface);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    transition: var(--transition);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.result-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px var(--shadow-hover);
+    border-color: var(--primary);
+}
+
+.result-thumb {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: contain; /* Изменено с cover на contain */
+    border-bottom: 1px solid var(--border);
+    transition: transform 0.3s ease;
+    background: var(--surface-dark); /* Добавлен фон для областей за пределами изображения */
+}
+
+.result-item:hover .result-thumb {
+    transform: scale(1.02);
+}
+
+.result-name {
+    padding: 10px 10px 6px 10px;
+    font-size: 13px;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 500;
+}
+
+.result-area-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px 10px 10px;
+    font-size: 12px;
+    color: var(--text-light);
+    border-top: none;
+    background: transparent;
+    cursor: help;
+}
+
+.result-area-badge i {
+    font-size: 12px;
+    color: var(--primary);
+    opacity: 0.8;
+}
+
+.result-area-badge .area-value {
+    font-weight: 700;
+    color: var(--primary);
+    font-size: 14px;
+}
+
+.result-area-badge .area-unit {
+    font-size: 11px;
+    color: var(--text-lighter);
+    margin-left: -2px;
+}
+
+/* Стили для панели результатов с кнопками справа */
+#results-panel .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+}
+
+#results-panel .panel-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+#results-panel .panel-title::before {
+    content: '';
+    width: 4px;
+    height: 20px;
+    background: var(--primary);
+    border-radius: 2px;
+    margin-right: 10px;
+}
+
+#results-panel .panel-body {
+    padding: 20px;
+}
+
+/* Контейнер для кнопок в правой части заголовка */
+#results-panel .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Стили для кнопок в заголовке панели результатов */
+#results-panel .panel-header .header-actions {
+    display: flex;
+    gap: 10px;
+    margin-left: auto;
+}
+
+#results-panel .panel-header .action-btn {
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+#results-panel .panel-header .action-btn:hover {
+    background: var(--surface-dark);
+    border-color: var(--primary);
+    transform: translateY(-1px);
+}
+
+#results-panel .panel-header .action-btn.primary {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+#results-panel .panel-header .action-btn.primary:hover {
+    background: var(--primary-dark);
+}
+
+/* Убираем старые кнопки из panel-body, если они там были */
+#results-panel .panel-body .actions {
+    display: none;
+}
+
+/* History Section */
+.history-section {
+    margin-top: 20px;
+    width: 100%;
+}
+
+.history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+}
+
+.history-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.history-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.history-clear-btn {
+    padding: 6px 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-light);
+    font-size: 12px;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.history-clear-btn:hover {
+    background: var(--surface-dark);
+    color: var(--danger);
+    border-color: var(--danger);
+}
+
+.history-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 12px;
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 10px;
+    background: var(--surface-dark);
+    border-radius: var(--radius-sm);
+    min-height: 120px;
+}
+
+.history-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    color: var(--text-light);
+    text-align: center;
+    grid-column: 1 / -1;
+}
+
+.history-empty i {
+    font-size: 32px;
+    margin-bottom: 12px;
+    color: var(--text-lighter);
+}
+
+.history-item {
+    background: var(--surface);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    transition: var(--transition);
+    cursor: pointer;
+    position: relative;
+}
+
+.history-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--shadow);
+    border-color: var(--primary);
+}
+
+.history-thumb {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: contain; /* Изменено с cover на contain */
+    border-bottom: 1px solid var(--border-light);
+    background: var(--surface-dark);
+}
+
+.history-info {
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.history-name {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.history-date {
+    font-size: 10px;
+    color: var(--text-light);
+}
+
+.history-remove {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 20px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--danger);
+    font-size: 10px;
+    cursor: pointer;
+    opacity: 0;
+    transition: var(--transition);
+}
+
+.history-item:hover .history-remove {
+    opacity: 1;
+}
+
+.history-remove:hover {
+    background: var(--danger);
+    color: white;
+}
+
+/* Footer */
+.footer {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-light);
+    font-size: 14px;
+    border-top: 1px solid var(--border);
+    margin-top: 20px;
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(5px);
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 30px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    animation: modalFadeIn 0.3s ease;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.modal-title {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.modal-message {
+    margin-bottom: 20px;
+    color: var(--text-light);
+    line-height: 1.6;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 30px;
+}
+
+/* Login Form */
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+}
+
+.form-input {
+    padding: 12px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-family: inherit;
+    transition: var(--transition);
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+.form-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    font-size: 14px;
+    color: var(--text-light);
+}
+
+.form-link {
+    color: var(--primary);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.form-link:hover {
+    text-decoration: underline;
+}
+
+/* Info Content */
+.info-content {
+    line-height: 1.8;
+}
+
+.info-section {
+    margin-bottom: 20px;
+}
+
+.info-section h3 {
+    font-size: 16px;
+    margin-bottom: 8px;
+    color: var(--text);
+}
+
+.info-section ul {
+    padding-left: 20px;
+    color: var(--text-light);
+}
+
+.info-section li {
+    margin-bottom: 4px;
+}
+
+/* Help Content */
+.help-content {
+    line-height: 1.8;
+}
+
+.help-step {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: var(--surface-dark);
+    border-radius: var(--radius-sm);
+}
+
+.help-step h3 {
+    font-size: 16px;
+    margin-bottom: 8px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.step-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: var(--primary);
+    color: white;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Toast уведомления */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 350px;
+}
+
+.toast {
+    background: white;
+    border-radius: 8px;
+    padding: 15px 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: slideIn 0.3s ease;
+    border-left: 4px solid;
+    transition: all 0.3s ease;
+}
+
+.toast.success {
+    border-left-color: #38b000;
+}
+
+.toast.success .toast-icon {
+    color: #38b000;
+}
+
+.toast.error {
+    border-left-color: #ff006e;
+}
+
+.toast.error .toast-icon {
+    color: #ff006e;
+}
+
+.toast.info {
+    border-left-color: #3b82f6;
+}
+
+.toast.info .toast-icon {
+    color: #3b82f6;
+}
+
+.toast.warning {
+    border-left-color: #f59e0b;
+}
+
+.toast.warning .toast-icon {
+    color: #f59e0b;
+}
+
+.toast-icon {
+    font-size: 20px;
+}
+
+.toast-content {
+    flex: 1;
+}
+
+.toast-title {
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 4px;
+    color: #1e293b;
+}
+
+.toast-message {
+    font-size: 13px;
+    color: #64748b;
+}
+
+.toast-close {
+    cursor: pointer;
+    color: #94a3b8;
+    font-size: 14px;
+    padding: 4px;
+    transition: color 0.2s;
+}
+
+.toast-close:hover {
+    color: #475569;
+}
+
+.toast.fade-out {
+    opacity: 0;
+    transform: translateX(100%);
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease;
+}
+
+/* Модальное окно для просмотра изображений */
+.image-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+}
+
+.image-modal.active {
+    display: flex;
+    animation: modalFadeIn 0.3s ease;
+}
+
+.image-modal-content {
+    position: relative;
+    max-width: 90vw;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.image-modal-img {
+    max-width: 100%;
+    max-height: 80vh;
+    object-fit: contain;
+    border-radius: var(--radius);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    border: 2px solid var(--primary-light);
+}
+
+.image-modal-info {
+    margin-top: 20px;
+    color: white;
+    font-size: 16px;
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 10px 20px;
+    border-radius: 40px;
+    backdrop-filter: blur(5px);
+}
+
+.image-modal-name {
+    font-weight: 500;
+}
+
+.image-modal-area {
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.image-modal-close {
+    position: absolute;
+    top: -40px;
+    right: -40px;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(5px);
+}
+
+.image-modal-close:hover {
+    background: var(--danger);
+    transform: scale(1.1);
+}
+
+.image-modal-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(5px);
+}
+
+.image-modal-nav:hover {
+    background: var(--primary);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.image-modal-nav.prev {
+    left: -70px;
+}
+
+.image-modal-nav.next {
+    right: -70px;
+}
+
+.image-modal-nav:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Responsive */
+@media (max-width: 1600px) {
+    .content-area {
+        grid-template-columns: 0.8fr 1.2fr;
+    }
+}
+
+@media (max-width: 1400px) {
+    .content-area {
+        grid-template-columns: 0.9fr 1.1fr;
+    }
+}
+
+@media (max-width: 1200px) {
+    .content-area {
+        grid-template-columns: 1fr;
+    }
+
+    .canvas-container {
+        aspect-ratio: 16 / 9;
+        min-height: 400px;
+    }
+
+    .actions {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .action-btn:last-child {
+        grid-column: span 2;
+    }
+
+    .point-type-selector {
+        min-width: 240px;
+    }
+}
+
+@media (max-width: 768px) {
+    .app-container {
+        padding: 10px;
+    }
+
+    .header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+
+    .header-actions {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .canvas-container {
+        min-height: 300px;
+    }
+
+    .fill-mode-toggle {
+        bottom: 80px;
+        right: 10px;
+        padding: 4px;
+    }
+
+    .fill-mode-btn {
+        padding: 4px 8px;
+        font-size: 11px;
+    }
+
+    .point-type-selector {
+        min-width: auto;
+        bottom: 15px;
+        width: 90%;
+    }
+
+    .point-btn {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+
+    .actions {
+        grid-template-columns: 1fr;
+    }
+
+    .action-btn:last-child {
+        grid-column: auto;
+    }
+
+    .upload-tabs {
+        flex-direction: column;
+    }
+
+    .tab-btn {
+        text-align: center;
+        border-bottom: none;
+        border-right: 3px solid transparent;
+    }
+
+    .tab-btn.active {
+        border-right-color: var(--primary);
+    }
+
+    .history-grid {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        max-height: 180px;
+    }
+
+
+
+    .control-btn {
+        width: 36px;
+        height: 36px;
+        padding: 8px;
+    }
+
+    .zoom-indicator {
+        bottom: 70px;
+        right: 10px;
+        padding: 4px 10px;
+        font-size: 11px;
+    }
+
+    #image-info > div {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    #image-name-display {
+        max-width: 100%;
+    }
+
+    #area-value {
+        font-size: 24px;
+    }
+
+    /* Адаптивность для бейджа площади на мобильных */
+    .result-area-badge {
+        padding: 2px 6px 6px 6px;
+        font-size: 10px;
+    }
+
+    .result-area-badge i {
+        font-size: 9px;
+    }
+
+    .result-area-badge .area-value {
+        font-size: 11px;
+    }
+
+    .result-area-badge .area-unit {
+        font-size: 9px;
+    }
+
+    .image-modal-close {
+        top: -30px;
+        right: 0;
+    }
+
+    .image-modal-nav {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+
+    .image-modal-nav.prev {
+        left: -50px;
+    }
+
+    .image-modal-nav.next {
+        right: -50px;
+    }
+}
+
+@media (max-width: 480px) {
+    .canvas-container {
+        min-height: 250px;
+    }
+
+    .fill-mode-toggle {
+        bottom: 70px;
+        right: 8px;
+    }
+
+    .point-type-selector {
+        min-width: auto;
+        width: 95%;
+    }
+
+    .point-btn {
+        padding: 6px 10px;
+        font-size: 11px;
+        gap: 4px;
+    }
+
+    .control-btn {
+        width: 32px;
+        height: 32px;
+        padding: 6px;
+    }
+
+    .history-grid {
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        max-height: 160px;
+    }
+
+    .history-thumb {
+        aspect-ratio: 16 / 9;
+    }
+
+    .history-name {
+        font-size: 10px;
+    }
+
+    .history-date {
+        font-size: 9px;
+    }
+
+    .actions {
+        gap: 8px;
+    }
+
+    .action-btn {
+        padding: 10px 6px;
+        font-size: 12px;
+    }
+
+    .action-btn i {
+        font-size: 12px;
+    }
+
+    #area-value {
+        font-size: 20px;
+    }
+
+    /* Ультра-компактный режим для очень маленьких экранов */
+    .result-area-badge {
+        padding: 2px 4px 4px 4px;
+    }
+
+    .result-name {
+        font-size: 11px;
+        padding: 6px 6px 2px 6px;
+    }
+
+    .image-modal-nav {
+        display: none;
+    }
+
+    .image-modal-info {
+        flex-direction: column;
+        gap: 5px;
+        text-align: center;
+    }
+}
+    /* Новые стили для организации кнопок авторизованного пользователя */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    padding-right: 15px;
+    border-right: 2px solid var(--border);
+    margin-right: 5px;
+}
+
+.user-name {
+    font-weight: 500;
+    color: var(--text);
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.user-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* Адаптация для мобильных устройств */
+@media (max-width: 768px) {
+    .header-actions {
+        flex-direction: column;
+        width: 100%;
+        gap: 8px;
+    }
+
+    .user-info {
+        border-right: none;
+        border-bottom: 2px solid var(--border);
+        padding-right: 0;
+        padding-bottom: 8px;
+        margin-right: 0;
+        width: 100%;
+        justify-content: center;
+    }
+
+    .user-actions {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .user-actions .header-btn {
+        flex: 0 1 auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .user-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .user-actions .header-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+.result-item {
+        position: relative;
+        transition: all 0.3s ease;
+    }
+
+    .result-item.fade-out {
+        opacity: 0;
+        transform: scale(0.8);
+        pointer-events: none;
+    }
+
+    .result-delete-btn {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid var(--border);
+        color: var(--text-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        opacity: 0;
+        transform: scale(0.8);
+    }
+
+    .result-item:hover .result-delete-btn {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    .result-delete-btn:hover {
+        background: #ff4444;
+        color: white;
+        border-color: #ff4444;
+    }
+
+    .result-delete-btn i {
+        font-size: 12px;
+    }
+
+    /* Стили для модального окна просмотра изображений */
+    .image-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.95);
+        z-index: 10000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .image-modal.active {
+        display: flex;
+    }
+
+    .image-modal-content {
+        position: relative;
+        max-width: 90vw;
+        max-height: 90vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .image-modal-img {
+        max-width: 100%;
+        max-height: 90vh;
+        object-fit: contain;
+        border-radius: 8px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .image-modal-close {
+        position: absolute;
+        top: -40px;
+        right: -40px;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: white;
+        font-size: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .image-modal-close:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: rotate(90deg);
+    }
+
+    .image-modal-nav {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: white;
+        font-size: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .image-modal-nav:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-50%) scale(1.1);
+    }
+
+    .image-modal-nav:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
+
+    .image-modal-nav.prev {
+        left: -70px;
+    }
+
+    .image-modal-nav.next {
+        right: -70px;
+    }
+
+    .image-modal-info {
+        position: absolute;
+        bottom: -40px;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 20px;
+        background: rgba(0, 0, 0, 0.5);
+        border-radius: 8px;
+        color: white;
+        font-size: 14px;
+        backdrop-filter: blur(5px);
+    }
+
+    .image-modal-name {
+        font-weight: 500;
+    }
+
+    .image-modal-area {
+        color: var(--primary-light);
+    }
+
+    .image-modal-area i {
+        margin-right: 5px;
+    }
+
+    @media (max-width: 768px) {
+        .image-modal-nav.prev {
+            left: 10px;
+        }
+
+        .image-modal-nav.next {
+            right: 10px;
+        }
+
+        .image-modal-close {
+            top: 10px;
+            right: 10px;
+        }
+
+        .image-modal-info {
+            bottom: 10px;
+            flex-direction: column;
+            gap: 5px;
+            text-align: center;
+        }
+    }
+    .image-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 10000;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(5px);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.image-modal.active {
+    display: flex;
+    opacity: 1;
+}
+
+.image-modal.closing {
+    opacity: 0;
+}
+
+.image-modal-content {
+    position: relative;
+    max-width: 90vw;
+    max-height: 90vh;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    background: #1e1e1e;
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+}
+
+.image-modal.active .image-modal-content {
+    transform: scale(1);
+}
+
+.image-modal.closing .image-modal-content {
+    transform: scale(0.9);
+}
+
+.image-modal-img {
+    max-width: 90vw;
+    max-height: 80vh;
+    object-fit: contain;
+    display: block;
+    border: 2px solid #333;
+    border-radius: 12px;
+}
+
+.image-modal-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 10001;
+    backdrop-filter: blur(5px);
+}
+
+.image-modal-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+.image-modal-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 10001;
+    backdrop-filter: blur(5px);
+}
+
+.image-modal-nav:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.image-modal-nav.prev {
+    left: 20px;
+}
+
+.image-modal-nav.next {
+    right: 20px;
+}
+
+.image-modal-nav:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.image-modal-info {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 30px;
+    font-size: 16px;
+    display: flex;
+    gap: 20px;
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    z-index: 10001;
+    transition: opacity 0.3s ease;
+}
+
+.image-modal.closing .image-modal-info {
+    opacity: 0;
+}
+
+.image-modal-name {
+    font-weight: 500;
+}
+
+.image-modal-area {
+    color: #58a6ff;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Убираем старую анимацию, так как теперь используем transition */
+/* @keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+} */
+</style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="toast-container" id="toast-container"></div>
+
+    <div class="app-container">
+        <!-- Header -->
+<header class="header">
+    <div class="logo">
+        <div class="logo-icon">
+            <!-- Замените путь на свой логотип -->
+            <img src="../static/photo-Photoroom.png" alt="Логотип">
+        </div>
+        <div class="logo-text">Поиск однородностей</div>
+    </div>
+    <div class="header-actions">
+    {% if is_guest %}
+        <a href="{{ url_for('auth.login_page') }}" class="header-btn">
+            <i class="fas fa-sign-in-alt"></i> Вход
+        </a>
+        <a href="{{ url_for('auth.login_page') }}?register=true" class="header-btn">
+            <i class="fas fa-user-plus"></i> Регистрация
+        </a>
+    {% else %}
+        <!-- Измененная структура для авторизованного пользователя -->
+        <div class="user-info">
+            <span class="user-name">{{ user.first_name }} {{ user.last_name }}</span>
+        </div>
+        <div class="user-actions">
+            {% if user.access_rights == 'admin' %}
+            <a href="{{ url_for('pages.administration') }}" class="header-btn">
+                <i class="fas fa-cog"></i> Управление
+            </a>
+            {% endif %}
+            <a href="{{ url_for('pages.profile') }}" class="header-btn">
+                <i class="fas fa-user"></i> Профиль
+            </a>
+            <a href="{{ url_for('auth.logout') }}" class="header-btn">
+                <i class="fas fa-sign-out-alt"></i> Выход
+            </a>
+        </div>
+    {% endif %}
+
+    <!-- Общие кнопки для всех пользователей -->
+    <button class="header-btn" onclick="showInfo()">
+        <i class="fas fa-info-circle"></i> Информация
+    </button>
+    <button class="header-btn" onclick="showHelp()">
+        <i class="fas fa-question-circle"></i> Помощь
+    </button>
+</div>
+</header>
+
+        <!-- Guest Notice for non-authenticated users -->
+        {% if is_guest %}
+<div class="guest-notice">
+    <div class="guest-notice-content">
+        <i class="fas fa-user-clock"></i>
+        <span>Вы используете сайт в режиме гостя. </span>
+        <a href="{{ url_for('auth.login_page') }}">Войдите</a> или
+        <a href="{{ url_for('auth.login_page') }}?register=true">зарегистрируйтесь</a>,
+        чтобы сохранять результаты и получать доступ к истории.
+    </div>
+    <button class="guest-notice-close" onclick="this.parentElement.style.display='none'">
+        <i class="fas fa-times"></i>
+    </button>
+</div>
+{% endif %}
+
+        <!-- Main Content -->
+        <div class="content-area">
+            <!-- Left Panel -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">Загрузка изображений</div>
+                </div>
+                <div class="panel-body">
+                    <!-- Upload Tabs -->
+                    <div class="upload-tabs">
+                        <button class="tab-btn active" onclick="switchUploadTab('single')">
+                            <i class="fas fa-image"></i> Одно изображение
+                        </button>
+                        <button class="tab-btn" onclick="switchUploadTab('zip')">
+                            <i class="fas fa-file-zipper"></i> ZIP архив
+                        </button>
+                    </div>
+
+                    <!-- Single Image Upload -->
+
+                    <div id="single-upload-tab" class="upload-tab-content">
+                        <!-- Зона загрузки (изначально видна) -->
+                        <div class="upload-zone" id="single-upload-zone">
+                            <div class="upload-icon">
+                                <i class="fas fa-image"></i>
+                            </div>
+                            <div class="upload-text">Перетащите изображение сюда</div>
+                            <div class="upload-subtext">или нажмите чтобы выбрать файл</div>
+                            <div class="upload-subtext" style="font-size: 12px; margin-top: 10px;">
+                                Поддерживаемые форматы: PNG, JPG, JPEG, BMP, TIFF
+                            </div>
+                            <button class="upload-btn">
+                                <i class="fas fa-upload"></i> Выбрать изображение
+                            </button>
+                            <input type="file" id="single-file-input" accept=".png,.jpg,.jpeg,.bmp,.tiff"
+                                   style="display: none;">
+                        </div>
+
+                        <!-- Область превью загруженного изображения (изначально скрыта) -->
+                        <div class="uploaded-preview" id="uploaded-preview" style="display: none;">
+                            <div class="preview-header">
+                                <div class="preview-title">
+                                    <i class="fas fa-check-circle" style="color: var(--success);"></i>
+                                    <span id="preview-filename">Изображение загружено</span>
+                                </div>
+                                <div class="preview-actions">
+                                    <button class="preview-btn" onclick="changeImage()" title="Изменить изображение">
+                                        <i class="fas fa-sync-alt"></i> Изменить
+                                    </button>
+                                    <button class="preview-btn" onclick="removeImage()" title="Удалить изображение">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="preview-image-container">
+                                <img id="preview-image" src="" alt="Preview" class="preview-image">
+                            </div>
+                            <div class="preview-info" id="preview-info">
+                                <span id="preview-dimensions"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ZIP Upload -->
+                    <div id="zip-upload-tab" class="upload-tab-content" style="display: none;">
+                        <div class="upload-zone" id="zip-upload-zone">
+                            <div class="upload-icon">
+                                <i class="fas fa-file-zipper"></i>
+                            </div>
+                            <div class="upload-text">Перетащите ZIP-архив сюда</div>
+                            <div class="upload-subtext">или нажмите чтобы выбрать файл</div>
+                            <div class="upload-subtext" style="font-size: 12px; margin-top: 10px;">
+                                Архив должен содержать изображения (PNG, JPG, JPEG, BMP, TIFF)
+                            </div>
+                            <button class="upload-btn" onclick="document.getElementById('zip-file-input').click()">
+                                <i class="fas fa-upload"></i> Выбрать архив
+                            </button>
+                            <input type="file" id="zip-file-input" accept=".zip"
+                                   style="display: none;">
+                        </div>
+
+                        <div class="upload-option" onclick="loadExampleData()">
+                            <div class="upload-option-icon">
+                                <i class="fas fa-database"></i>
+                            </div>
+                            <div class="upload-option-content">
+                                <div class="upload-option-title">Примеры изображений</div>
+                                <div class="upload-option-desc">Тестовые данные для демонстрации</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Image List -->
+                    <div id="image-list-container" style="display: none;">
+                        <div style="font-size: 14px; color: var(--text-light); margin-bottom: 10px;">
+                            <i class="fas fa-images"></i> Загруженные изображения (<span id="image-count">0</span>)
+                        </div>
+                        <div class="image-list" id="image-list"></div>
+                    </div>
+
+                    <!-- Points List -->
+                    <div id="points-container" style="display: none;">
+                        <div style="font-size: 14px; color: var(--text-light); margin-bottom: 10px;">
+                            <i class="fas fa-bullseye"></i> Точки сегментации (<span id="points-count">0</span>)
+                        </div>
+                        <div class="points-list" id="points-list"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">Сегментация</div>
+                </div>
+                <div class="panel-body">
+                    <!-- Canvas Area -->
+                    <div class="canvas-container" id="canvas-container">
+                        <!-- Сообщение при отсутствии изображения -->
+                        <div class="no-image-message" id="no-image-message">
+                            <i class="fas fa-image"></i>
+                            <div>Изображение отсутствует</div>
+                            <div style="font-size: 14px; margin-top: 10px; color: var(--text-lighter);">
+                                Загрузите изображение для начала работы
+                            </div>
+                        </div>
+
+                        <!-- Canvas -->
+                        <canvas id="main-canvas" style="display: none;"></canvas>
+
+                        <!-- Управление зумом -->
+                        <div class="canvas-controls" style="display: none;">
+                            <div class="tool-group">
+                                <button class="control-btn" title="Рука (перемещение)" onclick="setTool('hand')" id="tool-hand-btn">
+                                    <i class="fas fa-hand-paper"></i>
+                                </button>
+                                <button class="control-btn" title="Точки (разметка)" onclick="setTool('point')" id="tool-point-btn">
+                                    <i class="fas fa-bullseye"></i>
+                                </button>
+                            </div>
+                            <div class="zoom-group">
+                                <button class="control-btn" title="Увеличить" onclick="zoomIn()">
+                                    <i class="fas fa-search-plus"></i>
+                                </button>
+                                <button class="control-btn" title="Уменьшить" onclick="zoomOut()">
+                                    <i class="fas fa-search-minus"></i>
+                                </button>
+                                <button class="control-btn" title="Сбросить вид" onclick="resetView()">
+                                    <i class="fas fa-expand"></i>
+                                </button>
+                            </div>
+                            <div class="action-group">
+                                <button class="control-btn" title="Очистить точки" onclick="clearPoints()">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Уменьшенный переключатель точек -->
+                        <div class="point-type-selector" style="display: none;">
+                            <button class="point-btn positive active" onclick="setPointType('positive')">
+                                <i class="fas fa-plus-circle"></i> Положительные
+                            </button>
+                            <button class="point-btn negative" onclick="setPointType('negative')">
+                                <i class="fas fa-minus-circle"></i> Отрицательные
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Image Info -->
+                    <div id="image-info" style="display: none;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: var(--surface-dark); border-radius: var(--radius-sm);">
+                            <div>
+                                <div style="font-size: 14px; font-weight: 500; color: var(--text);" id="image-name-display"></div>
+                                <div style="font-size: 12px; color: var(--text-light);" id="image-dimensions"></div>
+                            </div>
+                            <div style="display: flex; gap: 10px;">
+                                <button class="control-btn" title="Предыдущее" onclick="prevImage()">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <button class="control-btn" title="Следующее" onclick="nextImage()">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Area Info - новая область для отображения площади -->
+                    <div id="area-info" style="display: none;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: var(--surface-dark); border-radius: var(--radius-sm); margin-top: 10px;">
+                            <div>
+                                <div style="font-size: 14px; font-weight: 500; color: var(--text);">
+                                    <i class="fas fa-vector-square"></i> Площадь выделенной области
+                                </div>
+                                <div style="font-size: 12px; color: var(--text-light); margin-top: 2px;">
+                                    (в пикселях)
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <span id="area-value" style="font-size: 24px; font-weight: 700; color: var(--primary);">0</span>
+                                <span style="font-size: 14px; color: var(--text-light); margin-left: 2px;">px²</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Progress -->
+                    <div class="progress-container" id="progress-container" style="display: none;">
+                        <div class="progress-header">
+                            <span id="progress-text">Обработка...</span>
+                            <span id="progress-percent">0%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill"></div>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                   <div class="actions">
+    <button class="action-btn secondary" onclick="undoLastPoint()" id="undo-btn" disabled>
+        <i class="fas fa-undo"></i> Отменить точку
+    </button>
+    <button class="action-btn primary" onclick="generateMask()" id="generate-btn" disabled>
+        <i class="fas fa-magic"></i> Создать маску
+    </button>
+    <button class="action-btn success" onclick="completeMask()" id="complete-btn" disabled>
+        <i class="fas fa-check"></i> Завершить маску
+    </button>
+    <button class="action-btn secondary" onclick="clearPoints()" id="clear-points-btn" disabled>
+        <i class="fas fa-eraser"></i> Очистить точки
+    </button>
+    <button class="action-btn success" onclick="propagateMasks()" id="propagate-btn" disabled>
+        <i class="fas fa-broadcast-tower"></i> Распространить
+    </button>
+</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Section -->
+        <div class="history-section">
+            <div class="history-header">
+                <div class="history-title">
+                    <i class="fas fa-history"></i> История загрузок
+                </div>
+                <div class="history-actions">
+                    {% if not is_guest %}
+                    <button class="history-clear-btn" onclick="clearHistory()">
+                        <i class="fas fa-trash"></i> Очистить историю
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="history-grid" id="history-grid">
+                {% if is_guest %}
+                <div class="history-empty" id="history-empty">
+                    <i class="fas fa-lock"></i>
+                    <div>История доступна только авторизованным пользователям</div>
+                    <div style="font-size: 12px; margin-top: 10px;">
+                        <button class="action-btn primary" onclick="showLogin()" style="padding: 8px 16px; font-size: 14px;">
+                            <i class="fas fa-sign-in-alt"></i> Войти
+                        </button>
+                        <button class="action-btn secondary" onclick="showRegister()" style="padding: 8px 16px; font-size: 14px; margin-left: 10px;">
+                            <i class="fas fa-user-plus"></i> Регистрация
+                        </button>
+                    </div>
+                </div>
+                {% else %}
+                <div class="history-empty" id="history-empty">
+                    <i class="fas fa-inbox"></i>
+                    <div>История пуста</div>
+                    <div style="font-size: 12px; margin-top: 5px; color: var(--text-lighter);">
+                        Загрузите изображения, чтобы они появились здесь
+                    </div>
+                </div>
+                <!-- История будет добавляться динамически -->
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Results Panel -->
+        <div class="panel" id="results-panel" style="display: none;">
+            <div class="panel-header">
+                <div class="panel-title">Результаты сегментации</div>
+                <div class="header-actions">
+                    <button class="action-btn secondary" onclick="clearResults()">
+                        <i class="fas fa-trash"></i> Очистить
+                    </button>
+                    <button class="action-btn primary" onclick="downloadResults()">
+                        <i class="fas fa-download"></i> Скачать все
+                    </button>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="results-grid" id="results-grid"></div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div>Поиск однородностей v1.0 | Segment Anything Model 2</div>
+            <div style="font-size: 12px; margin-top: 5px; color: var(--text-lighter);">
+                Поддерживает отдельные изображения и ZIP-архивы
+            </div>
+        </footer>
+    </div>
+
+    <!-- Login Modal -->
+    <div class="modal" id="login-modal">
+        <div class="modal-content">
+            <div class="modal-title">
+                <i class="fas fa-sign-in-alt" style="margin-right: 10px;"></i> Вход в систему
+            </div>
+            <div class="login-form">
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="text" class="form-input" id="login-username" placeholder="Введите ваш email">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Пароль</label>
+                    <input type="password" class="form-input" id="login-password" placeholder="Введите ваш пароль">
+                </div>
+                <div class="modal-actions">
+                    <button class="action-btn secondary" onclick="hideModal('login-modal')">
+                        Отмена
+                    </button>
+                    <button class="action-btn primary" onclick="performLogin()">
+                        <i class="fas fa-sign-in-alt"></i> Войти
+                    </button>
+                </div>
+                <div style="text-align: center; margin-top: 20px; color: var(--text-light);">
+                    Нет аккаунта? <a class="form-link" onclick="showRegister()">Зарегистрироваться</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div class="modal" id="register-modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-title">
+                <i class="fas fa-user-plus" style="margin-right: 10px;"></i> Регистрация
+            </div>
+            <div class="register-form">
+                <div class="form-group">
+                    <label class="form-label">Фамилия Имя Отчество <span style="color: #ff6b6b;">*</span></label>
+                    <input type="text" class="form-input" id="register-fullname" placeholder="Иванов Иван Иванович" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email <span style="color: #ff6b6b;">*</span></label>
+                    <input type="email" class="form-input" id="register-email" placeholder="ivan@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Пароль <span style="color: #ff6b6b;">*</span></label>
+                    <input type="password" class="form-input" id="register-password" placeholder="Минимум 6 символов" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Должность <span style="color: #ff6b6b;">*</span></label>
+                    <input type="text" class="form-input" id="register-position" placeholder="Ваша должность" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Телефон</label>
+                    <input type="tel" class="form-input" id="register-phone" placeholder="+7 (999) 999-99-99">
+                </div>
+                <div class="modal-actions">
+                    <button class="action-btn secondary" onclick="hideModal('register-modal')">
+                        Отмена
+                    </button>
+                    <button class="action-btn primary" onclick="performRegister()">
+                        <i class="fas fa-user-plus"></i> Зарегистрироваться
+                    </button>
+                </div>
+                <div style="text-align: center; margin-top: 20px; color: var(--text-light);">
+                    Уже есть аккаунт? <a class="form-link" onclick="showLogin()">Войти</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info Modal -->
+    <div class="modal" id="info-modal">
+        <div class="modal-content">
+            <div class="modal-title">
+                <i class="fas fa-info-circle" style="margin-right: 10px;"></i> Информация о системе
+            </div>
+            <div class="info-content">
+                <div class="info-section">
+                    <h3>О "Поиск однородностей"</h3>
+                    <p>Это веб-приложение для сегментации изображений с использованием модели SAM2 (Segment Anything Model 2).</p>
+                </div>
+
+                <div class="info-section">
+                    <h3>Возможности</h3>
+                    <ul>
+                        <li>Загрузка отдельных изображений или архивов ZIP</li>
+                        <li>Интерактивная разметка с помощью точек</li>
+                        <li>Автоматическая сегментация объектов</li>
+                        <li>Распространение масок на несколько изображений</li>
+                        <li>Скачивание результатов в формате PNG</li>
+                    </ul>
+                </div>
+
+                <div class="info-section">
+                    <h3>Технологии</h3>
+                    <ul>
+                        <li>Frontend: HTML5, CSS3, JavaScript</li>
+                        <li>Backend: Python, Flask</li>
+                        <li>AI модель: Meta SAM2</li>
+                        <li>Компьютерное зрение: OpenCV, NumPy</li>
+                    </ul>
+                </div>
+
+                <div class="info-section">
+                    <h3>Системные требования</h3>
+                    <ul>
+                        <li>Современный браузер с поддержкой Canvas</li>
+                        <li>Подключение к интернету</li>
+                        <li>GPU рекомендуется для обработки больших изображений</li>
+                    </ul>
+                </div>
+
+                <div class="info-section">
+                    <h3>Версия</h3>
+                    <p>Текущая версия: 1.0.0</p>
+                    <p>Последнее обновление: Октябрь 2024</p>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="action-btn primary" onclick="hideModal('info-modal')">
+                    Закрыть
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div class="modal" id="help-modal">
+        <div class="modal-content">
+            <div class="modal-title">
+                <i class="fas fa-question-circle" style="margin-right: 10px;"></i> Помощь и инструкции
+            </div>
+            <div class="help-content">
+                <div class="help-step">
+                    <h3><span class="step-number">1</span> Загрузка изображений</h3>
+                    <p>Выберите режим загрузки: одно изображение или ZIP-архив. Перетащите файлы в выделенную зону или нажмите кнопку для выбора файлов.</p>
+                </div>
+
+                <div class="help-step">
+                    <h3><span class="step-number">2</span> Разметка точек</h3>
+                    <p>На изображении кликните левой кнопкой мыши для добавления точек:</p>
+                    <ul>
+                        <li><strong>Положительные точки (зеленые)</strong>: указывают на объект, который нужно выделить</li>
+                        <li><strong>Отрицательные точки (красные)</strong>: указывают на области, которые НЕ должны быть выделены</li>
+                    </ul>
+                </div>
+
+                <div class="help-step">
+                    <h3><span class="step-number">3</span> Управление изображением</h3>
+                    <ul>
+                        <li><strong>Увеличить/Уменьшить</strong>: используйте кнопки "+" и "-" или колесико мыши</li>
+                        <li><strong>Панорамирование</strong>: зажмите левую кнопку мыши и перемещайте изображение</li>
+                        <li><strong>Сброс вида</strong>: кнопка с иконкой расширения</li>
+                    </ul>
+                </div>
+
+                <div class="help-step">
+                    <h3><span class="step-number">4</span> Создание маски</h3>
+                    <p>После добавления точек нажмите "Создать маску". Система обработает изображение и выделит объект.</p>
+                </div>
+
+                <div class="help-step">
+                    <h3><span class="step-number">5</span> Распространение маски</h3>
+                    <p>Если у вас несколько изображений, нажмите "Распространить" для автоматического применения маски ко всем изображениям в наборе.</p>
+                </div>
+
+                <div class="help-step">
+                    <h3><span class="step-number">6</span> Скачивание результатов</h3>
+                    <p>После обработки всех изображений вы можете скачать маски в виде ZIP-архива.</p>
+                </div>
+
+                <div class="help-step">
+                    <h3>Советы</h3>
+                    <ul>
+                        <li>Для сложных объектов используйте комбинацию положительных и отрицательных точек</li>
+                        <li>Старайтесь ставить точки в ключевых местах объекта</li>
+                        <li>Используйте зум для точной разметки мелких деталей</li>
+                        <li>Очищайте точки кнопкой "Очистить точки" при необходимости</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="action-btn primary" onclick="hideModal('help-modal')">
+                    Закрыть
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Modal -->
+    <div class="modal" id="loading-modal">
+        <div class="modal-content">
+            <div class="modal-title">Обработка</div>
+            <div class="modal-message" id="loading-message">Пожалуйста, подождите...</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="modal-progress-fill" style="width: 0%"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Message Modal -->
+    <div class="modal" id="message-modal">
+        <div class="modal-content">
+            <div class="modal-title" id="message-title"></div>
+            <div class="modal-message" id="message-content"></div>
+            <div class="modal-actions">
+                <button class="action-btn primary" onclick="hideModal('message-modal')">OK</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // Глобальные переменные
+    let currentSessionId = null;
+    let images = {};
+    let currentImageIndex = 0;
+    let points = [];
+    let pointType = 'positive'; // 'positive' или 'negative'
+    let canvas = null;
+    let ctx = null;
+    let currentImage = null;
+    let zoom = 1;
+    let offsetX = 0;
+    let offsetY = 0;
+    let isDragging = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let dragOffsetX = 0;
+    let dragOffsetY = 0;
+    let currentMask = false;
+    let currentUploadType = 'single'; // 'single' или 'zip'
+
+    // Переменные для хранения текущей маски и её площади
+    let currentMaskImageData = null;
+    let currentMaskArea = 0;
+
+    // Хранилище уже загруженных изображений для предотвращения дублирования
+    let loadedImageNames = new Set();
+
+    // Хранилище масок для изображений
+    window.masks = {};
+
+    // Хранилище для нескольких масок на одном изображении
+    window.multiMasks = {};
+
+    // Кэш загруженных изображений масок для производительности
+    window.maskImageCache = {};
+
+    // Текущая временная маска для отображения
+    window.currentTempMask = null;
+
+    // Флаг для отслеживания процесса отрисовки
+    let isRendering = false;
+
+    // Цвета для разных масок (без прозрачности в основном цвете)
+    const maskColors = [
+        'rgba(58, 134, 255, 0.6)',   // синий
+        'rgba(255, 99, 132, 0.6)',   // розовый
+        'rgba(75, 192, 192, 0.6)',   // бирюзовый
+        'rgba(255, 205, 86, 0.6)',   // желтый
+        'rgba(153, 102, 255, 0.6)',  // фиолетовый
+        'rgba(255, 159, 64, 0.6)',   // оранжевый
+        'rgba(46, 204, 113, 0.6)',   // зеленый
+        'rgba(231, 76, 60, 0.6)',    // красный
+        'rgba(52, 152, 219, 0.6)',   // голубой
+        'rgba(155, 89, 182, 0.6)',   // пурпурный
+        'rgba(26, 188, 156, 0.6)',   // бирюзовый
+        'rgba(241, 196, 15, 0.6)',   // желтый
+        'rgba(230, 126, 34, 0.6)',   // оранжевый
+        'rgba(231, 76, 60, 0.6)',    // красный
+        'rgba(149, 165, 166, 0.6)',  // серый
+        'rgba(52, 73, 94, 0.6)'      // темно-синий
+    ];
+
+    // Toast уведомления
+    let loadingToast = null;
+
+    // Переменные для модального окна просмотра изображений
+    let currentModalImages = [];
+    let currentModalIndex = 0;
+
+    // Инициализация
+    document.addEventListener('DOMContentLoaded', () => {
+        canvas = document.getElementById('main-canvas');
+        ctx = canvas.getContext('2d');
+
+        // Загружаем историю с сервера (если пользователь авторизован)
+        const isGuest = {{ is_guest|tojson }};
+        if (!isGuest) {
+            loadUserHistory();
+        } else {
+            // Для гостей показываем пустую историю с сообщением
+            renderHistoryFromServer([]);
+        }
+
+        // Настройка обработчиков событий
+        setupEventListeners();
+
+        // Инициализация превью
+        initPreview();
+
+        // Скрываем область площади при старте
+        document.getElementById('area-info').style.display = 'none';
+
+        // Создаем модальное окно для просмотра изображений
+        createImageModal();
+
+        // Создаем индикатор зума
+        createZoomIndicator();
+        // Устанавливаем начальный инструмент (рука)
+    setTool('hand');
+    });
+
+    // Создание индикатора зума
+    function createZoomIndicator() {
+        const container = document.getElementById('canvas-container');
+        if (!container) return;
+
+        const indicator = document.createElement('div');
+        indicator.id = 'zoom-indicator';
+        indicator.className = 'zoom-indicator';
+        indicator.innerHTML = '<i class="fas fa-search"></i> 100%';
+        container.appendChild(indicator);
+    }
+
+    // Обновление индикатора зума
+    function updateZoomIndicator() {
+        const indicator = document.getElementById('zoom-indicator');
+        if (indicator) {
+            const zoomPercent = Math.round(zoom * 100);
+            indicator.innerHTML = `<i class="fas fa-search"></i> ${zoomPercent}%`;
+        }
+    }
+
+    // Создание модального окна для просмотра изображений
+    function createImageModal() {
+    // Проверяем, существует ли уже модальное окно
+    if (document.getElementById('image-view-modal')) return;
+
+    const modal = document.createElement('div');
+    modal.id = 'image-view-modal';
+    modal.className = 'image-modal';
+    modal.innerHTML = `
+        <div class="image-modal-content">
+            <button class="image-modal-close" onclick="closeImageModal()">
+                <i class="fas fa-times"></i>
+            </button>
+            <button class="image-modal-nav prev" onclick="navigateModalImage(-1)">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <img class="image-modal-img" src="" alt="Просмотр изображения">
+            <button class="image-modal-nav next" onclick="navigateModalImage(1)">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+            <div class="image-modal-info">
+                <span class="image-modal-name"></span>
+                <span class="image-modal-area"></span>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    // Закрытие по клику на фон
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            closeImageModal();
+        }
+    });
+
+    // Закрытие по клавише Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+            closeImageModal();
+        }
+
+        // Навигация стрелками
+        if (modal.classList.contains('active')) {
+            if (e.key === 'ArrowLeft') {
+                navigateModalImage(-1);
+            } else if (e.key === 'ArrowRight') {
+                navigateModalImage(1);
+            }
+        }
+    });
+}
+
+    // Функция для открытия модального окна с изображением
+    function openImageModal(imageSrc, imageName, imageArea, allImages = null) {
+        const modal = document.getElementById('image-view-modal');
+        if (!modal) return;
+
+        // Если передан массив всех изображений
+        if (allImages && allImages.length > 0) {
+            currentModalImages = allImages;
+            // Находим индекс текущего изображения
+            currentModalIndex = allImages.findIndex(img => img.src === imageSrc);
+            if (currentModalIndex === -1) currentModalIndex = 0;
+
+            // Показываем/скрываем кнопки навигации
+            const prevBtn = modal.querySelector('.prev');
+            const nextBtn = modal.querySelector('.next');
+            if (prevBtn && nextBtn) {
+                prevBtn.style.display = 'flex';
+                nextBtn.style.display = 'flex';
+                updateNavButtons();
+            }
+        } else {
+            // Если только одно изображение
+            currentModalImages = [{
+                src: imageSrc,
+                name: imageName,
+                area: imageArea
+            }];
+            currentModalIndex = 0;
+            const prevBtn = modal.querySelector('.prev');
+            const nextBtn = modal.querySelector('.next');
+            if (prevBtn && nextBtn) {
+                prevBtn.style.display = 'none';
+                nextBtn.style.display = 'none';
+            }
+        }
+
+        // Устанавливаем текущее изображение
+        updateModalImage();
+
+        // Показываем модальное окно
+        modal.classList.add('active');
+
+        // Блокируем прокрутку страницы
+        document.body.style.overflow = 'hidden';
+    }
+
+    // Функция для обновления изображения в модальном окне
+    function updateModalImage() {
+        const modal = document.getElementById('image-view-modal');
+        if (!modal || !currentModalImages.length) return;
+
+        const currentImage = currentModalImages[currentModalIndex];
+        const img = modal.querySelector('.image-modal-img');
+        const nameSpan = modal.querySelector('.image-modal-name');
+        const areaSpan = modal.querySelector('.image-modal-area');
+
+        if (img) img.src = currentImage.src;
+        if (nameSpan) nameSpan.textContent = currentImage.name || 'Изображение';
+
+        if (areaSpan) {
+            if (currentImage.area) {
+                areaSpan.innerHTML = `<i class="fas fa-vector-square"></i> Площадь: ${currentImage.area}`;
+            } else {
+                areaSpan.innerHTML = '';
+            }
+        }
+
+        updateNavButtons();
+    }
+
+    // Функция для навигации по изображениям
+    function navigateModalImage(direction) {
+        const newIndex = currentModalIndex + direction;
+        if (newIndex >= 0 && newIndex < currentModalImages.length) {
+            currentModalIndex = newIndex;
+            updateModalImage();
+        }
+    }
+
+    // Функция для обновления состояния кнопок навигации
+    function updateNavButtons() {
+        const modal = document.getElementById('image-view-modal');
+        if (!modal) return;
+
+        const prevBtn = modal.querySelector('.prev');
+        const nextBtn = modal.querySelector('.next');
+
+        if (prevBtn) {
+            prevBtn.disabled = currentModalIndex === 0;
+        }
+        if (nextBtn) {
+            nextBtn.disabled = currentModalIndex === currentModalImages.length - 1;
+        }
+    }
+
+    // Функция для закрытия модального окна
+    function closeImageModal() {
+    const modal = document.getElementById('image-view-modal');
+    if (modal && modal.classList.contains('active')) {
+        // Добавляем класс closing для анимации
+        modal.classList.add('closing');
+        modal.classList.remove('active');
+
+        // Разблокируем прокрутку страницы сразу
+        document.body.style.overflow = '';
+
+        // Удаляем класс closing после завершения анимации
+        setTimeout(() => {
+            modal.classList.remove('closing');
+        }, 300); // 300ms соответствует длительности transition
+    }
+}
+
+    // Toast уведомления
+    function showToast(title, message, type = 'info', duration = 3000) {
+        const container = document.getElementById('toast-container');
+
+        // Создаем элемент уведомления
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+
+        // Выбираем иконку в зависимости от типа
+        let icon = 'info-circle';
+        if (type === 'success') icon = 'check-circle';
+        if (type === 'error') icon = 'exclamation-circle';
+        if (type === 'warning') icon = 'exclamation-triangle';
+
+        toast.innerHTML = `
+            <div class="toast-icon">
+                <i class="fas fa-${icon}"></i>
+            </div>
+            <div class="toast-content">
+                <div class="toast-title">${title}</div>
+                <div class="toast-message">${message}</div>
+            </div>
+            <div class="toast-close" onclick="this.closest('.toast').remove()">
+                <i class="fas fa-times"></i>
+            </div>
+        `;
+
+        container.appendChild(toast);
+
+        // Автоматическое удаление через duration
+        setTimeout(() => {
+            toast.classList.add('fade-out');
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.remove();
+                }
+            }, 300);
+        }, duration);
+    }
+
+    function showLoading(message = 'Загрузка...', showProgress = false) {
+        // Если уже есть уведомление о загрузке, обновляем его
+        if (loadingToast && loadingToast.parentElement) {
+            const messageEl = loadingToast.querySelector('.toast-message');
+            if (messageEl) messageEl.textContent = message;
+            return;
+        }
+
+        const container = document.getElementById('toast-container');
+
+        loadingToast = document.createElement('div');
+        loadingToast.className = 'toast info';
+        loadingToast.innerHTML = `
+            <div class="toast-icon">
+                <i class="fas fa-spinner fa-pulse"></i>
+            </div>
+            <div class="toast-content">
+                <div class="toast-title">Обработка</div>
+                <div class="toast-message">${message}</div>
+            </div>
+        `;
+
+        container.appendChild(loadingToast);
+    }
+
+    function hideLoading() {
+        if (loadingToast && loadingToast.parentElement) {
+            loadingToast.classList.add('fade-out');
+            setTimeout(() => {
+                if (loadingToast && loadingToast.parentElement) {
+                    loadingToast.remove();
+                    loadingToast = null;
+                }
+            }, 300);
+        }
+    }
+
+    // Инициализация превью
+    function initPreview() {
+        const changeBtn = document.querySelector('.preview-btn:first-of-type');
+        const removeBtn = document.querySelector('.preview-btn:last-of-type');
+
+        if (changeBtn) {
+            changeBtn.onclick = changeImage;
+        }
+        if (removeBtn) {
+            removeBtn.onclick = removeImage;
+        }
+    }
+
+    // Функция для показа превью после загрузки изображения
+    function showImagePreview(file) {
+        const uploadZone = document.getElementById('single-upload-zone');
+        const previewDiv = document.getElementById('uploaded-preview');
+        const previewImage = document.getElementById('preview-image');
+        const previewFilename = document.getElementById('preview-filename');
+        const previewDimensions = document.getElementById('preview-dimensions');
+
+        if (file) {
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                previewImage.src = e.target.result;
+
+                // Получаем размеры изображения
+                const img = new Image();
+                img.onload = function() {
+                    previewDimensions.textContent = `${img.width} × ${img.height} пикселей`;
+                };
+                img.src = e.target.result;
+
+                previewFilename.textContent = file.name;
+
+                // Скрываем зону загрузки и показываем превью
+                uploadZone.style.display = 'none';
+                previewDiv.style.display = 'block';
+                previewDiv.classList.add('fade-in');
+            };
+
+            reader.readAsDataURL(file);
+        }
+    }
+
+    // Функция для изменения изображения
+    function changeImage() {
+        // Скрываем превью и показываем зону загрузки
+        document.getElementById('single-upload-zone').style.display = 'block';
+        document.getElementById('uploaded-preview').style.display = 'none';
+        document.getElementById('preview-image').src = '';
+
+        // Открываем диалог выбора файла
+        document.getElementById('single-file-input').click();
+    }
+
+    // Функция для удаления изображения
+    function removeImage() {
+        document.getElementById('single-upload-zone').style.display = 'block';
+        document.getElementById('uploaded-preview').style.display = 'none';
+        document.getElementById('preview-image').src = '';
+
+        // Очищаем канвас
+        clearCanvas();
+
+        // Очищаем данные сессии
+        currentSessionId = null;
+        images = {};
+        points = [];
+        currentImage = null;
+
+        // Очищаем хранилища масок
+        window.masks = {};
+        window.multiMasks = {};
+        window.maskImageCache = {};
+        window.currentTempMask = null;
+
+        // Очищаем отображение площади
+        clearAreaDisplay();
+
+        // Обновляем интерфейс
+        updatePointsList();
+        showToast('Информация', 'Изображение удалено', 'info');
+    }
+
+    // Функция для очистки канваса
+    function clearCanvas() {
+        const canvas = document.getElementById('main-canvas');
+        const ctx = canvas.getContext('2d');
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        canvas.style.display = 'none';
+
+        document.getElementById('no-image-message').style.display = 'flex';
+        document.querySelector('.canvas-controls').style.display = 'none';
+        document.querySelector('.point-type-selector').style.display = 'none';
+        document.getElementById('image-info').style.display = 'none';
+
+        // Скрываем индикатор зума
+        const zoomIndicator = document.getElementById('zoom-indicator');
+        if (zoomIndicator) zoomIndicator.style.display = 'none';
+
+        // Деактивируем кнопки
+        document.getElementById('generate-btn').disabled = true;
+        document.getElementById('undo-btn').disabled = true;
+        document.getElementById('propagate-btn').disabled = true;
+        document.getElementById('complete-btn').disabled = true;
+    }
+
+    // Функция для загрузки истории пользователя с сервера
+    async function loadUserHistory() {
+        try {
+            const response = await fetch('/api/user_images');
+            const data = await response.json();
+
+            if (data.success) {
+                // Преобразуем данные из БД в формат для отображения
+                const historyFromServer = data.images.map(img => ({
+                    id: img.id,
+                    name: img.filename,
+                    thumb: img.url,
+                    dataUrl: img.url,
+                    date: img.upload_date
+                }));
+
+                // Обновляем отображение истории
+                renderHistoryFromServer(historyFromServer);
+            }
+        } catch (error) {
+            console.error('Error loading history:', error);
+        }
+    }
+
+    // Функция для отображения истории с сервера
+    function renderHistoryFromServer(historyItems) {
+        const grid = document.getElementById('history-grid');
+        const emptyMessage = document.getElementById('history-empty');
+
+        if (historyItems.length === 0) {
+            emptyMessage.style.display = 'flex';
+            return;
+        }
+
+        emptyMessage.style.display = 'none';
+        grid.innerHTML = '';
+
+        historyItems.forEach((item) => {
+            const div = document.createElement('div');
+            div.className = 'history-item';
+            div.onclick = () => loadFromHistory(item);
+            div.innerHTML = `
+                <img src="${item.thumb}" class="history-thumb" alt="${item.name}">
+                <div class="history-info">
+                    <div class="history-name">${item.name}</div>
+                    <div class="history-date">${item.date}</div>
+                </div>
+                <div class="history-remove" onclick="deleteHistoryItem(${item.id}, event)">
+                    <i class="fas fa-times"></i>
+                </div>
+            `;
+            grid.appendChild(div);
+        });
+    }
+
+    // Форматирование даты
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        if (diffMins < 1) return 'только что';
+        if (diffMins < 60) return `${diffMins} мин назад`;
+        if (diffHours < 24) return `${diffHours} ч назад`;
+        if (diffDays < 7) return `${diffDays} дн назад`;
+
+        return date.toLocaleDateString('ru-RU', {
+            day: '2-digit',
+            month: '2-digit',
+            year: '2-digit'
+        });
+    }
+
+    // Добавление в историю (теперь через сервер)
+   async function addToHistory(imageData) {
+    // Проверяем, авторизован ли пользователь
+    const isGuest = {{ is_guest|tojson }};
+
+    if (isGuest) {
+        showToast('Авторизация', 'Чтобы сохранять изображения в историю, необходимо авторизоваться', 'warning');
+        return;
+    }
+
+    // Проверяем, не было ли это изображение уже добавлено в текущей сессии
+    if (window._lastAddedImage && window._lastAddedImage === imageData.name) {
+        console.log('Изображение уже добавлено в историю в этой сессии:', imageData.name);
+        return;
+    }
+
+    showLoading('Сохранение в историю...');
+
+    try {
+        // Отправляем изображение на сервер для сохранения в БД
+        const formData = new FormData();
+
+        // Преобразуем dataUrl в blob
+        const response = await fetch(imageData.dataUrl);
+        const blob = await response.blob();
+        const file = new File([blob], imageData.name, { type: 'image/jpeg' });
+
+        formData.append('image', file);
+
+        const serverResponse = await fetch('/api/images/save', {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await serverResponse.json();
+
+        if (result.success) {
+            // Запоминаем, что это изображение уже добавлено
+            window._lastAddedImage = imageData.name;
+
+            showToast('Успех', 'Изображение сохранено в историю', 'success');
+            // Загружаем историю с сервера
+            await loadUserHistory();
+        } else {
+            throw new Error(result.message || 'Ошибка сохранения');
+        }
+    } catch (error) {
+        console.error('Error saving to history:', error);
+        showToast('Ошибка', 'Не удалось сохранить изображение в историю', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+    // Функция для удаления из истории на сервере
+    async function deleteHistoryItem(imageId, event) {
+        event.stopPropagation();
+
+        if (!confirm('Удалить изображение из истории?')) return;
+
+        try {
+            const response = await fetch(`/delete_image/${imageId}`, {
+                method: 'DELETE'
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                showToast('Успех', 'Изображение удалено из истории', 'success');
+                // Перезагружаем историю
+                await loadUserHistory();
+            } else {
+                throw new Error(result.message || 'Ошибка удаления');
+            }
+        } catch (error) {
+            console.error('Error deleting image:', error);
+            showToast('Ошибка', error.message, 'error');
+        }
+    }
+
+    // Очистка истории
+    function clearHistory() {
+        // Проверяем, авторизован ли пользователь
+        const isGuest = {{ is_guest|tojson }};
+
+        if (isGuest) {
+            showToast('Авторизация', 'Чтобы очищать историю, необходимо авторизоваться', 'warning');
+            return;
+        }
+
+        if (confirm('Вы уверены, что хотите очистить историю загрузок?')) {
+            // Здесь можно добавить API для очистки всей истории
+            showToast('Информация', 'Функция очистки всей истории в разработке', 'info');
+        }
+    }
+
+    // Загрузка из истории (обновленная версия)
+    async function loadFromHistory(historyItem) {
+        // Проверяем, авторизован ли пользователь
+        const isGuest = {{ is_guest|tojson }};
+
+        if (isGuest) {
+            showToast('Авторизация', 'Чтобы загружать изображения из истории, необходимо авторизоваться', 'warning');
+            return;
+        }
+
+        showLoading('Загрузка из истории...');
+
+        try {
+            // Используем URL изображения напрямую
+            const response = await fetch(historyItem.dataUrl);
+            const blob = await response.blob();
+            const file = new File([blob], historyItem.name, { type: 'image/jpeg' });
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const serverResponse = await fetch('/upload_single', {
+                method: 'POST',
+                body: formData
+            });
+
+            const contentType = serverResponse.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const text = await serverResponse.text();
+                console.error('Server returned non-JSON response:', text);
+                throw new Error('Сервер вернул некорректный ответ');
+            }
+
+            const data = await serverResponse.json();
+
+            if (data.success) {
+                displayImagePreview(data.image_data, data.filename);
+
+                currentSessionId = data.session_id;
+                images = {
+                    0: {
+                        name: data.filename,
+                        dataUrl: data.image_data,
+                        thumb: data.image_data
+                    }
+                };
+                currentImageIndex = 0;
+                showImageList();
+                showToast('Успех', 'Изображение загружено из истории', 'success');
+            } else {
+                throw new Error(data.error || 'Ошибка загрузки');
+            }
+        } catch (error) {
+            console.error('Load from history error:', error);
+            showToast('Ошибка', error.message, 'error');
+        } finally {
+            hideLoading();
+        }
+    }
+
+    // Настройка обработчиков событий
+    function setupEventListeners() {
+    // Переключение вкладок
+    setupUploadTab('single');
+    setupUploadTab('zip');
+
+    // Обработка перетаскивания для одиночного изображения
+    const singleZone = document.getElementById('single-upload-zone');
+    setupDragAndDrop(singleZone, handleSingleImageDrop);
+
+    // Обработка перетаскивания для ZIP
+    const zipZone = document.getElementById('zip-upload-zone');
+    setupDragAndDrop(zipZone, handleZipDrop);
+
+    // Клики по canvas
+    canvas.addEventListener('click', handleCanvasClick);
+    canvas.addEventListener('mousedown', startDrag);
+    canvas.addEventListener('mousemove', handleDrag);
+    canvas.addEventListener('mouseup', stopDrag);
+    canvas.addEventListener('wheel', handleZoom);
+
+    // ПОЛНАЯ БЛОКИРОВКА контекстного меню на canvas
+    canvas.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+    });
+    // Добавляем обработчик контекстного меню для предотвращения появления стандартного меню при правом клике
+    canvas.addEventListener('contextmenu', preventContextMenu);
+
+    // Добавляем обработчик mouseleave на случай, если мышь уйдет за пределы canvas во время перетаскивания
+    canvas.addEventListener('mouseleave', stopDrag);
+
+    // Изменение размера окна
+    window.addEventListener('resize', resizeCanvas);
+}
+
+// Добавляем глобальную переменную для отслеживания режима перетаскивания
+let dragMode = null; // 'left' или 'right'
+
+    // Настройка drag and drop для зоны
+    function setupDragAndDrop(zone, handler) {
+        zone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            zone.classList.add('drag-over');
+        });
+
+        zone.addEventListener('dragleave', () => {
+            zone.classList.remove('drag-over');
+        });
+
+        zone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            zone.classList.remove('drag-over');
+            handler(e.dataTransfer.files);
+        });
+    }
+
+    // Настройка вкладки загрузки
+    function setupUploadTab(type) {
+    const zone = document.getElementById(`${type}-upload-zone`);
+    const fileInput = document.getElementById(`${type}-file-input`);
+
+    // Убираем onclick из HTML и добавляем здесь обработчик для кнопки
+    if (type === 'zip') {
+        const uploadButton = document.getElementById('zip-upload-button');
+        if (uploadButton) {
+            uploadButton.addEventListener('click', (e) => {
+                e.stopPropagation(); // Останавливаем всплытие
+                fileInput.click();
+            });
+        }
+    }
+
+    zone.addEventListener('click', (e) => {
+        // Проверяем, что кликнули по зоне или по тексту, НЕ по кнопке
+        if (e.target === zone ||
+            e.target.classList.contains('upload-text') ||
+            e.target.classList.contains('upload-subtext') ||
+            e.target.classList.contains('upload-icon')) {
+            fileInput.click();
+        }
+    });
+
+    // Обработчик изменения файла (когда пользователь выбрал файл)
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            if (type === 'single') {
+                handleSingleImageUpload(e.target.files);
+            } else if (type === 'zip') {
+                handleZipUpload(e.target.files[0]);
+            }
+            // Сбрасываем значение инпута, чтобы можно было выбрать тот же файл снова
+            e.target.value = '';
+        }
+    });
+}
+
+    // Переключение вкладок загрузки
+    function switchUploadTab(tab) {
+        // Обновляем активную вкладку
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        event.target.classList.add('active');
+
+        // Показываем соответствующую вкладку
+        document.querySelectorAll('.upload-tab-content').forEach(content => {
+            content.style.display = 'none';
+        });
+
+        document.getElementById(`${tab}-upload-tab`).style.display = 'block';
+        currentUploadType = tab;
+    }
+
+    // Обработка перетаскивания одиночного изображения
+    function handleSingleImageDrop(files) {
+        if (files.length > 0) {
+            handleSingleImageUpload(files);
+        }
+    }
+
+    // Обработка перетаскивания ZIP
+    function handleZipDrop(files) {
+        if (files.length > 0 && files[0].name.endsWith('.zip')) {
+            handleZipUpload(files[0]);
+        } else {
+            showToast('Ошибка', 'Пожалуйста, загрузите ZIP-архив', 'error');
+        }
+    }
+
+    // Загрузка одиночного изображения
+async function handleSingleImageUpload(files) {
+    if (!files || files.length === 0) return;
+
+    const file = files[0];
+
+    // Проверка формата файла
+    const validFormats = ['.png', '.jpg', '.jpeg', '.bmp', '.tiff'];
+    const isValidFormat = validFormats.some(format =>
+        file.name.toLowerCase().endsWith(format)
+    );
+
+    if (!isValidFormat) {
+        showToast('Ошибка', 'Неподдерживаемый формат файла. Используйте PNG, JPG, JPEG, BMP или TIFF.', 'error');
+        return;
+    }
+
+    // Показываем превью сразу после выбора файла
+    showImagePreview(file);
+
+    showLoading('Загрузка изображения...');
+
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch('/upload_single', {
+            method: 'POST',
+            body: formData
+        });
+
+        // Проверяем, что ответ в формате JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            console.error('Server returned non-JSON response:', text);
+            throw new Error('Сервер вернул некорректный ответ');
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Немедленно отображаем изображение в правой панели
+            displayImagePreview(data.image_data, data.filename);
+
+            // Сохраняем для дальнейшей работы
+            currentSessionId = data.session_id;
+            console.log('Session ID set:', currentSessionId);
+
+            images = {
+                0: {
+                    name: data.filename,
+                    dataUrl: data.image_data,
+                    thumb: data.image_data
+                }
+            };
+            currentImageIndex = 0;
+            loadedImageNames.add(data.filename);
+
+            // Инициализируем хранилище для множественных масок
+            const imageName = data.filename;
+            if (!window.multiMasks[imageName]) {
+                window.multiMasks[imageName] = [];
+            }
+
+            // Показываем информацию об изображении
+            document.getElementById('image-info').style.display = 'block';
+
+            // Показываем индикатор зума
+            const zoomIndicator = document.getElementById('zoom-indicator');
+            if (zoomIndicator) zoomIndicator.style.display = 'flex';
+
+            showToast('Успех', 'Изображение успешно загружено', 'success');
+
+            // Сохраняем изображение в БД для авторизованных пользователей
+            const isGuest = {{ is_guest|tojson }};
+            if (!isGuest) {
+                await saveUploadedImageToDB(file);
+            }
+        } else {
+            throw new Error(data.error || 'Ошибка загрузки');
+        }
+    } catch (error) {
+        console.error('Upload error:', error);
+        showToast('Ошибка', error.message, 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// Новая функция для сохранения загруженного изображения в БД
+async function saveUploadedImageToDB(file) {
+    console.log('СОХРАНЕНИЕ В БД вызвано для файла:', file.name);
+    console.trace(); // Покажет стек вызовов - кто вызвал эту функцию
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch('/api/images/save_uploaded', {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            console.log('Изображение сохранено в БД:', result.filename);
+            // Обновляем историю
+            await loadUserHistory();
+        } else {
+            console.error('Ошибка сохранения в БД:', result.message);
+        }
+    } catch (error) {
+        console.error('Error saving to database:', error);
+    }
+}
+
+    // Функция для отображения предпросмотра изображения
+function displayImagePreview(imageData, filename) {
+    // Скрываем сообщение об отсутствии изображения
+    document.getElementById('no-image-message').style.display = 'none';
+
+    // Показываем canvas
+    const canvas = document.getElementById('main-canvas');
+    canvas.style.display = 'block';
+
+    // Показываем элементы управления
+    document.querySelector('.canvas-controls').style.display = 'flex';
+    document.querySelector('.point-type-selector').style.display = 'flex';
+
+    // Показываем индикатор зума
+    const zoomIndicator = document.getElementById('zoom-indicator');
+    if (zoomIndicator) zoomIndicator.style.display = 'flex';
+
+    // Загружаем изображение на canvas
+    const img = new Image();
+    img.onload = () => {
+        currentImage = img;
+
+        // Вычисляем оптимальный масштаб для вписывания изображения в canvas
+        resizeCanvas();
+
+        // Сбрасываем позицию и вычисляем оптимальный зум
+        offsetX = 0;
+        offsetY = 0;
+
+        // Вычисляем масштаб, чтобы изображение вписалось в canvas с минимальными отступами
+        const containerWidth = canvas.width;
+        const containerHeight = canvas.height;
+
+        const scaleX = containerWidth / img.width;
+        const scaleY = containerHeight / img.height;
+
+        // Берем минимальный масштаб, чтобы изображение полностью вписалось
+        zoom = Math.min(scaleX, scaleY) * 1.2;
+
+        // Дополнительная проверка: если изображение меньше canvas, не увеличиваем его
+        if (zoom > 1) {
+            zoom = 1; // Не увеличиваем изображение, если оно уже маленькое
+        }
+
+        renderCanvas();
+
+        // Обновляем информацию об изображении
+        document.getElementById('image-name-display').textContent = filename;
+        document.getElementById('image-dimensions').textContent =
+            `${img.width} × ${img.height} пикселей`;
+
+        // Активируем кнопки
+        document.getElementById('generate-btn').disabled = false;
+        document.getElementById('undo-btn').disabled = false;
+
+        // Показываем список изображений (только одно)
+        showImageList();
+
+        // Показываем информационное сообщение
+        showToast('Информация', 'Изображение загружено. Используйте колесико мыши для масштабирования.', 'info');
+    };
+    img.onerror = () => {
+        console.error('Ошибка загрузки изображения:', filename);
+        showToast('Ошибка', 'Не удалось загрузить изображение', 'error');
+    };
+    img.src = imageData;
+}
+
+    // Загрузка ZIP
+async function handleZipUpload(file) {
+    if (!file) return;
+
+    showLoading('Загрузка ZIP-архива...');
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        const response = await fetch('/upload', {
+            method: 'POST',
+            body: formData
+        });
+
+        // Проверяем, что ответ в формате JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            console.error('Server returned non-JSON response:', text);
+            throw new Error('Сервер вернул некорректный ответ');
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+            currentSessionId = data.session_id;
+            console.log('ZIP Session ID set:', currentSessionId);
+
+            images = {};
+            loadedImageNames.clear();
+
+            // Проверяем наличие необходимых полей
+            if (!data.image_keys || !data.images) {
+                console.error('Invalid server response format:', data);
+                throw new Error('Неверный формат ответа от сервера');
+            }
+
+            // Проходим по всем ключам
+            let index = 0;
+
+            data.image_keys.forEach((key) => {
+                // Пропускаем, если нет данных для этого ключа
+                if (!data.images[key]) {
+                    console.warn(`No image data for key: ${key}`);
+                    return;
+                }
+
+                // Декодируем имя файла если нужно
+                let fileName = key;
+                try {
+                    // Пытаемся декодировать URI-компоненты
+                    fileName = decodeURIComponent(key);
+                } catch (e) {
+                    // Если не получается, используем как есть
+                    console.warn('Could not decode filename:', key);
+                }
+
+                images[index] = {
+                    name: fileName,
+                    dataUrl: data.images[key],
+                    thumb: data.images[key]
+                };
+
+                // Инициализируем хранилище для множественных масок
+                if (!window.multiMasks[fileName]) {
+                    window.multiMasks[fileName] = [];
+                }
+
+                index++;
+            });
+
+            if (Object.keys(images).length > 0) {
+                displayImagePreview(images[0].dataUrl, images[0].name);
+                currentImageIndex = 0;
+                showImageList();
+
+                showToast('Успех', `Архив успешно загружен. Загружено ${Object.keys(images).length} изображений`, 'success');
+
+                // Сохраняем первое изображение в БД для авторизованных пользователей
+                const isGuestElement = document.getElementById('is-guest-data');
+                const isGuest = isGuestElement ? isGuestElement.value === 'true' : true;
+
+                if (!isGuest) {
+                    showToast('Информация', 'Изображения из ZIP будут сохранены при создании маски', 'info');
+                    // Здесь можно вызвать функцию загрузки истории
+                    if (typeof loadUserHistory === 'function') {
+                        await loadUserHistory();
+                    }
+                }
+            } else {
+                showToast('Предупреждение', 'В архиве не найдено подходящих изображений', 'warning');
+            }
+        } else {
+            throw new Error(data.error || 'Ошибка загрузки');
+        }
+    } catch (error) {
+        console.error('ZIP upload error:', error);
+        showToast('Ошибка', error.message, 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+    // Загрузка примера
+    async function loadExampleData() {
+        showLoading('Загрузка примеров...');
+
+        try {
+            // Здесь можно добавить предопределенные примеры
+            showToast('Информация', 'Функция загрузки примеров в разработке', 'info');
+        } catch (error) {
+            showToast('Ошибка', error.message, 'error');
+        } finally {
+            hideLoading();
+        }
+    }
+
+    // Функция для загрузки и отображения маски
+    function loadMaskForCurrentImage(maskDataUrl) {
+        return new Promise((resolve, reject) => {
+            const maskImg = new Image();
+            maskImg.onload = () => {
+                window.currentMaskImage = maskImg;
+                currentMask = true; // Указываем, что маска есть
+
+                // Вычисляем площадь маски
+                calculateMaskAreaFromImage(maskImg).then(area => {
+                    currentMaskArea = area;
+                    updateAreaDisplay(area);
+                    renderCanvas(); // Перерисовываем canvas с маской
+                    resolve();
+                }).catch(error => {
+                    console.error('Ошибка вычисления площади:', error);
+                    renderCanvas();
+                    resolve();
+                });
+            };
+            maskImg.onerror = () => {
+                console.error('Ошибка загрузки маски');
+                reject();
+            };
+            maskImg.src = maskDataUrl;
+        });
+    }
+
+    // Загрузка изображения
+async function loadImage(index) {
+    if (!images[index]) return;
+
+    const img = new Image();
+    img.onload = () => {
+        currentImage = img;
+
+        // Загружаем сохраненные маски для этого изображения, если они есть
+        const imageName = images[index].name;
+        if (window.multiMasks && window.multiMasks[imageName] && window.multiMasks[imageName].length > 0) {
+            // Устанавливаем флаг, что маски есть
+            currentMask = true;
+        } else {
+            currentMask = false;
+            window.currentMaskImage = null;
+            window.currentTempMask = null;
+            currentMaskArea = 0;
+            updateAreaDisplay(0);
+        }
+
+        // Вычисляем оптимальный масштаб
+        resizeCanvas();
+
+        // Сбрасываем позицию и вычисляем оптимальный зум
+        offsetX = 0;
+        offsetY = 0;
+
+        // Вычисляем масштаб, чтобы изображение вписалось в canvas
+        const containerWidth = canvas.width;
+        const containerHeight = canvas.height;
+
+        const scaleX = containerWidth / img.width;
+        const scaleY = containerHeight / img.height;
+
+        // Берем минимальный масштаб, чтобы изображение полностью вписалось
+        zoom = Math.min(scaleX, scaleY) * 0.95; // 0.95 для небольшого отступа от краев
+
+        renderCanvas();
+
+        updateImageSelection(index);
+        updateImageInfo();
+
+        // Показываем canvas и скрываем сообщение
+        document.getElementById('main-canvas').style.display = 'block';
+        document.getElementById('no-image-message').style.display = 'none';
+        document.querySelector('.canvas-controls').style.display = 'flex';
+        document.querySelector('.point-type-selector').style.display = 'flex';
+
+        // Показываем индикатор зума
+        const zoomIndicator = document.getElementById('zoom-indicator');
+        if (zoomIndicator) zoomIndicator.style.display = 'flex';
+
+        document.getElementById('generate-btn').disabled = false;
+        document.getElementById('image-info').style.display = 'block';
+
+        // Активируем кнопку завершения маски, если есть точки
+        document.getElementById('complete-btn').disabled = points.length === 0;
+    };
+    img.onerror = () => {
+        console.error('Ошибка загрузки изображения:', images[index].name);
+        showToast('Ошибка', 'Не удалось загрузить изображение', 'error');
+    };
+    img.src = images[index].dataUrl;
+}
+
+    // Обновление информации об изображении
+    function updateImageInfo() {
+        if (!currentImage) return;
+
+        document.getElementById('image-name-display').textContent =
+            images[currentImageIndex]?.name || 'Изображение';
+        document.getElementById('image-dimensions').textContent =
+            `${currentImage.width} × ${currentImage.height} пикселей`;
+    }
+
+    // Навигация по изображениям
+    function nextImage() {
+        if (currentImageIndex < Object.keys(images).length - 1) {
+            currentImageIndex++;
+            loadImage(currentImageIndex);
+        }
+    }
+
+    function prevImage() {
+        if (currentImageIndex > 0) {
+            currentImageIndex--;
+            loadImage(currentImageIndex);
+        }
+    }
+
+    // Функция для предварительной загрузки изображения маски в кэш
+    function loadMaskImage(dataUrl) {
+        return new Promise((resolve) => {
+            if (window.maskImageCache[dataUrl]) {
+                resolve(window.maskImageCache[dataUrl]);
+            } else {
+                const img = new Image();
+                img.onload = () => {
+                    window.maskImageCache[dataUrl] = img;
+                    resolve(img);
+                };
+                img.src = dataUrl;
+            }
+        });
+    }
+
+    // ИСПРАВЛЕННАЯ функция отрисовки canvas
+async function renderCanvas() {
+    if (!currentImage || !canvas) return;
+
+    if (isRendering) {
+        setTimeout(() => renderCanvas(), 50);
+        return;
+    }
+
+    isRendering = true;
+
+    try {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        ctx.save();
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.scale(zoom, zoom);
+        ctx.translate(offsetX, offsetY);
+
+        const x = -currentImage.width / 2;
+        const y = -currentImage.height / 2;
+
+        // 1. Рисуем оригинальное изображение
+        ctx.drawImage(currentImage, x, y, currentImage.width, currentImage.height);
+
+        const currentImageName = images[currentImageIndex].name;
+
+        // 2. Рисуем ВСЕ сохраненные маски (просто как есть, с прозрачностью)
+        if (window.multiMasks && window.multiMasks[currentImageName] && window.multiMasks[currentImageName].length > 0) {
+            for (let i = 0; i < window.multiMasks[currentImageName].length; i++) {
+                const mask = window.multiMasks[currentImageName][i];
+
+                try {
+                    const maskImg = await loadMaskImage(mask.dataUrl);
+
+                    if (maskImg && maskImg.width > 0 && maskImg.height > 0) {
+                        ctx.save();
+
+                        // Просто рисуем маску поверх с прозрачностью
+                        ctx.globalAlpha = 0.6;
+                        ctx.globalCompositeOperation = 'source-over';
+                        ctx.drawImage(maskImg, x, y, currentImage.width, currentImage.height);
+
+                        ctx.restore();
+                    }
+                } catch (maskError) {
+                    console.error('Ошибка при отрисовке сохраненной маски:', maskError);
+                }
+            }
+        }
+
+        // 3. Рисуем ВРЕМЕННУЮ маску (просто как есть, с прозрачностью)
+        if (window.currentTempMask) {
+            try {
+                const maskImg = await loadMaskImage(window.currentTempMask);
+
+                if (maskImg && maskImg.width > 0 && maskImg.height > 0) {
+                    ctx.save();
+
+                    // Просто рисуем маску поверх с прозрачностью
+                    ctx.globalAlpha = 0.6;
+                    ctx.globalCompositeOperation = 'source-over';
+                    ctx.drawImage(maskImg, x, y, currentImage.width, currentImage.height);
+
+                    ctx.restore();
+                }
+            } catch (maskError) {
+                console.error('Ошибка при отрисовке временной маски:', maskError);
+            }
+        }
+
+        // 4. Рисуем точки поверх всего
+        ctx.globalAlpha = 1.0;
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.shadowBlur = 0;
+        ctx.shadowColor = 'transparent';
+
+        // Базовый размер точки (в пикселях при zoom = 1)
+        const basePointSize = 10;
+        // Минимальный и максимальный размер точки
+        const minPointSize = 1;
+        const maxPointSize = 20;
+
+        // Вычисляем размер точки с учетом зума
+        // Чем больше зум, тем меньше точка относительно изображения, но абсолютный размер не становится слишком маленьким
+        let pointSize = basePointSize / Math.sqrt(zoom); // Используем квадратный корень для более плавного изменения
+
+        // Ограничиваем размер точки
+        pointSize = Math.max(minPointSize, Math.min(maxPointSize, pointSize));
+
+        // Размер внешнего свечения (пропорционален размеру точки)
+        const glowSize = pointSize * 1.5;
+        const highlightSize = pointSize * 0.4;
+
+        points.forEach(point => {
+    const pointX = point.x - currentImage.width / 2;
+    const pointY = point.y - currentImage.height / 2;
+
+    ctx.save();
+
+    // Внешнее свечение
+    ctx.shadowColor = point.type === 'positive' ? 'rgba(56, 176, 0, 0.5)' : 'rgba(255, 0, 110, 0.5)';
+    ctx.shadowBlur = 15 / zoom; // Тень тоже масштабируем
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+
+    ctx.beginPath();
+    ctx.arc(pointX, pointY, glowSize, 0, Math.PI * 2);
+    ctx.fillStyle = point.type === 'positive' ? 'rgba(56, 176, 0, 0.3)' : 'rgba(255, 0, 110, 0.3)';
+    ctx.fill();
+
+    // Основная точка
+    ctx.shadowBlur = 10 / zoom;
+    ctx.beginPath();
+    ctx.arc(pointX, pointY, pointSize, 0, Math.PI * 2);
+    ctx.fillStyle = point.type === 'positive' ? '#38b000' : '#ff006e';
+    ctx.fill();
+
+    // Блик
+    ctx.shadowBlur = 5 / zoom;
+    ctx.beginPath();
+    ctx.arc(pointX - pointSize * 0.15, pointY - pointSize * 0.15, highlightSize, 0, Math.PI * 2);
+    ctx.fillStyle = 'white';
+    ctx.fill();
+
+    ctx.restore();
+});
+
+        ctx.restore();
+        updateZoomIndicator();
+
+    } catch (error) {
+        console.error('Ошибка при отрисовке:', error);
+    } finally {
+        isRendering = false;
+    }
+}
+
+// Функция для принудительного обновления отображения маски
+async function forceUpdateMaskDisplay() {
+    if (!currentImage) return;
+
+    // Сбрасываем кэш для текущей временной маски
+    if (window.currentTempMask) {
+        // Удаляем из кэша, чтобы загрузить заново
+        delete window.maskImageCache[window.currentTempMask];
+    }
+
+    await renderCanvas();
+}
+    // Исправленная функция обработки кликов по canvas
+   function handleCanvasClick(e) {
+    if (!currentImage) return;
+
+    // Игнорируем клики правой кнопкой (они используются для перемещения)
+    if (e.button === 2) {
+        e.preventDefault();
+        return;
+    }
+
+    // В режиме руки игнорируем клики левой кнопкой (только перетаскивание)
+    if (currentTool === 'hand') {
+        return;
+    }
+
+    // В режиме точек обрабатываем клики левой кнопкой как добавление точек
+    const rect = canvas.getBoundingClientRect();
+
+    // Получаем координаты клика относительно canvas
+    const canvasX = e.clientX - rect.left;
+    const canvasY = e.clientY - rect.top;
+
+    // Преобразуем координаты canvas в координаты изображения
+    const transformedX = (canvasX - canvas.width / 2) / zoom - offsetX;
+    const transformedY = (canvasY - canvas.height / 2) / zoom - offsetY;
+
+    // Затем преобразуем в координаты изображения
+    const imgX = transformedX + currentImage.width / 2;
+    const imgY = transformedY + currentImage.height / 2;
+
+    // Проверяем, что клик внутри изображения
+    if (imgX >= 0 && imgX < currentImage.width &&
+        imgY >= 0 && imgY < currentImage.height) {
+
+        points.push({
+            x: imgX,
+            y: imgY,
+            type: pointType
+        });
+
+        updatePointsList();
+        renderCanvas();
+
+        document.getElementById('undo-btn').disabled = false;
+        document.getElementById('complete-btn').disabled = false;
+    }
+}
+
+    // Исправленная функция для начала перетаскивания
+   function startDrag(e) {
+    if (!currentImage) return;
+
+    // Проверяем, что нажата правая кнопка мыши (button === 2)
+    // Или левая кнопка в режиме руки, или с зажатым модификатором
+    const isRightButton = e.button === 2;
+
+    if (isRightButton) {
+        // Правая кнопка всегда включает режим перемещения
+        e.preventDefault(); // Предотвращаем появление контекстного меню
+        isDragging = true;
+        dragMode = 'right'; // Запоминаем, что тащим правой кнопкой
+    }
+    // Левая кнопка работает в зависимости от режима
+    else if (currentTool === 'hand' || e.ctrlKey || e.shiftKey) {
+        isDragging = true;
+        dragMode = 'left';
+    } else {
+        return; // В режиме точек без модификатора не начинаем перетаскивание
+    }
+
+    // Сохраняем начальную позицию мыши в координатах canvas
+    const rect = canvas.getBoundingClientRect();
+    dragStartX = e.clientX - rect.left;
+    dragStartY = e.clientY - rect.top;
+
+    // Сохраняем текущие offset для последующего расчета
+    dragOffsetX = offsetX;
+    dragOffsetY = offsetY;
+
+    // Добавляем класс для изменения курсора
+    canvas.style.cursor = 'grabbing';
+    canvas.parentElement.classList.add('dragging');
+}
+
+    function blockContextMenu(e) {
+    // Блокируем для всех типов кликов (левая, правая, средняя кнопка)
+    e.preventDefault();
+    e.stopPropagation();
+    return false;
+}
+    // Исправленная функция для перетаскивания
+    function handleDrag(e) {
+    if (!isDragging || !currentImage) return;
+
+    e.preventDefault(); // Предотвращаем выделение текста и другие действия
+
+    const rect = canvas.getBoundingClientRect();
+    const currentX = e.clientX - rect.left;
+    const currentY = e.clientY - rect.top;
+
+    // Вычисляем смещение мыши в пикселях canvas
+    const dx = currentX - dragStartX;
+    const dy = currentY - dragStartY;
+
+    // Преобразуем смещение в координаты изображения с учетом текущего зума
+    offsetX = dragOffsetX + dx / zoom;
+    offsetY = dragOffsetY + dy / zoom;
+
+    renderCanvas();
+}
+
+    function stopDrag(e) {
+    if (!isDragging) return;
+
+    isDragging = false;
+    dragMode = null;
+
+    // Возвращаем курсор в зависимости от текущего инструмента
+    if (currentTool === 'hand') {
+        canvas.style.cursor = 'grab';
+    } else {
+        canvas.style.cursor = 'crosshair';
+    }
+    canvas.parentElement.classList.remove('dragging');
+}
+function setTool(tool) {
+    currentTool = tool;
+
+    // Обновляем стили кнопок
+    document.getElementById('tool-hand-btn').classList.toggle('active', tool === 'hand');
+    document.getElementById('tool-point-btn').classList.toggle('active', tool === 'point');
+
+    // Меняем курсор в зависимости от инструмента
+    if (canvas) {
+        if (tool === 'hand') {
+            canvas.style.cursor = 'grab';
+        } else {
+            canvas.style.cursor = 'crosshair';
+        }
+    }
+
+    showToast('Информация', `Режим: ${tool === 'hand' ? 'перемещение' : 'разметка точками'}`, 'info', 1500);
+}
+    // Исправленная функция для зума
+    function handleZoom(e) {
+        if (!currentImage) return;
+
+        e.preventDefault();
+
+        const rect = canvas.getBoundingClientRect();
+
+        // Получаем позицию курсора относительно canvas
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        // Преобразуем позицию курсора в координаты изображения до зума
+        const worldX = (mouseX - canvas.width / 2) / zoom - offsetX;
+        const worldY = (mouseY - canvas.height / 2) / zoom - offsetY;
+
+        // Изменяем зум
+        const zoomFactor = 0.1;
+        if (e.deltaY < 0) {
+            zoom *= (1 + zoomFactor);
+        } else {
+            zoom /= (1 + zoomFactor);
+        }
+        zoom = Math.max(0.1, Math.min(10, zoom));
+
+        // Вычисляем новые offset так, чтобы точка под курсором осталась на месте
+        offsetX = (mouseX - canvas.width / 2) / zoom - worldX;
+        offsetY = (mouseY - canvas.height / 2) / zoom - worldY;
+
+        renderCanvas();
+    }
+
+    // Исправленная функция zoomIn
+    function zoomIn() {
+        if (!currentImage) return;
+
+        // Центр canvas
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+
+        // Точка в центре в координатах изображения
+        const worldX = (centerX - canvas.width / 2) / zoom - offsetX;
+        const worldY = (centerY - canvas.height / 2) / zoom - offsetY;
+
+        // Увеличиваем зум
+        zoom *= 1.2;
+        zoom = Math.min(10, zoom);
+
+        // Корректируем offset, чтобы центр оставался на месте
+        offsetX = (centerX - canvas.width / 2) / zoom - worldX;
+        offsetY = (centerY - canvas.height / 2) / zoom - worldY;
+
+        renderCanvas();
+    }
+
+    // Исправленная функция zoomOut
+    function zoomOut() {
+        if (!currentImage) return;
+
+        // Центр canvas
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+
+        // Точка в центре в координатах изображения
+        const worldX = (centerX - canvas.width / 2) / zoom - offsetX;
+        const worldY = (centerY - canvas.height / 2) / zoom - offsetY;
+
+        // Уменьшаем зум
+        zoom /= 1.2;
+        zoom = Math.max(0.1, zoom);
+
+        // Корректируем offset, чтобы центр оставался на месте
+        offsetX = (centerX - canvas.width / 2) / zoom - worldX;
+        offsetY = (centerY - canvas.height / 2) / zoom - worldY;
+
+        renderCanvas();
+    }
+
+    // Исправленная функция сброса вида
+    function resetView() {
+        if (!currentImage) return;
+
+        zoom = 1;
+        offsetX = 0;
+        offsetY = 0;
+        renderCanvas();
+
+        showToast('Информация', 'Вид сброшен', 'info');
+    }
+
+    // Изменение размера canvas
+    function resizeCanvas() {
+    if (!canvas) return;
+
+    const container = canvas.parentElement;
+    const oldWidth = canvas.width;
+    const oldHeight = canvas.height;
+
+    canvas.width = container.clientWidth;
+    canvas.height = container.clientHeight;
+
+    // Если есть изображение и размеры контейнера изменились,
+    // пересчитываем масштаб для оптимального отображения
+    if (currentImage && (oldWidth !== canvas.width || oldHeight !== canvas.height)) {
+        // Сохраняем текущий относительный центр изображения
+        if (zoom > 0) {
+            // Пересчитываем масштаб для нового размера контейнера
+            const scaleX = canvas.width / currentImage.width;
+            const scaleY = canvas.height / currentImage.height;
+
+            // Если изображение было вписано полностью (zoom < 1), пересчитываем
+            if (zoom < 1) {
+                zoom = Math.min(scaleX, scaleY) * 0.95;
+            }
+            // Если было увеличено, сохраняем масштаб
+        }
+
+        renderCanvas();
+    } else if (currentImage) {
+        renderCanvas();
+    }
+}
+
+    // Функции для работы с площадью
+    function updateAreaDisplay(area) {
+        const areaInfo = document.getElementById('area-info');
+        const areaValue = document.getElementById('area-value');
+
+        if (area > 0) {
+            areaInfo.style.display = 'block';
+            areaValue.textContent = area.toLocaleString();
+
+            // Добавляем анимацию обновления
+            areaValue.classList.add('updated');
+            setTimeout(() => {
+                areaValue.classList.remove('updated');
+            }, 300);
+        } else {
+            areaInfo.style.display = 'none';
+            areaValue.textContent = '0';
+        }
+    }
+
+    function clearAreaDisplay() {
+        currentMaskImageData = null;
+        currentMaskArea = 0;
+        updateAreaDisplay(0);
+    }
+
+    async function calculateMaskAreaFromImage(maskImage) {
+        return new Promise((resolve, reject) => {
+            try {
+                // Создаем временный canvas для анализа маски
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = maskImage.width;
+                tempCanvas.height = maskImage.height;
+                const tempCtx = tempCanvas.getContext('2d');
+
+                // Рисуем маску на canvas
+                tempCtx.drawImage(maskImage, 0, 0, maskImage.width, maskImage.height);
+
+                // Получаем данные пикселей
+                const imageData = tempCtx.getImageData(0, 0, maskImage.width, maskImage.height);
+                const data = imageData.data;
+
+                // Подсчитываем количество пикселей в маске
+                let area = 0;
+                for (let i = 0; i < data.length; i += 4) {
+                    // Проверяем, является ли пиксель частью маски (яркий пиксель)
+                    if (data[i] > 200 || data[i + 1] > 200 || data[i + 2] > 200) {
+                        area++;
+                    }
+                }
+
+                resolve(area);
+            } catch (error) {
+                console.error('Ошибка вычисления площади:', error);
+                reject(error);
+            }
+        });
+    }
+
+    function addAreaToResult(area, imageName, maskIndex = 0) {
+        const resultsGrid = document.getElementById('results-grid');
+        if (resultsGrid) {
+            // Ищем результат с соответствующим именем и индексом маски
+            const resultItems = resultsGrid.querySelectorAll('.result-item');
+            let foundItem = null;
+
+            for (let item of resultItems) {
+                const nameDiv = item.querySelector('.result-name');
+                const maskIndexEl = item.querySelector('.result-mask-index');
+                const itemMaskIndex = maskIndexEl ? parseInt(maskIndexEl.textContent) : 0;
+
+                if (nameDiv && nameDiv.textContent.includes(imageName) && itemMaskIndex === maskIndex) {
+                    foundItem = item;
+                    break;
+                }
+            }
+
+            if (foundItem) {
+                // Обновляем или создаем бейдж с площадью
+                let areaBadge = foundItem.querySelector('.result-area-badge');
+                if (!areaBadge) {
+                    areaBadge = document.createElement('div');
+                    areaBadge.className = 'result-area-badge';
+                    areaBadge.innerHTML = `
+                        <i class="fas fa-vector-square"></i>
+                        <span class="area-value">0</span>
+                        <span class="area-unit">px²</span>
+                    `;
+                    foundItem.appendChild(areaBadge);
+                }
+
+                const areaValue = areaBadge.querySelector('.area-value');
+                areaValue.textContent = area.toLocaleString('ru-RU');
+                areaBadge.style.display = 'flex';
+                areaBadge.title = `Точная площадь: ${area} пикселей`;
+            }
+        }
+    }
+
+    // ИСПРАВЛЕННАЯ функция создания маски - маска появляется сразу
+    async function generateMask() {
+    if (points.length === 0) {
+        showToast('Ошибка', 'Добавьте точки для сегментации', 'error');
+        return;
+    }
+
+    if (!currentSessionId) {
+        showToast('Ошибка', 'Сессия не найдена. Пожалуйста, загрузите изображение заново.', 'error');
+        return;
+    }
+
+    console.log('Current session ID:', currentSessionId);
+    console.log('Points:', points);
+
+    showLoading('Создание маски...');
+
+    // Подготавливаем данные в формате, который ожидает сервер
+    const pointsArray = points.map(p => [p.x, p.y]);
+    const labelsArray = points.map(p => p.type === 'positive' ? 1 : 0);
+
+    const payload = {
+        session_id: currentSessionId,
+        points: pointsArray,
+        labels: labelsArray
+    };
+
+    console.log('Sending to server:', JSON.stringify(payload, null, 2));
+
+    try {
+        const response = await fetch('/sam2/set_points', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        console.log('Response status:', response.status);
+
+        const responseText = await response.text();
+        console.log('Response text:', responseText);
+
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch (e) {
+            console.error('Failed to parse JSON:', e);
+            throw new Error('Сервер вернул некорректный ответ: ' + responseText.substring(0, 100));
+        }
+
+        if (response.ok && data.success) {
+            // Сохраняем маску во временное хранилище и сразу отображаем
+            if (data.mask_image) {
+                window.currentTempMask = data.mask_image;
+
+                // Удаляем из кэша, если там была старая версия
+                if (window.maskImageCache) {
+                    delete window.maskImageCache[data.mask_image];
+                }
+
+                // Принудительно перерисовываем canvas
+                await forceUpdateMaskDisplay();
+
+                showToast('Успех', 'Маска создана. Нажмите "Завершить маску" для сохранения.', 'success');
+
+                // Активируем кнопку завершения
+                document.getElementById('complete-btn').disabled = false;
+                document.getElementById('propagate-btn').disabled = false;
+            }
+        } else {
+            throw new Error(data.error || `Ошибка ${response.status}: ${responseText}`);
+        }
+    } catch (error) {
+        console.error('Generate mask error:', error);
+        showToast('Ошибка', error.message, 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+    // ИСПРАВЛЕННАЯ функция для завершения маски (сохранение текущей маски)
+    async function completeMask() {
+        if (!window.currentTempMask) {
+            showToast('Ошибка', 'Сначала создайте маску', 'error');
+            return;
+        }
+
+        const currentImageName = images[currentImageIndex].name;
+
+        // Инициализируем хранилище для этого изображения, если нужно
+        if (!window.multiMasks[currentImageName]) {
+            window.multiMasks[currentImageName] = [];
+        }
+
+        // Определяем цвет для новой маски
+        const maskColor = maskColors[window.multiMasks[currentImageName].length % maskColors.length];
+
+        // Сохраняем маску с цветом
+        const maskData = {
+            dataUrl: window.currentTempMask,
+            color: maskColor,
+            index: window.multiMasks[currentImageName].length,
+            points: [...points] // Сохраняем точки, использованные для создания маски
+        };
+
+        window.multiMasks[currentImageName].push(maskData);
+
+        // Обновляем отображение в результатах
+        updateResultsWithAllMasks();
+
+        // Очищаем временную маску
+        window.currentTempMask = null;
+
+        // Очищаем точки для следующей маски
+        points = [];
+        updatePointsList();
+
+        // Перерисовываем canvas со всеми сохраненными масками
+        await renderCanvas();
+
+        // Деактивируем кнопки
+        document.getElementById('undo-btn').disabled = true;
+        document.getElementById('complete-btn').disabled = true;
+
+        showToast('Успех', `Маска #${window.multiMasks[currentImageName].length} сохранена`, 'success');
+    }
+
+    // Новая функция для обновления результатов со всеми масками
+   function updateResultsWithAllMasks() {
+    const resultsGrid = document.getElementById('results-grid');
+    resultsGrid.innerHTML = '';
+
+    // Создаем массив данных для модального окна
+    const modalImages = [];
+
+    // Проходим по всем изображениям и их маскам
+    Object.keys(window.multiMasks).forEach(imageName => {
+        const masks = window.multiMasks[imageName];
+
+        masks.forEach((mask, maskIndex) => {
+            const maskId = `${imageName}_mask_${maskIndex + 1}`;
+
+            const div = document.createElement('div');
+            div.className = 'result-item';
+            div.setAttribute('data-image', imageName);
+            div.setAttribute('data-mask-index', maskIndex);
+
+            // Создаем контейнер для информации о маске
+            div.innerHTML = `
+                <img src="${mask.dataUrl}" class="result-thumb" alt="${imageName} - маска ${maskIndex + 1}">
+                <div class="result-name">${imageName} (маска ${maskIndex + 1})</div>
+                <div class="result-mask-index" style="display: none;">${maskIndex}</div>
+                <div class="result-area-badge" style="display: none; border-left: 4px solid ${mask.color}">
+                    <i class="fas fa-vector-square"></i>
+                    <span class="area-value">0</span>
+                    <span class="area-unit">px²</span>
+                </div>
+                <button class="result-delete-btn" onclick="deleteResultItem(this)" title="Удалить">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+
+            resultsGrid.appendChild(div);
+
+            // Вычисляем площадь для этой маски асинхронно
+            const img = new Image();
+            img.onload = async () => {
+                const area = await calculateMaskAreaFromImage(img);
+                const areaBadge = div.querySelector('.result-area-badge');
+                const areaValue = areaBadge.querySelector('.area-value');
+
+                areaValue.textContent = area.toLocaleString('ru-RU');
+                areaBadge.style.display = 'flex';
+                areaBadge.title = `Точная площадь: ${area} пикселей`;
+
+                // Добавляем в массив для модального окна
+                modalImages.push({
+                    src: mask.dataUrl,
+                    name: `${imageName} (маска ${maskIndex + 1})`,
+                    area: area.toLocaleString('ru-RU') + ' px²'
+                });
+            };
+            img.src = mask.dataUrl;
+        });
+    });
+
+    // Добавляем обработчики кликов на все элементы результатов
+    // Используем setTimeout, чтобы убедиться, что все элементы уже в DOM
+    setTimeout(() => {
+        const resultItems = resultsGrid.querySelectorAll('.result-item');
+        resultItems.forEach((item) => {
+            // Удаляем старый обработчик, если был
+            item.removeEventListener('click', item.clickHandler);
+
+            // Создаем новый обработчик
+            item.clickHandler = function(e) {
+                // Проверяем, что клик не по кнопке удаления
+                if (!e.target.closest('.result-delete-btn') && !e.target.closest('.result-area-badge')) {
+                    const img = this.querySelector('.result-thumb');
+                    const name = this.querySelector('.result-name').textContent;
+                    const areaBadge = this.querySelector('.area-value');
+                    const area = areaBadge ? areaBadge.textContent + ' px²' : '0 px²';
+
+                    console.log('Opening modal with:', img.src, name); // Для отладки
+
+                    openImageModal(
+                        img.src,
+                        name,
+                        area,
+                        modalImages.length > 0 ? modalImages : null
+                    );
+                }
+            };
+
+            // Добавляем новый обработчик
+            item.addEventListener('click', item.clickHandler);
+        });
+    }, 100);
+
+    document.getElementById('results-panel').style.display = 'block';
+}
+
+    // Распространение масок - доступно всем
+    async function propagateMasks() {
+        if (!currentSessionId) {
+            showToast('Ошибка', 'Сессия не найдена', 'error');
+            return;
+        }
+
+        showLoading('Распространение масок...', true);
+
+        const payload = {
+            session_id: currentSessionId
+        };
+
+        try {
+            // Сначала пробуем /propagate
+            let response = await fetch('/propagate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            // Если 400, пробуем /sam2/propagate
+            if (response.status === 400) {
+                console.log('Trying alternative endpoint /sam2/propagate...');
+                response = await fetch('/sam2/propagate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+            }
+
+            // Проверяем, что ответ в формате JSON
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const text = await response.text();
+                console.error('Server returned non-JSON response:', text);
+                throw new Error('Сервер вернул некорректный ответ');
+            }
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Сохраняем все маски как отдельные маски для каждого изображения
+                if (!window.multiMasks) window.multiMasks = {};
+
+                Object.keys(data.visualizations).forEach(key => {
+                    if (!window.multiMasks[key]) {
+                        window.multiMasks[key] = [];
+                    }
+
+                    // Добавляем новую маску для этого изображения
+                    const maskColor = maskColors[window.multiMasks[key].length % maskColors.length];
+                    window.multiMasks[key].push({
+                        dataUrl: data.visualizations[key],
+                        color: maskColor,
+                        index: window.multiMasks[key].length
+                    });
+                });
+
+                // Обновляем отображение результатов
+                updateResultsWithAllMasks();
+
+                // Перерисовываем canvas для текущего изображения
+                renderCanvas();
+
+                showToast('Успех', `Обработано ${data.processed_count} изображений`, 'success');
+            } else {
+                throw new Error(data.error || 'Ошибка распространения');
+            }
+        } catch (error) {
+            console.error('Propagate masks error:', error);
+            showToast('Ошибка', error.message, 'error');
+        } finally {
+            hideLoading();
+        }
+    }
+
+    // Утилиты
+    function setPointType(type) {
+        pointType = type;
+        document.querySelectorAll('.point-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`.point-btn.${type}`).classList.add('active');
+    }
+
+    function undoLastPoint() {
+        if (points.length > 0) {
+            points.pop();
+            updatePointsList();
+            renderCanvas();
+            document.getElementById('undo-btn').disabled = points.length === 0;
+            document.getElementById('complete-btn').disabled = points.length === 0;
+        }
+    }
+
+    function clearPoints() {
+        points = [];
+        currentMask = false;
+        window.currentMaskImage = null;
+        window.currentTempMask = null;
+        currentMaskArea = 0;
+        updateAreaDisplay(0);
+        updatePointsList();
+        renderCanvas();
+        document.getElementById('undo-btn').disabled = true;
+        document.getElementById('generate-btn').disabled = false;
+        document.getElementById('propagate-btn').disabled = true;
+        document.getElementById('complete-btn').disabled = true;
+    }
+
+    function updatePointsList() {
+        const container = document.getElementById('points-list');
+        const countElement = document.getElementById('points-count');
+
+        container.innerHTML = '';
+        points.forEach((point, index) => {
+            const div = document.createElement('div');
+            div.className = 'point-item';
+            div.innerHTML = `
+                <div class="point-marker ${point.type}"></div>
+                <div class="point-coords">(${Math.round(point.x)}, ${Math.round(point.y)})</div>
+                <div class="point-remove" onclick="removePoint(${index})">
+                    <i class="fas fa-times"></i>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+
+        countElement.textContent = points.length;
+        document.getElementById('points-container').style.display = points.length > 0 ? 'block' : 'none';
+    }
+
+    function removePoint(index) {
+        points.splice(index, 1);
+        updatePointsList();
+        renderCanvas();
+        document.getElementById('undo-btn').disabled = points.length === 0;
+        document.getElementById('complete-btn').disabled = points.length === 0;
+    }
+
+    function showImageList() {
+        const container = document.getElementById('image-list');
+        const countElement = document.getElementById('image-count');
+
+        container.innerHTML = '';
+        Object.keys(images).forEach(index => {
+            const div = document.createElement('div');
+            div.className = `image-item ${parseInt(index) === currentImageIndex ? 'active' : ''}`;
+            div.onclick = () => loadImage(parseInt(index));
+            div.innerHTML = `
+                <img src="${images[index].thumb}" class="image-thumb" alt="${images[index].name}">
+                <div class="image-name">${images[index].name}</div>
+            `;
+            container.appendChild(div);
+        });
+
+        countElement.textContent = Object.keys(images).length;
+        document.getElementById('image-list-container').style.display = 'block';
+    }
+
+    function updateImageSelection(index) {
+        document.querySelectorAll('.image-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        document.querySelectorAll('.image-item')[index]?.classList.add('active');
+    }
+
+    function showResults(visualizations) {
+    const grid = document.getElementById('results-grid');
+    grid.innerHTML = '';
+
+    // Создаем массив данных для модального окна
+    const modalImages = [];
+
+    Object.keys(visualizations).forEach(key => {
+        const div = document.createElement('div');
+        div.className = 'result-item';
+        div.setAttribute('data-image', key);
+        div.setAttribute('data-mask-index', '0');
+
+        // Создаем контейнер для информации о площади (будет заполнен позже)
+        div.innerHTML = `
+            <img src="${visualizations[key]}" class="result-thumb" alt="${key}">
+            <div class="result-name">${key}</div>
+            <div class="result-mask-index" style="display: none;">0</div>
+            <div class="result-area-badge" style="display: none;">
+                <i class="fas fa-vector-square"></i>
+                <span class="area-value">0</span>
+                <span class="area-unit">px²</span>
+            </div>
+        `;
+
+        grid.appendChild(div);
+
+        // Вычисляем площадь для этой маски асинхронно
+        const img = new Image();
+        img.onload = async () => {
+            const area = await calculateMaskAreaFromImage(img);
+            const areaBadge = div.querySelector('.result-area-badge');
+            const areaValue = areaBadge.querySelector('.area-value');
+
+            // Форматируем число с пробелами как разделителями
+            areaValue.textContent = area.toLocaleString('ru-RU');
+            areaBadge.style.display = 'flex';
+            areaBadge.title = `Точная площадь: ${area} пикселей`;
+
+            // Добавляем в массив для модального окна
+            modalImages.push({
+                src: visualizations[key],
+                name: key,
+                area: area.toLocaleString('ru-RU') + ' px²'
+            });
+        };
+        img.src = visualizations[key];
+    });
+
+    // Добавляем обработчики кликов на все элементы результатов
+    setTimeout(() => {
+        const resultItems = grid.querySelectorAll('.result-item');
+        resultItems.forEach((item, index) => {
+            item.addEventListener('click', function(e) {
+                // Проверяем, что клик не по бейджу (чтобы не конфликтовать)
+                if (!e.target.closest('.result-area-badge')) {
+                    const img = this.querySelector('.result-thumb');
+                    const name = this.querySelector('.result-name').textContent;
+                    const areaBadge = this.querySelector('.area-value');
+                    const area = areaBadge ? areaBadge.textContent + ' px²' : '0 px²';
+
+                    openImageModal(
+                        img.src,
+                        name,
+                        area,
+                        modalImages.length > 0 ? modalImages : null
+                    );
+                }
+            });
+        });
+    }, 100);
+
+    document.getElementById('results-panel').style.display = 'block';
+}
+
+    // Скачивание результатов - с проверкой авторизации
+  async function downloadResults() {
+    // Проверяем, авторизован ли пользователь
+    const isGuest = {{ is_guest|tojson }};
+
+    if (isGuest) {
+        showToast('Авторизация', 'Для скачивания результатов необходимо авторизоваться', 'warning');
+        return;
+    }
+
+    if (!currentSessionId) {
+        showToast('Ошибка', 'Нет результатов для скачивания', 'error');
+        return;
+    }
+
+    showLoading('Подготовка архива с оригиналами, масками, наложениями и метаданными...');
+
+    try {
+        // Делаем запрос на сервер для получения архива с масками
+        const response = await fetch(`/download?session_id=${encodeURIComponent(currentSessionId)}`);
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Ошибка сервера: ${response.status} - ${errorText}`);
+        }
+
+        // Получаем blob из ответа (это архив только с масками)
+        const masksBlob = await response.blob();
+
+        // Создаем новый ZIP архив
+        const zip = new JSZip();
+
+        // Создаем структуру папок
+        const originalsFolder = zip.folder('originals');           // Оригинальные изображения
+        const masksFolder = zip.folder('masks');                   // Маски (с новыми именами)
+        const overlaysFolder = zip.folder('images_with_overlay');  // Изображения с наложением
+        const metadataFolder = zip.folder('metadata');             // Метаданные
+
+        // Собираем информацию о всех изображениях и масках для метаданных
+        const resultsGrid = document.getElementById('results-grid');
+        const resultItems = resultsGrid.querySelectorAll('.result-item');
+
+        // Создаем маппинг оригинальных имен на порядковые номера
+        const imageNumberMap = new Map(); // originalName -> number
+        const metadataMap = new Map();    // originalName -> {original, masks: []}
+
+        // Сначала собираем все уникальные имена изображений
+        const uniqueImageNames = new Set();
+        resultItems.forEach(item => {
+            const nameDiv = item.querySelector('.result-name');
+            if (nameDiv) {
+                const fullName = nameDiv.textContent;
+                const maskMatch = fullName.match(/(.*)\s*\(маска\s*(\d+)\)/);
+                if (maskMatch) {
+                    uniqueImageNames.add(maskMatch[1].trim());
+                }
+            }
+        });
+
+        // Преобразуем Set в массив и сортируем для консистентности
+        const sortedImageNames = Array.from(uniqueImageNames).sort();
+
+        // Присваиваем порядковые номера
+        sortedImageNames.forEach((name, index) => {
+            imageNumberMap.set(name, index + 1);
+        });
+
+        // Теперь собираем данные с учетом порядковых номеров
+        resultItems.forEach(item => {
+            const maskImg = item.querySelector('.result-thumb');
+            const nameDiv = item.querySelector('.result-name');
+            const areaBadge = item.querySelector('.area-value');
+            const maskIndex = item.getAttribute('data-mask-index') || '0';
+
+            if (maskImg && nameDiv) {
+                const fullName = nameDiv.textContent;
+                // Извлекаем имя оригинального изображения
+                let originalName = fullName;
+                const maskMatch = fullName.match(/(.*)\s*\(маска\s*(\d+)\)/);
+                let maskNumber = 1;
+
+                if (maskMatch) {
+                    originalName = maskMatch[1].trim();
+                    maskNumber = parseInt(maskMatch[2]) || 1;
+                }
+
+                // Получаем порядковый номер для этого изображения
+                const imageNumber = imageNumberMap.get(originalName) || 1;
+
+                // Получаем площадь из бейджа
+                let area = 0;
+                if (areaBadge) {
+                    area = parseInt(areaBadge.textContent.replace(/\s/g, '')) || 0;
+                }
+
+                if (!metadataMap.has(originalName)) {
+                    metadataMap.set(originalName, {
+                        original: null,
+                        imageNumber: imageNumber,
+                        masks: []
+                    });
+                }
+
+                const imageData = metadataMap.get(originalName);
+                imageData.masks.push({
+                    index: maskNumber,
+                    area: area,
+                    dataUrl: maskImg.src,
+                    originalFilename: `${originalName.replace(/\.[^/.]+$/, '')}_mask_${maskNumber}.png` // оригинальное имя маски
+                });
+            }
+        });
+
+        // 1. Добавляем маски в папку 'masks' с новыми именами
+        const masksZip = await JSZip.loadAsync(masksBlob);
+
+        const maskPromises = [];
+
+        // Создаем маппинг старых имен масок на новые
+        masksZip.forEach(async (relativePath, file) => {
+            if (!file.dir) {
+                // Определяем, какому изображению принадлежит эта маска
+                let matchedImageName = null;
+                let matchedMaskIndex = null;
+
+                // Ищем соответствие в metadataMap
+                for (const [originalName, data] of metadataMap.entries()) {
+                    for (const mask of data.masks) {
+                        // Проверяем, содержит ли путь имя оригинального изображения
+                        if (relativePath.includes(originalName.replace(/\.[^/.]+$/, ''))) {
+                            matchedImageName = originalName;
+                            matchedMaskIndex = mask.index;
+                            break;
+                        }
+                    }
+                    if (matchedImageName) break;
+                }
+
+                if (matchedImageName) {
+                    const imageNumber = imageNumberMap.get(matchedImageName);
+                    const baseFileName = imageNumber.toString().padStart(3, '0');
+
+                    maskPromises.push(
+                        file.async('blob').then(blob => {
+                            // Сохраняем маску с новым именем
+                            const newMaskName = `${baseFileName}_mask_${matchedMaskIndex}.png`;
+                            masksFolder.file(newMaskName, blob);
+                        })
+                    );
+                } else {
+                    // Если не нашли соответствие, сохраняем как есть
+                    maskPromises.push(
+                        file.async('blob').then(blob => {
+                            masksFolder.file(relativePath, blob);
+                        })
+                    );
+                }
+            }
+        });
+
+        await Promise.all(maskPromises);
+
+        // 2. Добавляем оригинальные изображения и собираем данные о них
+        const originalPromises = [];
+
+        for (const [originalName, data] of metadataMap.entries()) {
+            // Ищем оригинальное изображение в объекте images
+            const originalImage = Object.values(images).find(img => img.name === originalName);
+
+            if (originalImage) {
+                data.original = {
+                    name: originalName,
+                    dataUrl: originalImage.dataUrl,
+                    width: 0,
+                    height: 0,
+                    size: 0,
+                    imageNumber: data.imageNumber
+                };
+
+                // Получаем размеры и вес изображения
+                const originalPromise = fetch(originalImage.dataUrl)
+                    .then(res => {
+                        // Получаем размер файла из заголовков или вычисляем
+                        const contentLength = res.headers.get('content-length');
+                        if (contentLength) {
+                            data.original.size = parseInt(contentLength);
+                        }
+                        return res.blob();
+                    })
+                    .then(blob => {
+                        // Если не получили размер из заголовков, используем размер blob
+                        if (!data.original.size) {
+                            data.original.size = blob.size;
+                        }
+
+                        // Сохраняем оригинальное изображение с новым именем (по номеру)
+                        const fileExt = originalName.split('.').pop() || 'jpg';
+                        const newFileName = `${data.imageNumber.toString().padStart(3, '0')}_original.${fileExt}`;
+                        originalsFolder.file(newFileName, blob);
+
+                        // Получаем размеры изображения
+                        return new Promise((resolve, reject) => {
+                            const img = new Image();
+                            img.onload = () => {
+                                data.original.width = img.width;
+                                data.original.height = img.height;
+                                resolve();
+                            };
+                            img.onerror = reject;
+                            img.src = URL.createObjectURL(blob);
+                        });
+                    })
+                    .catch(err => {
+                        console.error('Ошибка загрузки оригинала:', originalName, err);
+                    });
+
+                originalPromises.push(originalPromise);
+            }
+        }
+
+        await Promise.all(originalPromises);
+
+        // 3. Создаем файлы с метаданными
+        // Глобальный файл со всей информацией
+        const globalMetadata = {
+            generation_date: new Date().toISOString(),
+            session_id: currentSessionId,
+            total_images: metadataMap.size,
+            total_masks: Array.from(metadataMap.values()).reduce((sum, data) => sum + data.masks.length, 0),
+            images: []
+        };
+
+        // Для каждого изображения создаем отдельный файл метаданных и добавляем в глобальный
+        for (const [originalName, data] of metadataMap.entries()) {
+            if (!data.original) continue;
+
+            // Формируем базовое имя файла с номером
+            const baseFileName = data.imageNumber.toString().padStart(3, '0');
+            const fileExt = originalName.split('.').pop() || 'jpg';
+
+            // Данные для этого изображения
+            const imageMetadata = {
+                image_number: data.imageNumber,
+                original_filename: originalName,
+                new_filename: `${baseFileName}_original.${fileExt}`,
+                width: data.original.width,
+                height: data.original.height,
+                file_size_bytes: data.original.size,
+                file_size_formatted: formatFileSize(data.original.size),
+                total_pixels: data.original.width * data.original.height,
+                masks: data.masks.map(mask => ({
+                    mask_index: mask.index,
+                    area_pixels: mask.area,
+                    area_percentage: ((mask.area / (data.original.width * data.original.height)) * 100).toFixed(2),
+                    original_mask_filename: mask.originalFilename,
+                    new_mask_filename: `${baseFileName}_mask_${mask.index}.png`,
+                    overlay_filename: `${baseFileName}_mask_${mask.index}_overlay.png`
+                }))
+            };
+
+            // Добавляем в глобальный массив
+            globalMetadata.images.push(imageMetadata);
+
+            // Создаем отдельный JSON файл для этого изображения
+            const metadataJson = JSON.stringify(imageMetadata, null, 2);
+            metadataFolder.file(`${baseFileName}_metadata.json`, metadataJson);
+
+            // Создаем читаемый текстовый файл с метаданными
+            const textMetadata = generateReadableMetadata(imageMetadata);
+            metadataFolder.file(`${baseFileName}_metadata.txt`, textMetadata);
+        }
+
+        // Сортируем изображения по номеру для глобальных файлов
+        globalMetadata.images.sort((a, b) => a.image_number - b.image_number);
+
+        // Сохраняем глобальный файл метаданных
+        const globalMetadataJson = JSON.stringify(globalMetadata, null, 2);
+        metadataFolder.file('all_metadata.json', globalMetadataJson);
+
+        // Создаем общий читаемый файл со всей информацией
+        const globalTextMetadata = generateGlobalReadableMetadata(globalMetadata);
+        metadataFolder.file('all_metadata.txt', globalTextMetadata);
+
+        // Создаем CSV файл для удобного импорта в Excel
+        const csvContent = generateCSVMetadata(globalMetadata);
+        metadataFolder.file('metadata.csv', csvContent);
+
+        // 4. Создаем изображения с наложением маски (оверлеи) с новыми именами
+        const overlayPromises = [];
+
+        resultItems.forEach(item => {
+            const maskImg = item.querySelector('.result-thumb');
+            const nameDiv = item.querySelector('.result-name');
+
+            if (maskImg && nameDiv) {
+                const fullName = nameDiv.textContent;
+                const maskMatch = fullName.match(/(.*)\s*\(маска\s*(\d+)\)/);
+
+                if (maskMatch) {
+                    const originalName = maskMatch[1].trim();
+                    const maskNumber = parseInt(maskMatch[2]) || 1;
+
+                    // Получаем порядковый номер для этого изображения
+                    const imageNumber = imageNumberMap.get(originalName) || 1;
+                    const baseFileName = imageNumber.toString().padStart(3, '0');
+
+                    // Находим оригинальное изображение
+                    const originalImage = Object.values(images).find(img => img.name === originalName);
+
+                    if (originalImage) {
+                        // Создаем оверлей
+                        const overlayPromise = createOverlayImage(
+                            originalImage.dataUrl,
+                            maskImg.src,
+                            originalName,
+                            maskNumber
+                        ).then(overlayBlob => {
+                            const fileName = `${baseFileName}_mask_${maskNumber}_overlay.png`;
+                            overlaysFolder.file(fileName, overlayBlob);
+                        });
+
+                        overlayPromises.push(overlayPromise);
+                    }
+                }
+            }
+        });
+
+        // Ждем создания всех оверлеев
+        await Promise.all(overlayPromises);
+
+        // Генерируем итоговый ZIP архив
+        const finalZipBlob = await zip.generateAsync({
+            type: 'blob',
+            compression: 'DEFLATE',
+            compressionOptions: {
+                level: 6
+            }
+        });
+
+        // Создаем ссылку для скачивания
+        const url = window.URL.createObjectURL(finalZipBlob);
+        const a = document.createElement('a');
+        a.href = url;
+
+        // Генерируем имя файла с текущей датой
+        const date = new Date();
+        const dateStr = `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2,'0')}-${date.getDate().toString().padStart(2,'0')}`;
+        a.download = `segmentation_results_${dateStr}.zip`;
+
+        document.body.appendChild(a);
+        a.click();
+
+        // Очищаем
+        setTimeout(() => {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }, 100);
+
+        showToast('Успех', 'Архив с оригиналами, масками, наложениями и метаданными готов', 'success');
+    } catch (error) {
+        console.error('Download error:', error);
+        showToast('Ошибка', error.message, 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// Вспомогательная функция для форматирования размера файла
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// Функция для генерации читаемого текстового файла с метаданными
+function generateReadableMetadata(metadata) {
+    const lines = [];
+    lines.push('='.repeat(60));
+    lines.push('МЕТАДАННЫЕ ИЗОБРАЖЕНИЯ');
+    lines.push('='.repeat(60));
+    lines.push('');
+    lines.push(`Номер изображения: ${metadata.image_number}`);
+    lines.push(`Оригинальный файл: ${metadata.original_filename}`);
+    lines.push(`Новый файл: ${metadata.new_filename}`);
+    lines.push(`Размер изображения: ${metadata.width} × ${metadata.height} пикселей`);
+    lines.push(`Общее количество пикселей: ${metadata.total_pixels.toLocaleString()}`);
+    lines.push(`Размер файла: ${metadata.file_size_formatted} (${metadata.file_size_bytes.toLocaleString()} байт)`);
+    lines.push('');
+    lines.push('МАСКИ:');
+    lines.push('-'.repeat(40));
+
+    metadata.masks.forEach(mask => {
+        lines.push('');
+        lines.push(`Маска #${mask.mask_index}:`);
+        lines.push(`  Площадь выделенной области: ${mask.area_pixels.toLocaleString()} пикселей`);
+        lines.push(`  Процент от всего изображения: ${mask.area_percentage}%`);
+        lines.push(`  Файл маски: ${mask.mask_filename}`);
+        lines.push(`  Файл с наложением: ${mask.overlay_filename}`);
+    });
+
+    lines.push('');
+    lines.push('='.repeat(60));
+    lines.push(`Дата генерации: ${new Date().toLocaleString('ru-RU')}`);
+    lines.push('='.repeat(60));
+
+    return lines.join('\n');
+}
+
+// Функция для генерации глобального читаемого файла
+function generateGlobalReadableMetadata(globalMetadata) {
+    const lines = [];
+    lines.push('='.repeat(70));
+    lines.push('ОБЩИЙ ОТЧЕТ ПО СЕГМЕНТАЦИИ');
+    lines.push('='.repeat(70));
+    lines.push('');
+    lines.push(`Дата генерации: ${new Date(globalMetadata.generation_date).toLocaleString('ru-RU')}`);
+    lines.push(`ID сессии: ${globalMetadata.session_id}`);
+    lines.push(`Всего изображений: ${globalMetadata.total_images}`);
+    lines.push(`Всего масок: ${globalMetadata.total_masks}`);
+    lines.push('');
+    lines.push('ДЕТАЛЬНАЯ ИНФОРМАЦИЯ:');
+    lines.push('='.repeat(70));
+
+    globalMetadata.images.forEach((img, idx) => {
+        lines.push('');
+        lines.push(`ИЗОБРАЖЕНИЕ ${img.image_number}: ${img.original_filename}`);
+        lines.push(`Новый файл: ${img.new_filename}`);
+        lines.push('-'.repeat(40));
+        lines.push(`Размер: ${img.width} × ${img.height} (${img.total_pixels.toLocaleString()} пикселей)`);
+        lines.push(`Размер файла: ${img.file_size_formatted}`);
+        lines.push('');
+        lines.push('Маски:');
+
+        img.masks.forEach(mask => {
+            lines.push(`  #${mask.mask_index}: Площадь = ${mask.area_pixels.toLocaleString()} px (${mask.area_percentage}%)`);
+            lines.push(`    Файл маски: ${mask.mask_filename}`);
+            lines.push(`    Файл наложения: ${mask.overlay_filename}`);
+        });
+    });
+
+    lines.push('');
+    lines.push('='.repeat(70));
+    lines.push('КОНЕЦ ОТЧЕТА');
+    lines.push('='.repeat(70));
+
+    return lines.join('\n');
+}
+
+
+// Функция для генерации CSV файла
+function generateCSVMetadata(globalMetadata) {
+    // Заголовки CSV
+    const headers = [
+        'Image Number',
+        'Original Filename',
+        'New Filename',
+        'Image Width',
+        'Image Height',
+        'Total Pixels',
+        'File Size (Bytes)',
+        'File Size (Formatted)',
+        'Mask Index',
+        'Mask Area (px)',
+        'Mask Area (%)',
+        'Mask Filename',
+        'Overlay Filename'
+    ];
+
+    const rows = [headers.join(',')];
+
+    globalMetadata.images.forEach(img => {
+        if (img.masks.length === 0) {
+            // Если нет масок, добавляем строку только с информацией об изображении
+            const row = [
+                img.image_number,
+                `"${img.original_filename}"`,
+                `"${img.new_filename}"`,
+                img.width,
+                img.height,
+                img.total_pixels,
+                img.file_size_bytes,
+                `"${img.file_size_formatted}"`,
+                '',
+                '',
+                '',
+                '',
+                ''
+            ];
+            rows.push(row.join(','));
+        } else {
+            // Для каждой маски создаем отдельную строку
+            img.masks.forEach(mask => {
+                const row = [
+                    img.image_number,
+                    `"${img.original_filename}"`,
+                    `"${img.new_filename}"`,
+                    img.width,
+                    img.height,
+                    img.total_pixels,
+                    img.file_size_bytes,
+                    `"${img.file_size_formatted}"`,
+                    mask.mask_index,
+                    mask.area_pixels,
+                    mask.area_percentage,
+                    `"${mask.mask_filename}"`,
+                    `"${mask.overlay_filename}"`
+                ];
+                rows.push(row.join(','));
+            });
+        }
+    });
+
+    return rows.join('\n');
+}
+
+// Вспомогательная функция для создания изображения с наложенной маской
+async function createOverlayImage(originalImageUrl, maskImageUrl, imageName, maskIndex) {
+    return new Promise((resolve, reject) => {
+        try {
+            // Создаем canvas для наложения
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            // Загружаем оригинальное изображение
+            const originalImg = new Image();
+            originalImg.crossOrigin = 'Anonymous';
+
+            originalImg.onload = () => {
+                canvas.width = originalImg.width;
+                canvas.height = originalImg.height;
+
+                // Рисуем оригинальное изображение
+                ctx.drawImage(originalImg, 0, 0, canvas.width, canvas.height);
+
+                // Загружаем маску
+                const maskImg = new Image();
+                maskImg.crossOrigin = 'Anonymous';
+
+                maskImg.onload = () => {
+                    // Рисуем маску поверх с хорошей прозрачностью
+                    ctx.globalAlpha = 0.5;
+                    ctx.globalCompositeOperation = 'source-over';
+                    ctx.drawImage(maskImg, 0, 0, canvas.width, canvas.height);
+
+                    // Добавляем красную обводку вокруг маски для лучшей видимости
+                    ctx.globalAlpha = 1.0;
+                    ctx.strokeStyle = '#ff4444';
+                    ctx.lineWidth = 2;
+
+                    // Получаем данные пикселей для определения границ маски
+                    // Создаем временный canvas для анализа маски
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = canvas.width;
+                    tempCanvas.height = canvas.height;
+                    const tempCtx = tempCanvas.getContext('2d');
+                    tempCtx.drawImage(maskImg, 0, 0, canvas.width, canvas.height);
+
+                    const imageData = tempCtx.getImageData(0, 0, canvas.width, canvas.height);
+                    const data = imageData.data;
+
+                    // Находим границы маски (упрощенный алгоритм)
+                    ctx.beginPath();
+
+                    // Проходим по пикселям и находим границы
+                    // Для больших изображений это может быть медленно, поэтому делаем сэмплинг
+                    const step = Math.max(1, Math.floor(Math.min(canvas.width, canvas.height) / 500));
+
+                    for (let y = 0; y < canvas.height; y += step) {
+                        for (let x = 0; x < canvas.width; x += step) {
+                            const index = (y * canvas.width + x) * 4;
+                            // Если пиксель маски яркий (принадлежит маске)
+                            if (data[index] > 200) {
+                                // Проверяем соседние пиксели, чтобы найти границу
+                                let isEdge = false;
+                                for (let dy = -step; dy <= step && !isEdge; dy += step) {
+                                    for (let dx = -step; dx <= step && !isEdge; dx += step) {
+                                        if (dx === 0 && dy === 0) continue;
+
+                                        const nx = x + dx;
+                                        const ny = y + dy;
+                                        if (nx >= 0 && nx < canvas.width && ny >= 0 && ny < canvas.height) {
+                                            const nIndex = (ny * canvas.width + nx) * 4;
+                                            if (data[nIndex] <= 200) {
+                                                isEdge = true;
+                                            }
+                                        }
+                                    }
+                                }
+
+                                if (isEdge) {
+                                    ctx.fillStyle = '#ff4444';
+                                    ctx.fillRect(x, y, step, step);
+                                }
+                            }
+                        }
+                    }
+
+                    // Конвертируем canvas в blob
+                    canvas.toBlob((blob) => {
+                        resolve(blob);
+                    }, 'image/png');
+                };
+
+                maskImg.onerror = () => {
+                    console.error('Ошибка загрузки маски:', maskImageUrl);
+                    // В случае ошибки возвращаем оригинальное изображение
+                    canvas.toBlob((blob) => {
+                        resolve(blob);
+                    }, 'image/png');
+                };
+
+                maskImg.src = maskImageUrl;
+            };
+
+            originalImg.onerror = () => {
+                console.error('Ошибка загрузки оригинального изображения:', originalImageUrl);
+                reject(new Error('Не удалось загрузить оригинальное изображение'));
+            };
+
+            originalImg.src = originalImageUrl;
+        } catch (error) {
+            console.error('Ошибка создания наложения:', error);
+            reject(error);
+        }
+    });
+}
+
+    function clearResults() {
+        document.getElementById('results-grid').innerHTML = '';
+        document.getElementById('results-panel').style.display = 'none';
+    }
+
+    // Функции для навигации
+    function showInfo() {
+        const infoModal = document.getElementById('info-modal');
+        if (infoModal) {
+            infoModal.style.display = 'flex';
+        }
+    }
+
+    function showHelp() {
+        const helpModal = document.getElementById('help-modal');
+        if (helpModal) {
+            helpModal.style.display = 'flex';
+        }
+    }
+
+    // Функции для закрытия модальных окон
+    function hideModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
+
+    // Добавьте обработчики для кнопок закрытия в модальных окнах
+    document.addEventListener('DOMContentLoaded', function() {
+        // Закрытие по клику на крестик
+        document.querySelectorAll('.close-button, .modal-actions .action-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const modal = this.closest('.modal');
+                if (modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        });
+
+        // Закрытие по клику вне модального окна
+        window.addEventListener('click', function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        });
+    });
+
+    function showLogin() {
+        window.location.href = '{{ url_for("auth.login_page") }}';
+    }
+
+    function showRegister() {
+        window.location.href = '{{ url_for("auth.login_page") }}?register=true';
+    }
+
+    function openRegisterModal() {
+        showRegister();
+    }
+    // Функция для удаления отдельного изображения из результатов
+function deleteResultItem(element) {
+    event.stopPropagation(); // Предотвращаем открытие модального окна
+
+    const resultItem = element.closest('.result-item');
+    if (!resultItem) return;
+
+    const imageName = resultItem.querySelector('.result-name').textContent;
+    const maskIndex = resultItem.getAttribute('data-mask-index');
+    const originalImageName = resultItem.getAttribute('data-image');
+
+    if (confirm(`Удалить "${imageName}" из результатов?`)) {
+
+        // Удаляем маску из хранилища multiMasks
+        if (originalImageName && maskIndex !== null) {
+            if (window.multiMasks[originalImageName]) {
+                // Удаляем конкретную маску по индексу
+                window.multiMasks[originalImageName] = window.multiMasks[originalImageName].filter(
+                    (mask, idx) => idx !== parseInt(maskIndex)
+                );
+
+                // Если масок больше нет, удаляем запись об изображении
+                if (window.multiMasks[originalImageName].length === 0) {
+                    delete window.multiMasks[originalImageName];
+                }
+            }
+        }
+
+        // Удаляем элемент из DOM
+        resultItem.classList.add('fade-out');
+        setTimeout(() => {
+            resultItem.remove();
+
+            // Проверяем, остались ли еще результаты
+            const resultsGrid = document.getElementById('results-grid');
+            if (resultsGrid.children.length === 0) {
+                document.getElementById('results-panel').style.display = 'none';
+            } else {
+                // Обновляем индексы масок в оставшихся элементах
+                updateMaskIndices();
+            }
+
+            // Перерисовываем canvas, если нужно
+            renderCanvas();
+
+            showToast('Успех', 'Изображение удалено из результатов', 'success');
+        }, 300);
+    }
+}
+
+// Функция для обновления индексов масок после удаления
+function updateMaskIndices() {
+    const resultsGrid = document.getElementById('results-grid');
+    const resultItems = resultsGrid.querySelectorAll('.result-item');
+
+    // Группируем по имени изображения
+    const imageGroups = {};
+
+    resultItems.forEach(item => {
+        const imageName = item.getAttribute('data-image');
+        if (!imageGroups[imageName]) {
+            imageGroups[imageName] = [];
+        }
+        imageGroups[imageName].push(item);
+    });
+
+    // Обновляем индексы для каждой группы
+    Object.keys(imageGroups).forEach(imageName => {
+        const items = imageGroups[imageName];
+        items.sort((a, b) => {
+            const idxA = parseInt(a.getAttribute('data-mask-index') || '0');
+            const idxB = parseInt(b.getAttribute('data-mask-index') || '0');
+            return idxA - idxB;
+        });
+
+        items.forEach((item, newIndex) => {
+            const nameDiv = item.querySelector('.result-name');
+            const originalName = item.getAttribute('data-image');
+            nameDiv.textContent = `${originalName} (маска ${newIndex + 1})`;
+            item.setAttribute('data-mask-index', newIndex);
+
+            // Обновляем индекс в хранилище multiMasks
+            if (window.multiMasks[originalName] && window.multiMasks[originalName][newIndex]) {
+                window.multiMasks[originalName][newIndex].index = newIndex;
+            }
+        });
+    });
+}
+// Принудительная инициализация модального окна
+window.addEventListener('load', function() {
+    console.log('Window loaded, checking for modal...');
+    if (!document.getElementById('image-view-modal')) {
+        createImageModal();
+    }
+});
+
+
+</script>
+
+<!-- Подключаем библиотеку JSZip для работы с ZIP архивами -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</body>
+</html>
