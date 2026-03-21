@@ -5032,52 +5032,51 @@ function setTool(tool) {
     }
 }
 
-    // ИСПРАВЛЕННАЯ функция для завершения маски (сохранение текущей маски)
-    async function completeMask() {
-        if (!window.currentTempMask) {
-            showToast('Ошибка', 'Сначала создайте маску', 'error');
-            return;
-        }
-
-        const currentImageName = images[currentImageIndex].name;
-
-        // Инициализируем хранилище для этого изображения, если нужно
-        if (!window.multiMasks[currentImageName]) {
-            window.multiMasks[currentImageName] = [];
-        }
-
-        // Определяем цвет для новой маски
-        const maskColor = maskColors[window.multiMasks[currentImageName].length % maskColors.length];
-
-        // Сохраняем маску с цветом
-        const maskData = {
-            dataUrl: window.currentTempMask,
-            color: maskColor,
-            index: window.multiMasks[currentImageName].length,
-            points: [...points] // Сохраняем точки, использованные для создания маски
-        };
-
-        window.multiMasks[currentImageName].push(maskData);
-
-        // Обновляем отображение в результатах
-        updateResultsWithAllMasks();
-
-        // Очищаем временную маску
-        window.currentTempMask = null;
-
-        // Очищаем точки для следующей маски
-        points = [];
-        updatePointsList();
-
-        // Перерисовываем canvas со всеми сохраненными масками
-        await renderCanvas();
-
-        // Деактивируем кнопки
-        document.getElementById('undo-btn').disabled = true;
-        document.getElementById('complete-btn').disabled = true;
-
-        showToast('Успех', `Маска #${window.multiMasks[currentImageName].length} сохранена`, 'success');
+   // ИСПРАВЛЕННАЯ функция для завершения маски (удаляет старые маски и сохраняет только текущую)
+async function completeMask() {
+    if (!window.currentTempMask) {
+        showToast('Ошибка', 'Сначала создайте маску', 'error');
+        return;
     }
+
+    const currentImageName = images[currentImageIndex].name;
+
+    // СОЗДАЕМ НОВОЕ ХРАНИЛИЩЕ ТОЛЬКО ДЛЯ ТЕКУЩЕЙ МАСКИ
+    // Вместо добавления к существующим - создаем новый массив только с текущей маской
+    window.multiMasks[currentImageName] = [];
+
+    // Определяем цвет для новой маски (всегда первый цвет, так как маска теперь одна)
+    const maskColor = maskColors[0];
+
+    // Сохраняем маску с цветом
+    const maskData = {
+        dataUrl: window.currentTempMask,
+        color: maskColor,
+        index: 0, // Всегда индекс 0, так как маска теперь одна
+        points: [...points] // Сохраняем точки, использованные для создания маски
+    };
+
+    window.multiMasks[currentImageName].push(maskData);
+
+    // Обновляем отображение в результатах (теперь будет только одна маска)
+    updateResultsWithAllMasks();
+
+    // Очищаем временную маску
+    window.currentTempMask = null;
+
+    // Очищаем точки для следующей маски
+    points = [];
+    updatePointsList();
+
+    // Перерисовываем canvas только с новой маской
+    await renderCanvas();
+
+    // Деактивируем кнопки
+    document.getElementById('undo-btn').disabled = true;
+    document.getElementById('complete-btn').disabled = true;
+
+    showToast('Успех', 'Маска сохранена (предыдущие маски удалены)', 'success');
+}
 
     // Новая функция для обновления результатов со всеми масками
    function updateResultsWithAllMasks() {
@@ -5275,19 +5274,40 @@ function setTool(tool) {
     }
 
     function clearPoints() {
-        points = [];
-        currentMask = false;
-        window.currentMaskImage = null;
-        window.currentTempMask = null;
-        currentMaskArea = 0;
-        updateAreaDisplay(0);
-        updatePointsList();
-        renderCanvas();
-        document.getElementById('undo-btn').disabled = true;
-        document.getElementById('generate-btn').disabled = false;
-        document.getElementById('propagate-btn').disabled = true;
-        document.getElementById('complete-btn').disabled = true;
+    const currentImageName = images[currentImageIndex]?.name;
+
+    // Очищаем точки
+    points = [];
+
+    // Очищаем временную маску
+    window.currentTempMask = null;
+
+    // Очищаем сохраненные маски для текущего изображения
+    if (currentImageName && window.multiMasks[currentImageName]) {
+        window.multiMasks[currentImageName] = [];
     }
+
+    // Очищаем отображение площади
+    currentMaskArea = 0;
+    updateAreaDisplay(0);
+
+    // Обновляем список точек
+    updatePointsList();
+
+    // Обновляем результаты (удаляем маску из результатов)
+    updateResultsWithAllMasks();
+
+    // Перерисовываем canvas
+    renderCanvas();
+
+    // Деактивируем кнопки
+    document.getElementById('undo-btn').disabled = true;
+    document.getElementById('complete-btn').disabled = true;
+    document.getElementById('clear-points-btn').disabled = true;
+    document.getElementById('propagate-btn').disabled = true;
+
+    showToast('Информация', 'Все точки и маска очищены', 'info');
+}
 
     function updatePointsList() {
         const container = document.getElementById('points-list');
