@@ -7,8 +7,7 @@ import torch
 import numpy as np
 from PIL import Image
 import base64
-import json
-import hashlib
+
 from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for, session, Blueprint, \
     current_app
 from flask_cors import CORS
@@ -16,12 +15,8 @@ from werkzeug.utils import secure_filename
 from skimage.morphology import remove_small_objects
 import tempfile
 import shutil
-import psutil
-import traceback
 from datetime import datetime
-import time
-from threading import Thread
-from collections import deque
+
 
 
 # Автоматическое определение базовой директории SAM2

@@ -4,12 +4,12 @@ from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, session
 import hashlib
 from datetime import datetime, date  # Добавляем импорт date
-
+import os
 DB_CONFIG = {
-    'host': 'localhost',
-    'user': 'root',
-    'password': '12345678',
-    'database': 'Process_image',
+    'host': os.getenv('MYSQL_HOST', 'localhost'),
+    'user': os.getenv('MYSQL_USER', 'root'),
+    'password': os.getenv('MYSQL_PASSWORD', '12345678'),
+    'database': os.getenv('MYSQL_DB', 'Process_image'),
 }
 
 

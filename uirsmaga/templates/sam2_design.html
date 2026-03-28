@@ -2572,6 +2572,68 @@ body {
         transform: scale(1);
     }
 } */
+    /* Стили для переключателя сжатия */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 22px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.3s;
+    border-radius: 34px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+    background-color: var(--primary);
+}
+
+input:checked + .toggle-slider:before {
+    transform: translateX(22px);
+}
+
+.compression-settings {
+    transition: all 0.3s ease;
+}
+
+.compression-settings input,
+.compression-settings select {
+    font-size: 12px;
+    transition: border-color 0.2s;
+}
+
+.compression-settings input:focus,
+.compression-settings select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px var(--primary-light);
+}
 </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -3158,10 +3220,11 @@ body {
                 <button class="action-btn primary" onclick="hideModal('message-modal')">OK</button>
             </div>
         </div>
-    </div>
+    </div>а
 
 <script>
     // Глобальные переменные
+    let allUploadedImages = []; // Массив для хранения всех загруженных изображений
     let currentSessionId = null;
     let images = {};
     let currentImageIndex = 0;
@@ -3807,65 +3870,117 @@ body {
         }
     }
 
-    // Загрузка из истории (обновленная версия)
-    async function loadFromHistory(historyItem) {
-        // Проверяем, авторизован ли пользователь
-        const isGuest = {{ is_guest|tojson }};
+    // Загрузка из истории (исправленная версия)
+async function loadFromHistory(historyItem) {
+    // Проверяем, авторизован ли пользователь
+    const isGuest = {{ is_guest|tojson }};
 
-        if (isGuest) {
-            showToast('Авторизация', 'Чтобы загружать изображения из истории, необходимо авторизоваться', 'warning');
+    if (isGuest) {
+        showToast('Авторизация', 'Чтобы загружать изображения из истории, необходимо авторизоваться', 'warning');
+        return;
+    }
+
+    showLoading('Загрузка из истории...');
+
+    try {
+        // Проверяем, не загружено ли уже это изображение
+        const isAlreadyLoaded = allUploadedImages.some(img => img.name === historyItem.name);
+        if (isAlreadyLoaded) {
+            showToast('Информация', `Изображение "${historyItem.name}" уже загружено`, 'info');
+
+            // Находим индекс уже загруженного изображения и переключаемся на него
+            const existingIndex = allUploadedImages.findIndex(img => img.name === historyItem.name);
+            if (existingIndex !== -1) {
+                currentImageIndex = existingIndex;
+                loadImageFromArray(currentImageIndex);
+            }
+
+            hideLoading();
             return;
         }
 
-        showLoading('Загрузка из истории...');
+        // Используем URL изображения напрямую
+        const response = await fetch(historyItem.dataUrl);
+        const blob = await response.blob();
+        const file = new File([blob], historyItem.name, { type: 'image/jpeg' });
 
-        try {
-            // Используем URL изображения напрямую
-            const response = await fetch(historyItem.dataUrl);
-            const blob = await response.blob();
-            const file = new File([blob], historyItem.name, { type: 'image/jpeg' });
+        const formData = new FormData();
+        formData.append('file', file);
 
-            const formData = new FormData();
-            formData.append('file', file);
+        const serverResponse = await fetch('/upload_single', {
+            method: 'POST',
+            body: formData
+        });
 
-            const serverResponse = await fetch('/upload_single', {
-                method: 'POST',
-                body: formData
+        const contentType = serverResponse.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await serverResponse.text();
+            console.error('Server returned non-JSON response:', text);
+            throw new Error('Сервер вернул некорректный ответ');
+        }
+
+        const data = await serverResponse.json();
+
+        if (data.success) {
+            // СОЗДАЕМ НОВОЕ ИЗОБРАЖЕНИЕ ДЛЯ МАССИВА
+            const newImage = {
+                name: data.filename,
+                dataUrl: data.image_data,
+                thumb: data.image_data,
+                sessionId: data.session_id,
+                uploadDate: new Date()
+            };
+
+            // ДОБАВЛЯЕМ В МАССИВ allUploadedImages
+            allUploadedImages.push(newImage);
+
+            // Обновляем images для обратной совместимости
+            images = {};
+            let index = 0;
+            allUploadedImages.forEach(img => {
+                images[index] = {
+                    name: img.name,
+                    dataUrl: img.dataUrl,
+                    thumb: img.thumb
+                };
+                index++;
             });
 
-            const contentType = serverResponse.headers.get('content-type');
-            if (!contentType || !contentType.includes('application/json')) {
-                const text = await serverResponse.text();
-                console.error('Server returned non-JSON response:', text);
-                throw new Error('Сервер вернул некорректный ответ');
+            // Устанавливаем текущую сессию
+            currentSessionId = data.session_id;
+
+            // Отображаем загруженное изображение
+            const newIndex = allUploadedImages.length - 1;
+            displayImagePreview(allUploadedImages[newIndex].dataUrl, allUploadedImages[newIndex].name);
+            currentImageIndex = newIndex;
+
+            // Инициализируем хранилище для множественных масок
+            const imageName = data.filename;
+            if (!window.multiMasks[imageName]) {
+                window.multiMasks[imageName] = [];
             }
 
-            const data = await serverResponse.json();
+            // Показываем информацию об изображении
+            document.getElementById('image-info').style.display = 'block';
 
-            if (data.success) {
-                displayImagePreview(data.image_data, data.filename);
+            // Показываем индикатор зума
+            const zoomIndicator = document.getElementById('zoom-indicator');
+            if (zoomIndicator) zoomIndicator.style.display = 'flex';
 
-                currentSessionId = data.session_id;
-                images = {
-                    0: {
-                        name: data.filename,
-                        dataUrl: data.image_data,
-                        thumb: data.image_data
-                    }
-                };
-                currentImageIndex = 0;
-                showImageList();
-                showToast('Успех', 'Изображение загружено из истории', 'success');
-            } else {
-                throw new Error(data.error || 'Ошибка загрузки');
-            }
-        } catch (error) {
-            console.error('Load from history error:', error);
-            showToast('Ошибка', error.message, 'error');
-        } finally {
-            hideLoading();
+            // Обновляем список изображений
+            showImageList();
+
+            showToast('Успех', `Изображение "${data.filename}" загружено из истории. Всего загружено: ${allUploadedImages.length}`, 'success');
+        } else {
+            throw new Error(data.error || 'Ошибка загрузки');
         }
+    } catch (error) {
+        console.error('Load from history error:', error);
+        showToast('Ошибка', error.message, 'error');
+    } finally {
+        hideLoading();
     }
+}
 
     // Настройка обработчиков событий
     function setupEventListeners() {
@@ -3998,11 +4113,290 @@ let dragMode = null; // 'left' или 'right'
         }
     }
 
+
+    // ========== ФУНКЦИИ СЖАТИЯ ИЗОБРАЖЕНИЙ (ИСПРАВЛЕННЫЕ) ==========
+
+/**
+ * Проверка, является ли объект File или Blob
+ */
+function isFileObject(obj) {
+    return obj instanceof File || obj instanceof Blob;
+}
+
+/**
+ * Сжатие изображения перед отправкой на сервер
+ * @param {File|Blob} file - исходный файл изображения
+ * @param {Object} options - настройки сжатия
+ * @returns {Promise<File>} - сжатый файл
+ */
+async function compressImage(file, options = {}) {
+    const {
+        maxWidth = 1920,
+        maxHeight = 1920,
+        quality = 0.85,
+        maxSizeMB = 5
+    } = options;
+
+    return new Promise((resolve, reject) => {
+        // Проверяем входные данные
+        if (!file) {
+            reject(new Error('Файл не предоставлен'));
+            return;
+        }
+
+        // Получаем размер файла
+        const fileSize = file.size || 0;
+
+        // ВСЕГДА сжимаем (для теста)
+        console.log("FORCE COMPRESS:", (fileSize / 1024 / 1024).toFixed(2), "MB");
+
+        // Создаем URL для файла
+        let objectUrl = null;
+
+        try {
+            // Если это Blob или File, создаем URL
+            if (isFileObject(file)) {
+                objectUrl = URL.createObjectURL(file);
+            } else if (typeof file === 'string') {
+                objectUrl = file;
+            } else {
+                reject(new Error('Неподдерживаемый тип файла'));
+                return;
+            }
+
+            const img = new Image();
+
+            img.onload = function() {
+                let width = img.width;
+                let height = img.height;
+
+                // Вычисляем новые размеры с сохранением пропорций
+                if (width > maxWidth || height > maxHeight) {
+                    const ratio = Math.min(maxWidth / width, maxHeight / height);
+                    width = Math.floor(width * ratio);
+                    height = Math.floor(height * ratio);
+                }
+
+                // Создаем canvas для сжатия
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // Определяем формат выходного файла
+                let mimeType = file.type || 'image/jpeg';
+                if (mimeType === 'image/bmp' || mimeType === 'image/tiff' || mimeType === '') {
+                    mimeType = 'image/jpeg';
+                }
+
+                // Сжимаем изображение
+                canvas.toBlob(function(blob) {
+                    // Создаем имя файла
+                    const fileName = file.name || `image_${Date.now()}.${mimeType.split('/')[1] || 'jpg'}`;
+
+                    const compressedFile = new File([blob], fileName, {
+                        type: mimeType,
+                        lastModified: Date.now()
+                    });
+
+                    const originalSize = (fileSize / 1024 / 1024).toFixed(2);
+                    const compressedSize = (compressedFile.size / 1024 / 1024).toFixed(2);
+                    const reduction = ((1 - compressedFile.size / fileSize) * 100).toFixed(1);
+
+                    console.log(`Сжатие ${fileName}: ${originalSize} MB → ${compressedSize} MB (${reduction}%)`);
+
+                    // Показываем уведомление о сжатии
+                    if (reduction > 10) {
+                        showToast(`Изображение сжато: ${originalSize} MB → ${compressedSize} MB`, 'info');
+                    }
+
+                    // Очищаем URL объект
+                    if (objectUrl && objectUrl.startsWith('blob:')) {
+                        URL.revokeObjectURL(objectUrl);
+                    }
+
+                    resolve(compressedFile);
+                }, mimeType, quality);
+            };
+
+            img.onerror = () => {
+                if (objectUrl && objectUrl.startsWith('blob:')) {
+                    URL.revokeObjectURL(objectUrl);
+                }
+                reject(new Error('Не удалось загрузить изображение для сжатия'));
+            };
+
+            img.src = objectUrl;
+
+        } catch (error) {
+            if (objectUrl && objectUrl.startsWith('blob:')) {
+                URL.revokeObjectURL(objectUrl);
+            }
+            reject(error);
+        }
+    });
+}
+
+/**
+ * Безопасная обертка для handleSingleImageUpload с сжатием
+ */
+
+
+/**
+ * Получаем текущие настройки сжатия
+ */
+function getCompressionSettings() {
+    const compressEnabled = document.getElementById('compress-toggle')?.checked ?? true;
+
+    if (!compressEnabled) {
+        return null;
+    }
+
+    return {
+        maxWidth: parseInt(document.getElementById('max-width')?.value || 1920),
+        maxHeight: parseInt(document.getElementById('max-height')?.value || 1920),
+        quality: parseFloat(document.getElementById('compression-quality')?.value || 0.85),
+        maxSizeMB: parseFloat(document.getElementById('max-size-mb')?.value || 5)
+    };
+}
+
+/**
+ * Добавляем настройки сжатия в интерфейс
+ */
+function addCompressionSettings() {
+    // Проверяем, не добавлены ли уже настройки
+    if (document.querySelector('.compression-settings')) {
+        return;
+    }
+
+    const settingsHTML = `
+        <div class="compression-settings" style="margin-top: 15px; padding: 12px; background: var(--surface-dark); border-radius: var(--radius-sm); border: 1px solid var(--border);">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-compress-alt" style="color: var(--primary);"></i>
+                    <span style="font-size: 13px; font-weight: 500;">Сжатие изображений</span>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="compress-toggle" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div id="compression-options">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 12px;">
+                    <div>
+                        <label style="color: var(--text-light); display: block; margin-bottom: 4px;">Макс. ширина:</label>
+                        <input type="number" id="max-width" value="1920" step="100" min="640" max="4096"
+                               style="width: 100%; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface);">
+                    </div>
+                    <div>
+                        <label style="color: var(--text-light); display: block; margin-bottom: 4px;">Макс. высота:</label>
+                        <input type="number" id="max-height" value="1920" step="100" min="640" max="4096"
+                               style="width: 100%; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface);">
+                    </div>
+                    <div>
+                        <label style="color: var(--text-light); display: block; margin-bottom: 4px;">Качество:</label>
+                        <input type="range" id="compression-quality" min="0.5" max="1.0" step="0.05" value="0.85"
+                               style="width: 100%;">
+                        <div style="display: flex; justify-content: space-between; margin-top: 2px;">
+                            <span style="font-size: 10px;">50%</span>
+                            <span id="quality-value" style="font-size: 11px; font-weight: 500;">85%</span>
+                            <span style="font-size: 10px;">100%</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label style="color: var(--text-light); display: block; margin-bottom: 4px;">Макс. размер:</label>
+                        <select id="max-size-mb" style="width: 100%; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface);">
+                            <option value="2">2 MB</option>
+                            <option value="5" selected>5 MB</option>
+                            <option value="10">10 MB</option>
+                            <option value="20">20 MB</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="margin-top: 10px; padding: 8px; background: var(--primary-light); border-radius: 6px; font-size: 11px; color: var(--primary-dark);">
+                    <i class="fas fa-info-circle"></i>
+                    Автоматическое сжатие изображений размером более ${document.getElementById('max-size-mb')?.value || 5} MB
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Добавляем настройки в панель загрузки
+    const currentTab = document.querySelector('.upload-tab-content:not([style*="display: none"])');
+    if (currentTab) {
+        const uploadZone = currentTab.querySelector('.upload-zone');
+        uploadZone.insertAdjacentHTML('afterend', settingsHTML);
+    }
+
+    // Добавляем обработчики
+    const toggle = document.getElementById('compress-toggle');
+    const options = document.getElementById('compression-options');
+    const qualitySlider = document.getElementById('compression-quality');
+    const qualityValue = document.getElementById('quality-value');
+    const maxSizeSelect = document.getElementById('max-size-mb');
+
+    if (toggle && options) {
+        toggle.addEventListener('change', (e) => {
+            options.style.display = e.target.checked ? 'block' : 'none';
+        });
+    }
+
+    if (qualitySlider && qualityValue) {
+        qualitySlider.addEventListener('input', (e) => {
+            const percent = Math.round(e.target.value * 100);
+            qualityValue.textContent = `${percent}%`;
+        });
+    }
+
+    if (maxSizeSelect) {
+        maxSizeSelect.addEventListener('change', () => {
+            const infoDiv = document.querySelector('.compression-settings .bg-primary-light');
+            if (infoDiv) {
+                infoDiv.innerHTML = `<i class="fas fa-info-circle"></i> Автоматическое сжатие изображений размером более ${maxSizeSelect.value} MB`;
+            }
+        });
+    }
+}
+
+// Инициализация при загрузке страницы
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+            addCompressionSettings();
+
+        }, 500);
+    });
+} else {
+    setTimeout(() => {
+        addCompressionSettings();
+
+    }, 500);
+}
     // Загрузка одиночного изображения
 async function handleSingleImageUpload(files) {
     if (!files || files.length === 0) return;
 
-    const file = files[0];
+   let file = files[0];
+
+    console.log("FILE BEFORE:", file.name, file.size);
+
+    // СЖАТИЕ
+    try {
+        const settings = getCompressionSettings();
+
+        console.log("START COMPRESS");
+
+        const compressed = await compressImage(file, settings);
+
+        console.log("FILE AFTER:", compressed.name, compressed.size);
+
+        file = compressed;
+
+    } catch (err) {
+        console.error("COMPRESS ERROR:", err);
+    }
 
     // Проверка формата файла
     const validFormats = ['.png', '.jpg', '.jpeg', '.bmp', '.tiff'];
@@ -4029,7 +4423,6 @@ async function handleSingleImageUpload(files) {
             body: formData
         });
 
-        // Проверяем, что ответ в формате JSON
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
             const text = await response.text();
@@ -4040,22 +4433,36 @@ async function handleSingleImageUpload(files) {
         const data = await response.json();
 
         if (data.success) {
-            // Немедленно отображаем изображение в правой панели
-            displayImagePreview(data.image_data, data.filename);
-
-            // Сохраняем для дальнейшей работы
-            currentSessionId = data.session_id;
-            console.log('Session ID set:', currentSessionId);
-
-            images = {
-                0: {
-                    name: data.filename,
-                    dataUrl: data.image_data,
-                    thumb: data.image_data
-                }
+            // СОХРАНЯЕМ ВСЕ ИЗОБРАЖЕНИЯ В МАССИВ
+            const newImage = {
+                name: data.filename,
+                dataUrl: data.image_data,
+                thumb: data.image_data,
+                sessionId: data.session_id,
+                uploadDate: new Date()
             };
-            currentImageIndex = 0;
-            loadedImageNames.add(data.filename);
+
+            allUploadedImages.push(newImage);
+
+            // Обновляем images для обратной совместимости (текущее изображение)
+            images = {};
+            let index = 0;
+            allUploadedImages.forEach(img => {
+                images[index] = {
+                    name: img.name,
+                    dataUrl: img.dataUrl,
+                    thumb: img.thumb
+                };
+                index++;
+            });
+
+            // Устанавливаем текущую сессию как последнюю загруженную
+            currentSessionId = data.session_id;
+
+            // Отображаем последнее загруженное изображение
+            const lastIndex = allUploadedImages.length - 1;
+            displayImagePreview(allUploadedImages[lastIndex].dataUrl, allUploadedImages[lastIndex].name);
+            currentImageIndex = lastIndex;
 
             // Инициализируем хранилище для множественных масок
             const imageName = data.filename;
@@ -4070,13 +4477,16 @@ async function handleSingleImageUpload(files) {
             const zoomIndicator = document.getElementById('zoom-indicator');
             if (zoomIndicator) zoomIndicator.style.display = 'flex';
 
-            showToast('Успех', 'Изображение успешно загружено', 'success');
+            showToast('Успех', `Изображение "${data.filename}" успешно загружено. Всего загружено: ${allUploadedImages.length}`, 'success');
 
             // Сохраняем изображение в БД для авторизованных пользователей
             const isGuest = {{ is_guest|tojson }};
             if (!isGuest) {
                 await saveUploadedImageToDB(file);
             }
+
+            // Обновляем список изображений
+            showImageList();
         } else {
             throw new Error(data.error || 'Ошибка загрузки');
         }
@@ -4183,7 +4593,7 @@ function displayImagePreview(imageData, filename) {
     img.src = imageData;
 }
 
-    // Загрузка ZIP
+    // Загрузка ZIP - ИСПРАВЛЕННАЯ ВЕРСИЯ
 async function handleZipUpload(file) {
     if (!file) return;
 
@@ -4198,7 +4608,6 @@ async function handleZipUpload(file) {
             body: formData
         });
 
-        // Проверяем, что ответ в формате JSON
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
             const text = await response.text();
@@ -4208,76 +4617,122 @@ async function handleZipUpload(file) {
 
         const data = await response.json();
 
-        if (data.success) {
-            currentSessionId = data.session_id;
-            console.log('ZIP Session ID set:', currentSessionId);
+        if (!data.success) throw new Error(data.error || 'Ошибка загрузки');
 
-            images = {};
-            loadedImageNames.clear();
+        currentSessionId = data.session_id;
+        console.log('ZIP Session ID set:', currentSessionId);
 
-            // Проверяем наличие необходимых полей
-            if (!data.image_keys || !data.images) {
-                console.error('Invalid server response format:', data);
-                throw new Error('Неверный формат ответа от сервера');
+        // ОЧИЩАЕМ ПРЕДЫДУЩИЕ ДАННЫЕ
+        images = {};
+        loadedImageNames.clear();
+
+        // ВАЖНО: ОЧИЩАЕМ allUploadedImages ПРИ ЗАГРУЗКЕ НОВОГО ZIP
+        allUploadedImages = [];
+
+        if (!data.image_keys || !data.images) {
+            console.error('Invalid server response format:', data);
+            throw new Error('Неверный формат ответа от сервера');
+        }
+
+        const compressionSettings = getCompressionSettings();
+
+        let index = 0;
+        for (const key of data.image_keys) {
+            if (!data.images[key]) {
+                console.warn(`No image data for key: ${key}`);
+                continue;
             }
 
-            // Проходим по всем ключам
-            let index = 0;
+            let fileName = key;
+            try {
+                fileName = decodeURIComponent(key);
+            } catch (e) {
+                console.warn('Could not decode filename:', key);
+            }
 
-            data.image_keys.forEach((key) => {
-                // Пропускаем, если нет данных для этого ключа
-                if (!data.images[key]) {
-                    console.warn(`No image data for key: ${key}`);
-                    return;
-                }
+            let dataUrl = data.images[key];
 
-                // Декодируем имя файла если нужно
-                let fileName = key;
+            // Сжатие включено?
+            if (compressionSettings) {
                 try {
-                    // Пытаемся декодировать URI-компоненты
-                    fileName = decodeURIComponent(key);
-                } catch (e) {
-                    // Если не получается, используем как есть
-                    console.warn('Could not decode filename:', key);
+                    const blob = await (async () => {
+                        const res = await fetch(dataUrl);
+                        return await res.blob();
+                    })();
+
+                    const type = blob.type === 'image/png' ? 'image/jpeg' : blob.type;
+                    const compressedFile = await compressImage(new File([blob], fileName, { type }), compressionSettings);
+
+                    dataUrl = await new Promise(resolve => {
+                        const reader = new FileReader();
+                        reader.onload = e => resolve(e.target.result);
+                        reader.readAsDataURL(compressedFile);
+                    });
+
+                    if (blob.type === 'image/png') {
+                        fileName = fileName.replace(/\.png$/i, '.jpg');
+                    }
+
+                    console.log(`Изображение ${fileName} сжато и конвертировано`);
+                } catch (err) {
+                    console.error(`Ошибка сжатия изображения ${fileName}:`, err);
                 }
+            }
 
-                images[index] = {
-                    name: fileName,
-                    dataUrl: data.images[key],
-                    thumb: data.images[key]
-                };
+            // СОХРАНЯЕМ В ОБА МАССИВА
+            images[index] = {
+                name: fileName,
+                dataUrl: dataUrl,
+                thumb: dataUrl
+            };
 
-                // Инициализируем хранилище для множественных масок
-                if (!window.multiMasks[fileName]) {
-                    window.multiMasks[fileName] = [];
-                }
-
-                index++;
+            // ДОБАВЛЯЕМ В allUploadedImages
+            allUploadedImages.push({
+                name: fileName,
+                dataUrl: dataUrl,
+                thumb: dataUrl,
+                sessionId: currentSessionId,
+                uploadDate: new Date()
             });
 
-            if (Object.keys(images).length > 0) {
-                displayImagePreview(images[0].dataUrl, images[0].name);
-                currentImageIndex = 0;
-                showImageList();
+            if (!window.multiMasks[fileName]) {
+                window.multiMasks[fileName] = [];
+            }
 
-                showToast('Успех', `Архив успешно загружен. Загружено ${Object.keys(images).length} изображений`, 'success');
+            index++;
+        }
 
-                // Сохраняем первое изображение в БД для авторизованных пользователей
-                const isGuestElement = document.getElementById('is-guest-data');
-                const isGuest = isGuestElement ? isGuestElement.value === 'true' : true;
+        if (allUploadedImages.length > 0) {
+            // Обновляем images для обратной совместимости
+            images = {};
+            let idx = 0;
+            allUploadedImages.forEach(img => {
+                images[idx] = {
+                    name: img.name,
+                    dataUrl: img.dataUrl,
+                    thumb: img.thumb
+                };
+                idx++;
+            });
 
-                if (!isGuest) {
-                    showToast('Информация', 'Изображения из ZIP будут сохранены при создании маски', 'info');
-                    // Здесь можно вызвать функцию загрузки истории
-                    if (typeof loadUserHistory === 'function') {
-                        await loadUserHistory();
-                    }
-                }
-            } else {
-                showToast('Предупреждение', 'В архиве не найдено подходящих изображений', 'warning');
+            // Отображаем первое изображение
+            displayImagePreview(allUploadedImages[0].dataUrl, allUploadedImages[0].name);
+            currentImageIndex = 0;
+
+            // ПОКАЗЫВАЕМ СПИСОК ИЗОБРАЖЕНИЙ
+            showImageList();
+
+            showToast('Успех', `Архив успешно загружен. Загружено ${allUploadedImages.length} изображений`, 'success');
+
+            const isGuestElement = document.getElementById('is-guest-data');
+            const isGuest = isGuestElement ? isGuestElement.value === 'true' : true;
+
+            if (!isGuest) {
+                showToast('Информация', 'Изображения из ZIP будут сохранены при создании маски', 'info');
+                if (typeof loadUserHistory === 'function') await loadUserHistory();
             }
         } else {
-            throw new Error(data.error || 'Ошибка загрузки');
+            showToast('Предупреждение', 'В архиве не найдено подходящих изображений', 'warning');
         }
     } catch (error) {
         console.error('ZIP upload error:', error);
@@ -5032,8 +5487,8 @@ function setTool(tool) {
     }
 }
 
-   // ИСПРАВЛЕННАЯ функция для завершения маски (удаляет старые маски и сохраняет только текущую)
-async function completeMask() {
+    // ИСПРАВЛЕННАЯ функция для завершения маски (сохранение текущей маски)
+   async function completeMask() {
     if (!window.currentTempMask) {
         showToast('Ошибка', 'Сначала создайте маску', 'error');
         return;
@@ -5041,24 +5496,29 @@ async function completeMask() {
 
     const currentImageName = images[currentImageIndex].name;
 
-    // СОЗДАЕМ НОВОЕ ХРАНИЛИЩЕ ТОЛЬКО ДЛЯ ТЕКУЩЕЙ МАСКИ
-    // Вместо добавления к существующим - создаем новый массив только с текущей маской
-    window.multiMasks[currentImageName] = [];
+    // Инициализируем хранилище для этого изображения, если нужно
+    if (!window.multiMasks[currentImageName]) {
+        window.multiMasks[currentImageName] = [];
+    }
 
-    // Определяем цвет для новой маски (всегда первый цвет, так как маска теперь одна)
-    const maskColor = maskColors[0];
+    // Определяем цвет для новой маски
+    const maskColor = maskColors[window.multiMasks[currentImageName].length % maskColors.length];
 
-    // Сохраняем маску с цветом
+    // СОЗДАЕМ БИНАРНУЮ (ЧЕРНО-БЕЛУЮ) МАСКУ СРАЗУ
+    const binaryMaskDataUrl = await createBinaryMask(window.currentTempMask);
+
+    // Сохраняем маски (и цветную, и бинарную)
     const maskData = {
-        dataUrl: window.currentTempMask,
+        dataUrl: window.currentTempMask,           // Цветная маска (для отображения)
+        binaryDataUrl: binaryMaskDataUrl,          // Бинарная маска (для скачивания)
         color: maskColor,
-        index: 0, // Всегда индекс 0, так как маска теперь одна
-        points: [...points] // Сохраняем точки, использованные для создания маски
+        index: window.multiMasks[currentImageName].length,
+        points: [...points]
     };
 
     window.multiMasks[currentImageName].push(maskData);
 
-    // Обновляем отображение в результатах (теперь будет только одна маска)
+    // Обновляем отображение в результатах
     updateResultsWithAllMasks();
 
     // Очищаем временную маску
@@ -5068,27 +5528,86 @@ async function completeMask() {
     points = [];
     updatePointsList();
 
-    // Перерисовываем canvas только с новой маской
+    // Перерисовываем canvas со всеми сохраненными масками
     await renderCanvas();
 
     // Деактивируем кнопки
     document.getElementById('undo-btn').disabled = true;
     document.getElementById('complete-btn').disabled = true;
 
-    showToast('Успех', 'Маска сохранена (предыдущие маски удалены)', 'success');
+    showToast('Успех', `Маска #${window.multiMasks[currentImageName].length} сохранена`, 'success');
 }
 
-    // Новая функция для обновления результатов со всеми масками
-   function updateResultsWithAllMasks() {
+// Функция для создания бинарной маски из цветной
+async function createBinaryMask(colorMaskDataUrl) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+            // Создаем canvas для обработки
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+
+            // Рисуем исходную маску
+            ctx.drawImage(img, 0, 0, img.width, img.height);
+
+            // Получаем данные пикселей
+            const imageData = ctx.getImageData(0, 0, img.width, img.height);
+            const data = imageData.data;
+
+            // Конвертируем в черно-белое (бинарное) изображение
+            for (let i = 0; i < data.length; i += 4) {
+                // Проверяем, является ли пиксель частью маски
+                const isMaskPixel = data[i] > 200 || data[i+1] > 200 || data[i+2] > 200;
+
+                if (isMaskPixel) {
+                    // Белый цвет для маски
+                    data[i] = 255;     // R
+                    data[i+1] = 255;   // G
+                    data[i+2] = 255;   // B
+                    data[i+3] = 255;   // A - полностью непрозрачный
+                } else {
+                    // Черный цвет для фона
+                    data[i] = 0;       // R
+                    data[i+1] = 0;     // G
+                    data[i+2] = 0;     // B
+                    data[i+3] = 255;   // A - полностью непрозрачный
+                }
+            }
+
+            // Обновляем canvas с бинарным изображением
+            ctx.putImageData(imageData, 0, 0);
+
+            // Конвертируем в data URL
+            const binaryMaskDataUrl = canvas.toDataURL('image/png');
+            resolve(binaryMaskDataUrl);
+        };
+
+        img.onerror = () => {
+            console.error('Ошибка создания бинарной маски');
+            reject(new Error('Не удалось создать бинарную маску'));
+        };
+
+        img.src = colorMaskDataUrl;
+    });
+}
+
+    // Обновленная функция для отображения всех масок из multiMasks
+function updateResultsWithAllMasks() {
     const resultsGrid = document.getElementById('results-grid');
+    if (!resultsGrid) return;
+
     resultsGrid.innerHTML = '';
 
     // Создаем массив данных для модального окна
     const modalImages = [];
 
-    // Проходим по всем изображениям и их маскам
+    // Проходим по всем изображениям и их маскам в multiMasks
     Object.keys(window.multiMasks).forEach(imageName => {
         const masks = window.multiMasks[imageName];
+
+        if (!masks || masks.length === 0) return;
 
         masks.forEach((mask, maskIndex) => {
             const maskId = `${imageName}_mask_${maskIndex + 1}`;
@@ -5098,14 +5617,17 @@ async function completeMask() {
             div.setAttribute('data-image', imageName);
             div.setAttribute('data-mask-index', maskIndex);
 
+            // Определяем цвет для отображения (используем сохраненный цвет или цвет по умолчанию)
+            const badgeColor = mask.color || maskColors[maskIndex % maskColors.length];
+
             // Создаем контейнер для информации о маске
             div.innerHTML = `
                 <img src="${mask.dataUrl}" class="result-thumb" alt="${imageName} - маска ${maskIndex + 1}">
-                <div class="result-name">${imageName} (маска ${maskIndex + 1})</div>
+                <div class="result-name">${imageName} (маска ${maskIndex + 1})${mask.propagated ? ' 🔄' : ''}</div>
                 <div class="result-mask-index" style="display: none;">${maskIndex}</div>
-                <div class="result-area-badge" style="display: none; border-left: 4px solid ${mask.color}">
+                <div class="result-area-badge" style="display: none; border-left: 4px solid ${badgeColor}">
                     <i class="fas fa-vector-square"></i>
-                    <span class="area-value">0</span>
+                    <span class="area-value">${mask.area ? mask.area.toLocaleString() : '0'}</span>
                     <span class="area-unit">px²</span>
                 </div>
                 <button class="result-delete-btn" onclick="deleteResultItem(this)" title="Удалить">
@@ -5115,35 +5637,45 @@ async function completeMask() {
 
             resultsGrid.appendChild(div);
 
-            // Вычисляем площадь для этой маски асинхронно
-            const img = new Image();
-            img.onload = async () => {
-                const area = await calculateMaskAreaFromImage(img);
+            // Если площадь еще не вычислена, вычисляем асинхронно
+            if (!mask.area) {
+                const img = new Image();
+                img.onload = async () => {
+                    const area = await calculateMaskAreaFromImage(img);
+                    const areaBadge = div.querySelector('.result-area-badge');
+                    const areaValue = areaBadge.querySelector('.area-value');
+
+                    areaValue.textContent = area.toLocaleString('ru-RU');
+                    areaBadge.style.display = 'flex';
+                    areaBadge.title = `Точная площадь: ${area} пикселей`;
+
+                    // Обновляем площадь в объекте маски
+                    mask.area = area;
+                };
+                img.src = mask.dataUrl;
+            } else {
+                // Если площадь уже есть, сразу показываем
                 const areaBadge = div.querySelector('.result-area-badge');
-                const areaValue = areaBadge.querySelector('.area-value');
-
-                areaValue.textContent = area.toLocaleString('ru-RU');
                 areaBadge.style.display = 'flex';
-                areaBadge.title = `Точная площадь: ${area} пикселей`;
+            }
 
-                // Добавляем в массив для модального окна
-                modalImages.push({
-                    src: mask.dataUrl,
-                    name: `${imageName} (маска ${maskIndex + 1})`,
-                    area: area.toLocaleString('ru-RU') + ' px²'
-                });
-            };
-            img.src = mask.dataUrl;
+            // Добавляем в массив для модального окна
+            modalImages.push({
+                src: mask.dataUrl,
+                name: `${imageName} (маска ${maskIndex + 1})${mask.propagated ? ' - распространенная' : ''}`,
+                area: mask.area ? mask.area.toLocaleString() + ' px²' : 'Вычисляется...'
+            });
         });
     });
 
     // Добавляем обработчики кликов на все элементы результатов
-    // Используем setTimeout, чтобы убедиться, что все элементы уже в DOM
     setTimeout(() => {
         const resultItems = resultsGrid.querySelectorAll('.result-item');
         resultItems.forEach((item) => {
             // Удаляем старый обработчик, если был
-            item.removeEventListener('click', item.clickHandler);
+            if (item.clickHandler) {
+                item.removeEventListener('click', item.clickHandler);
+            }
 
             // Создаем новый обработчик
             item.clickHandler = function(e) {
@@ -5153,8 +5685,6 @@ async function completeMask() {
                     const name = this.querySelector('.result-name').textContent;
                     const areaBadge = this.querySelector('.area-value');
                     const area = areaBadge ? areaBadge.textContent + ' px²' : '0 px²';
-
-                    console.log('Opening modal with:', img.src, name); // Для отладки
 
                     openImageModal(
                         img.src,
@@ -5170,89 +5700,153 @@ async function completeMask() {
         });
     }, 100);
 
-    document.getElementById('results-panel').style.display = 'block';
+    // Показываем панель результатов, если есть хотя бы одна маска
+    if (resultsGrid.children.length > 0) {
+        document.getElementById('results-panel').style.display = 'block';
+    } else {
+        document.getElementById('results-panel').style.display = 'none';
+    }
 }
 
     // Распространение масок - доступно всем
-    async function propagateMasks() {
-        if (!currentSessionId) {
-            showToast('Ошибка', 'Сессия не найдена', 'error');
-            return;
-        }
+    // Исправленная функция распространения масок с сохранением в multiMasks
+async function propagateMasks() {
+    if (!currentSessionId) {
+        showToast('Ошибка', 'Сессия не найдена', 'error');
+        return;
+    }
 
-        showLoading('Распространение масок...', true);
+    showLoading('Распространение масок...', true);
 
-        const payload = {
-            session_id: currentSessionId
-        };
+    const payload = {
+        session_id: currentSessionId
+    };
 
-        try {
-            // Сначала пробуем /propagate
-            let response = await fetch('/propagate', {
+    try {
+        // Сначала пробуем /propagate
+        let response = await fetch('/propagate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        // Если 400, пробуем /sam2/propagate
+        if (response.status === 400) {
+            console.log('Trying alternative endpoint /sam2/propagate...');
+            response = await fetch('/sam2/propagate', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(payload)
             });
-
-            // Если 400, пробуем /sam2/propagate
-            if (response.status === 400) {
-                console.log('Trying alternative endpoint /sam2/propagate...');
-                response = await fetch('/sam2/propagate', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(payload)
-                });
-            }
-
-            // Проверяем, что ответ в формате JSON
-            const contentType = response.headers.get('content-type');
-            if (!contentType || !contentType.includes('application/json')) {
-                const text = await response.text();
-                console.error('Server returned non-JSON response:', text);
-                throw new Error('Сервер вернул некорректный ответ');
-            }
-
-            const data = await response.json();
-
-            if (data.success) {
-                // Сохраняем все маски как отдельные маски для каждого изображения
-                if (!window.multiMasks) window.multiMasks = {};
-
-                Object.keys(data.visualizations).forEach(key => {
-                    if (!window.multiMasks[key]) {
-                        window.multiMasks[key] = [];
-                    }
-
-                    // Добавляем новую маску для этого изображения
-                    const maskColor = maskColors[window.multiMasks[key].length % maskColors.length];
-                    window.multiMasks[key].push({
-                        dataUrl: data.visualizations[key],
-                        color: maskColor,
-                        index: window.multiMasks[key].length
-                    });
-                });
-
-                // Обновляем отображение результатов
-                updateResultsWithAllMasks();
-
-                // Перерисовываем canvas для текущего изображения
-                renderCanvas();
-
-                showToast('Успех', `Обработано ${data.processed_count} изображений`, 'success');
-            } else {
-                throw new Error(data.error || 'Ошибка распространения');
-            }
-        } catch (error) {
-            console.error('Propagate masks error:', error);
-            showToast('Ошибка', error.message, 'error');
-        } finally {
-            hideLoading();
         }
+
+        // Проверяем, что ответ в формате JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            console.error('Server returned non-JSON response:', text);
+            throw new Error('Сервер вернул некорректный ответ');
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Убеждаемся, что multiMasks существует
+            if (!window.multiMasks) window.multiMasks = {};
+
+            // Проходим по всем изображениям из ответа сервера
+            const imageNames = Object.keys(data.visualizations);
+
+            for (let i = 0; i < imageNames.length; i++) {
+                const imageName = imageNames[i];
+                const maskDataUrl = data.visualizations[imageName];
+
+                // Инициализируем массив масок для этого изображения, если нужно
+                if (!window.multiMasks[imageName]) {
+                    window.multiMasks[imageName] = [];
+                }
+
+                // Определяем цвет для новой маски
+                const maskColor = maskColors[window.multiMasks[imageName].length % maskColors.length];
+
+                try {
+                    // Получаем blob цветной маски
+                    const maskResponse = await fetch(maskDataUrl);
+                    const colorMaskBlob = await maskResponse.blob();
+
+                    // Создаем бинарную маску (черно-белую)
+                    const binaryMaskBlob = await convertToBinaryMask(colorMaskBlob);
+                    const binaryMaskDataUrl = URL.createObjectURL(binaryMaskBlob);
+
+                    // Вычисляем площадь маски для метаданных
+                    const area = await calculateMaskAreaFromBlob(binaryMaskBlob);
+
+                    // Сохраняем маску в multiMasks (как при обычном завершении)
+                    const maskData = {
+                        dataUrl: maskDataUrl,                    // Цветная маска для отображения
+                        binaryDataUrl: binaryMaskDataUrl,        // Бинарная маска для скачивания
+                        color: maskColor,                        // Цвет для отображения
+                        index: window.multiMasks[imageName].length, // Индекс маски
+                        propagated: true,                        // Отмечаем, что это распространенная маска
+                        points: [],                              // Для распространенных масок точек нет
+                        area: area,                              // Сохраняем площадь для быстрого доступа
+                        createdAt: new Date().toISOString()      // Время создания
+                    };
+
+                    window.multiMasks[imageName].push(maskData);
+
+                    // Обновляем отображение в панели результатов
+                    updateResultsWithAllMasks();
+
+                    console.log(`Маска для "${imageName}" сохранена в multiMasks. Всего масок: ${window.multiMasks[imageName].length}`);
+
+                } catch (maskError) {
+                    console.error(`Ошибка при обработке маски для ${imageName}:`, maskError);
+
+                    // В случае ошибки сохраняем хотя бы цветную маску
+                    const maskData = {
+                        dataUrl: maskDataUrl,
+                        binaryDataUrl: null,
+                        color: maskColor,
+                        index: window.multiMasks[imageName].length,
+                        propagated: true,
+                        points: [],
+                        error: true,
+                        createdAt: new Date().toISOString()
+                    };
+                    window.multiMasks[imageName].push(maskData);
+                    updateResultsWithAllMasks();
+                }
+            }
+
+            // Если текущее изображение имеет маски, обновляем отображение на canvas
+            const currentImageName = images[currentImageIndex]?.name || allUploadedImages[currentImageIndex]?.name;
+            if (currentImageName && window.multiMasks[currentImageName] && window.multiMasks[currentImageName].length > 0) {
+                currentMask = true;
+                await renderCanvas();
+            }
+
+            // Показываем уведомление об успехе
+            const totalMasks = Object.values(window.multiMasks).reduce((sum, masks) => sum + masks.length, 0);
+            showToast('Успех',
+                `Распространение завершено! Создано масок: ${totalMasks} для ${Object.keys(window.multiMasks).length} изображений`,
+                'success'
+            );
+
+        } else {
+            throw new Error(data.error || 'Ошибка распространения');
+        }
+    } catch (error) {
+        console.error('Propagate masks error:', error);
+        showToast('Ошибка', error.message, 'error');
+    } finally {
+        hideLoading();
     }
+}
 
     // Утилиты
     function setPointType(type) {
@@ -5274,40 +5868,19 @@ async function completeMask() {
     }
 
     function clearPoints() {
-    const currentImageName = images[currentImageIndex]?.name;
-
-    // Очищаем точки
-    points = [];
-
-    // Очищаем временную маску
-    window.currentTempMask = null;
-
-    // Очищаем сохраненные маски для текущего изображения
-    if (currentImageName && window.multiMasks[currentImageName]) {
-        window.multiMasks[currentImageName] = [];
+        points = [];
+        currentMask = false;
+        window.currentMaskImage = null;
+        window.currentTempMask = null;
+        currentMaskArea = 0;
+        updateAreaDisplay(0);
+        updatePointsList();
+        renderCanvas();
+        document.getElementById('undo-btn').disabled = true;
+        document.getElementById('generate-btn').disabled = false;
+        document.getElementById('propagate-btn').disabled = true;
+        document.getElementById('complete-btn').disabled = true;
     }
-
-    // Очищаем отображение площади
-    currentMaskArea = 0;
-    updateAreaDisplay(0);
-
-    // Обновляем список точек
-    updatePointsList();
-
-    // Обновляем результаты (удаляем маску из результатов)
-    updateResultsWithAllMasks();
-
-    // Перерисовываем canvas
-    renderCanvas();
-
-    // Деактивируем кнопки
-    document.getElementById('undo-btn').disabled = true;
-    document.getElementById('complete-btn').disabled = true;
-    document.getElementById('clear-points-btn').disabled = true;
-    document.getElementById('propagate-btn').disabled = true;
-
-    showToast('Информация', 'Все точки и маска очищены', 'info');
-}
 
     function updatePointsList() {
         const container = document.getElementById('points-list');
@@ -5330,7 +5903,17 @@ async function completeMask() {
         countElement.textContent = points.length;
         document.getElementById('points-container').style.display = points.length > 0 ? 'block' : 'none';
     }
-
+    function getImageDimensions(dataUrl) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve({
+            width: img.width,
+            height: img.height
+        });
+        img.onerror = reject;
+        img.src = dataUrl;
+    });
+}
     function removePoint(index) {
         points.splice(index, 1);
         updatePointsList();
@@ -5340,25 +5923,99 @@ async function completeMask() {
     }
 
     function showImageList() {
-        const container = document.getElementById('image-list');
-        const countElement = document.getElementById('image-count');
+    const container = document.getElementById('image-list');
+    const countElement = document.getElementById('image-count');
 
-        container.innerHTML = '';
-        Object.keys(images).forEach(index => {
-            const div = document.createElement('div');
-            div.className = `image-item ${parseInt(index) === currentImageIndex ? 'active' : ''}`;
-            div.onclick = () => loadImage(parseInt(index));
-            div.innerHTML = `
-                <img src="${images[index].thumb}" class="image-thumb" alt="${images[index].name}">
-                <div class="image-name">${images[index].name}</div>
-            `;
-            container.appendChild(div);
+    container.innerHTML = '';
+
+    // Используем allUploadedImages вместо images
+    allUploadedImages.forEach((img, index) => {
+        const div = document.createElement('div');
+        div.className = `image-item ${index === currentImageIndex ? 'active' : ''}`;
+        div.onclick = () => loadImageFromArray(index);
+        div.innerHTML = `
+            <img src="${img.thumb}" class="image-thumb" alt="${img.name}">
+            <div class="image-name">${img.name}</div>
+        `;
+        container.appendChild(div);
+    });
+
+    countElement.textContent = allUploadedImages.length;
+    document.getElementById('image-list-container').style.display = allUploadedImages.length > 0 ? 'block' : 'none';
+}
+function loadImageFromArray(index) {
+    if (!allUploadedImages[index]) return;
+
+    const img = new Image();
+    img.onload = () => {
+        currentImage = img;
+
+        // Обновляем images для обратной совместимости
+        images = {};
+        let idx = 0;
+        allUploadedImages.forEach(imgData => {
+            images[idx] = {
+                name: imgData.name,
+                dataUrl: imgData.dataUrl,
+                thumb: imgData.thumb
+            };
+            idx++;
         });
 
-        countElement.textContent = Object.keys(images).length;
-        document.getElementById('image-list-container').style.display = 'block';
-    }
+        currentImageIndex = index;
 
+        // Загружаем сохраненные маски для этого изображения
+        const imageName = allUploadedImages[index].name;
+        if (window.multiMasks && window.multiMasks[imageName] && window.multiMasks[imageName].length > 0) {
+            currentMask = true;
+        } else {
+            currentMask = false;
+            window.currentMaskImage = null;
+            window.currentTempMask = null;
+            currentMaskArea = 0;
+            updateAreaDisplay(0);
+        }
+
+        // Вычисляем оптимальный масштаб
+        resizeCanvas();
+
+        // Сбрасываем позицию
+        offsetX = 0;
+        offsetY = 0;
+
+        // Вычисляем масштаб, чтобы изображение вписалось в canvas
+        const containerWidth = canvas.width;
+        const containerHeight = canvas.height;
+        const scaleX = containerWidth / img.width;
+        const scaleY = containerHeight / img.height;
+        zoom = Math.min(scaleX, scaleY) * 0.95;
+
+        renderCanvas();
+
+        updateImageSelection(index);
+        updateImageInfo();
+
+        // Показываем canvas
+        document.getElementById('main-canvas').style.display = 'block';
+        document.getElementById('no-image-message').style.display = 'none';
+        document.querySelector('.canvas-controls').style.display = 'flex';
+        document.querySelector('.point-type-selector').style.display = 'flex';
+
+        const zoomIndicator = document.getElementById('zoom-indicator');
+        if (zoomIndicator) zoomIndicator.style.display = 'flex';
+
+        document.getElementById('generate-btn').disabled = false;
+        document.getElementById('image-info').style.display = 'block';
+        document.getElementById('complete-btn').disabled = points.length === 0;
+    };
+
+    img.onerror = () => {
+        console.error('Ошибка загрузки изображения:', allUploadedImages[index].name);
+        showToast('Ошибка', 'Не удалось загрузить изображение', 'error');
+    };
+
+    img.src = allUploadedImages[index].dataUrl;
+}
     function updateImageSelection(index) {
         document.querySelectorAll('.image-item').forEach(item => {
             item.classList.remove('active');
@@ -5441,9 +6098,86 @@ async function completeMask() {
     document.getElementById('results-panel').style.display = 'block';
 }
 
-    // Скачивание результатов - с проверкой авторизации
-  async function downloadResults() {
-    // Проверяем, авторизован ли пользователь
+    // Функция для извлечения маски по красному цвету из изображения
+async function extractMaskByRedColor(imageBlob, originalFilename, maskIndex) {
+   return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+            // Создаем canvas для анализа
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+
+            // Рисуем исходное изображение
+            ctx.drawImage(img, 0, 0);
+
+            // Получаем данные пикселей
+            const imageData = ctx.getImageData(0, 0, img.width, img.height);
+            const data = imageData.data;
+
+            // Создаем бинарную маску (черно-белую)
+            const maskCanvas = document.createElement('canvas');
+            maskCanvas.width = img.width;
+            maskCanvas.height = img.height;
+            const maskCtx = maskCanvas.getContext('2d');
+            const maskImageData = maskCtx.createImageData(img.width, img.height);
+            const maskData = maskImageData.data;
+
+            let redPixelCount = 0;
+
+            // Строгое определение чистого красного цвета
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i];
+                const g = data[i+1];
+                const b = data[i+2];
+                const a = data[i+3];
+
+                // Строго чистый красный цвет: R = 255, G = 0, B = 0
+                // Допускаем небольшое отклонение для сглаживания, но строго по заданию
+                const isPureRed = (r === 255 && g === 0 && b === 0);
+
+                if (isPureRed) {
+                    // Белый цвет для маски (область выделения)
+                    maskData[i] = 255;     // R
+                    maskData[i+1] = 255;   // G
+                    maskData[i+2] = 255;   // B
+                    maskData[i+3] = 255;   // A - непрозрачный
+                    redPixelCount++;
+                } else {
+                    // Черный цвет для фона
+                    maskData[i] = 0;       // R
+                    maskData[i+1] = 0;     // G
+                    maskData[i+2] = 0;     // B
+                    maskData[i+3] = 255;   // A - непрозрачный
+                }
+            }
+
+            // Применяем маску
+            maskCtx.putImageData(maskImageData, 0, 0);
+
+            // Конвертируем в PNG blob
+            maskCanvas.toBlob((blob) => {
+                console.log(`Маска #${maskIndex} извлечена. Найдено красных пикселей (255,0,0): ${redPixelCount}`);
+                resolve({
+                    blob: blob,
+                    width: img.width,
+                    height: img.height,
+                    pixelCount: redPixelCount
+                });
+            }, 'image/png');
+        };
+
+        img.onerror = () => {
+            reject(new Error(`Не удалось загрузить изображение: ${originalFilename}`));
+        };
+
+        img.src = URL.createObjectURL(imageBlob);
+    });
+}
+
+
+async function downloadResults() {
     const isGuest = {{ is_guest|tojson }};
 
     if (isGuest) {
@@ -5451,355 +6185,446 @@ async function completeMask() {
         return;
     }
 
-    if (!currentSessionId) {
-        showToast('Ошибка', 'Нет результатов для скачивания', 'error');
+    // Проверяем наличие масок в multiMasks
+    if (!window.multiMasks || Object.keys(window.multiMasks).length === 0) {
+        showToast('Ошибка', 'Нет масок для скачивания', 'error');
         return;
     }
 
-    showLoading('Подготовка архива с оригиналами, масками, наложениями и метаданными...');
+    // Подсчитываем общее количество масок
+    let totalMasks = 0;
+    for (const imageName in window.multiMasks) {
+        totalMasks += window.multiMasks[imageName].length;
+    }
+
+    if (totalMasks === 0) {
+        showToast('Ошибка', 'Нет масок для скачивания', 'error');
+        return;
+    }
+
+    showLoading('Подготовка архива...');
 
     try {
-        // Делаем запрос на сервер для получения архива с масками
-        const response = await fetch(`/download?session_id=${encodeURIComponent(currentSessionId)}`);
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Ошибка сервера: ${response.status} - ${errorText}`);
-        }
-
-        // Получаем blob из ответа (это архив только с масками)
-        const masksBlob = await response.blob();
-
-        // Создаем новый ZIP архив
         const zip = new JSZip();
 
-        // Создаем структуру папок
-        const originalsFolder = zip.folder('originals');           // Оригинальные изображения
-        const masksFolder = zip.folder('masks');                   // Маски (с новыми именами)
-        const overlaysFolder = zip.folder('images_with_overlay');  // Изображения с наложением
-        const metadataFolder = zip.folder('metadata');             // Метаданные
+        // Создаем папки
+        const originalsFolder = zip.folder("originals");
+        const masksFolder = zip.folder("masks");
+        const overlaysFolder = zip.folder("overlays");
+        const metadataFolder = zip.folder("metadata");
 
-        // Собираем информацию о всех изображениях и масках для метаданных
-        const resultsGrid = document.getElementById('results-grid');
-        const resultItems = resultsGrid.querySelectorAll('.result-item');
+        const metadataMap = new Map();
 
-        // Создаем маппинг оригинальных имен на порядковые номера
-        const imageNumberMap = new Map(); // originalName -> number
-        const metadataMap = new Map();    // originalName -> {original, masks: []}
+        // Функция для нормализации имени файла
+        function normalizeFilename(filename) {
+            return filename.replace(/[\\/:*?"<>|]/g, '_');
+        }
 
-        // Сначала собираем все уникальные имена изображений
-        const uniqueImageNames = new Set();
-        resultItems.forEach(item => {
-            const nameDiv = item.querySelector('.result-name');
-            if (nameDiv) {
-                const fullName = nameDiv.textContent;
-                const maskMatch = fullName.match(/(.*)\s*\(маска\s*(\d+)\)/);
-                if (maskMatch) {
-                    uniqueImageNames.add(maskMatch[1].trim());
-                }
-            }
-        });
+        // Функция для сравнения имен файлов
+        function isSameImageName(name1, name2) {
+            const name1WithoutExt = name1.replace(/\.[^/.]+$/, '');
+            const name2WithoutExt = name2.replace(/\.[^/.]+$/, '');
+            const normalized1 = normalizeFilename(name1WithoutExt);
+            const normalized2 = normalizeFilename(name2WithoutExt);
+            return normalized1 === normalized2;
+        }
 
-        // Преобразуем Set в массив и сортируем для консистентности
-        const sortedImageNames = Array.from(uniqueImageNames).sort();
+        // Функция извлечения маски по красному цвету
+        async function extractMaskFromOverlay(overlayBlob) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
 
-        // Присваиваем порядковые номера
-        sortedImageNames.forEach((name, index) => {
-            imageNumberMap.set(name, index + 1);
-        });
+                    ctx.drawImage(img, 0, 0);
 
-        // Теперь собираем данные с учетом порядковых номеров
-        resultItems.forEach(item => {
-            const maskImg = item.querySelector('.result-thumb');
-            const nameDiv = item.querySelector('.result-name');
-            const areaBadge = item.querySelector('.area-value');
-            const maskIndex = item.getAttribute('data-mask-index') || '0';
+                    const imageData = ctx.getImageData(0, 0, img.width, img.height);
+                    const data = imageData.data;
 
-            if (maskImg && nameDiv) {
-                const fullName = nameDiv.textContent;
-                // Извлекаем имя оригинального изображения
-                let originalName = fullName;
-                const maskMatch = fullName.match(/(.*)\s*\(маска\s*(\d+)\)/);
-                let maskNumber = 1;
+                    const maskCanvas = document.createElement('canvas');
+                    maskCanvas.width = img.width;
+                    maskCanvas.height = img.height;
+                    const maskCtx = maskCanvas.getContext('2d');
+                    const maskImageData = maskCtx.createImageData(img.width, img.height);
+                    const maskData = maskImageData.data;
 
-                if (maskMatch) {
-                    originalName = maskMatch[1].trim();
-                    maskNumber = parseInt(maskMatch[2]) || 1;
-                }
+                    for (let i = 0; i < data.length; i += 4) {
+                        const r = data[i];
+                        const g = data[i+1];
+                        const b = data[i+2];
 
-                // Получаем порядковый номер для этого изображения
-                const imageNumber = imageNumberMap.get(originalName) || 1;
+                        // Ищем чистый красный цвет
+                        const isMaskPixel = (r >= 250 && g <= 5 && b <= 5);
 
-                // Получаем площадь из бейджа
-                let area = 0;
-                if (areaBadge) {
-                    area = parseInt(areaBadge.textContent.replace(/\s/g, '')) || 0;
-                }
-
-                if (!metadataMap.has(originalName)) {
-                    metadataMap.set(originalName, {
-                        original: null,
-                        imageNumber: imageNumber,
-                        masks: []
-                    });
-                }
-
-                const imageData = metadataMap.get(originalName);
-                imageData.masks.push({
-                    index: maskNumber,
-                    area: area,
-                    dataUrl: maskImg.src,
-                    originalFilename: `${originalName.replace(/\.[^/.]+$/, '')}_mask_${maskNumber}.png` // оригинальное имя маски
-                });
-            }
-        });
-
-        // 1. Добавляем маски в папку 'masks' с новыми именами
-        const masksZip = await JSZip.loadAsync(masksBlob);
-
-        const maskPromises = [];
-
-        // Создаем маппинг старых имен масок на новые
-        masksZip.forEach(async (relativePath, file) => {
-            if (!file.dir) {
-                // Определяем, какому изображению принадлежит эта маска
-                let matchedImageName = null;
-                let matchedMaskIndex = null;
-
-                // Ищем соответствие в metadataMap
-                for (const [originalName, data] of metadataMap.entries()) {
-                    for (const mask of data.masks) {
-                        // Проверяем, содержит ли путь имя оригинального изображения
-                        if (relativePath.includes(originalName.replace(/\.[^/.]+$/, ''))) {
-                            matchedImageName = originalName;
-                            matchedMaskIndex = mask.index;
-                            break;
+                        if (isMaskPixel) {
+                            maskData[i] = 255;
+                            maskData[i+1] = 255;
+                            maskData[i+2] = 255;
+                            maskData[i+3] = 255;
+                        } else {
+                            maskData[i] = 0;
+                            maskData[i+1] = 0;
+                            maskData[i+2] = 0;
+                            maskData[i+3] = 255;
                         }
                     }
-                    if (matchedImageName) break;
-                }
 
-                if (matchedImageName) {
-                    const imageNumber = imageNumberMap.get(matchedImageName);
-                    const baseFileName = imageNumber.toString().padStart(3, '0');
+                    maskCtx.putImageData(maskImageData, 0, 0);
 
-                    maskPromises.push(
-                        file.async('blob').then(blob => {
-                            // Сохраняем маску с новым именем
-                            const newMaskName = `${baseFileName}_mask_${matchedMaskIndex}.png`;
-                            masksFolder.file(newMaskName, blob);
-                        })
-                    );
-                } else {
-                    // Если не нашли соответствие, сохраняем как есть
-                    maskPromises.push(
-                        file.async('blob').then(blob => {
-                            masksFolder.file(relativePath, blob);
-                        })
-                    );
-                }
-            }
-        });
-
-        await Promise.all(maskPromises);
-
-        // 2. Добавляем оригинальные изображения и собираем данные о них
-        const originalPromises = [];
-
-        for (const [originalName, data] of metadataMap.entries()) {
-            // Ищем оригинальное изображение в объекте images
-            const originalImage = Object.values(images).find(img => img.name === originalName);
-
-            if (originalImage) {
-                data.original = {
-                    name: originalName,
-                    dataUrl: originalImage.dataUrl,
-                    width: 0,
-                    height: 0,
-                    size: 0,
-                    imageNumber: data.imageNumber
+                    maskCanvas.toBlob((blob) => {
+                        resolve(blob);
+                    }, 'image/png');
                 };
 
-                // Получаем размеры и вес изображения
-                const originalPromise = fetch(originalImage.dataUrl)
-                    .then(res => {
-                        // Получаем размер файла из заголовков или вычисляем
-                        const contentLength = res.headers.get('content-length');
-                        if (contentLength) {
-                            data.original.size = parseInt(contentLength);
-                        }
-                        return res.blob();
-                    })
-                    .then(blob => {
-                        // Если не получили размер из заголовков, используем размер blob
-                        if (!data.original.size) {
-                            data.original.size = blob.size;
-                        }
+                img.onerror = reject;
+                img.src = URL.createObjectURL(overlayBlob);
+            });
+        }
 
-                        // Сохраняем оригинальное изображение с новым именем (по номеру)
-                        const fileExt = originalName.split('.').pop() || 'jpg';
-                        const newFileName = `${data.imageNumber.toString().padStart(3, '0')}_original.${fileExt}`;
-                        originalsFolder.file(newFileName, blob);
+        // ========== ОСНОВНОЙ ПОДХОД: ищем маски по имени изображения ==========
+        for (let i = 0; i < allUploadedImages.length; i++) {
+            const image = allUploadedImages[i];
+            const imageName = image.name;
 
-                        // Получаем размеры изображения
-                        return new Promise((resolve, reject) => {
-                            const img = new Image();
-                            img.onload = () => {
-                                data.original.width = img.width;
-                                data.original.height = img.height;
-                                resolve();
-                            };
-                            img.onerror = reject;
-                            img.src = URL.createObjectURL(blob);
-                        });
-                    })
-                    .catch(err => {
-                        console.error('Ошибка загрузки оригинала:', originalName, err);
+            // Ищем соответствующие маски
+            let foundMasks = null;
+            let matchedMaskKey = null;
+
+            for (const maskKey of Object.keys(window.multiMasks)) {
+                if (isSameImageName(maskKey, imageName)) {
+                    foundMasks = window.multiMasks[maskKey];
+                    matchedMaskKey = maskKey;
+                    break;
+                }
+            }
+
+            if (!foundMasks || foundMasks.length === 0) {
+                console.log(`Нет масок для изображения: ${imageName}`);
+                continue;
+            }
+
+            const imageNumber = i + 1;
+            const paddedNumber = imageNumber.toString().padStart(3, '0');
+
+            // Получаем оригинальное изображение
+            const originalResponse = await fetch(image.dataUrl);
+            const originalBlob = await originalResponse.blob();
+            const fileExt = image.name.split('.').pop() || 'png';
+            const cleanImageName = normalizeFilename(image.name.replace(/\.[^/.]+$/, ''));
+            const imgDimensions = await getImageDimensionsFromBlob(originalBlob);
+
+            const imageData = {
+                original: {
+                    name: image.name,
+                    blob: originalBlob,
+                    width: imgDimensions.width,
+                    height: imgDimensions.height,
+                    size: originalBlob.size,
+                    imageNumber: imageNumber,
+                    paddedNumber: paddedNumber,
+                    cleanName: cleanImageName,
+                    extension: fileExt
+                },
+                masks: [],
+                imageNumber: imageNumber,
+                paddedNumber: paddedNumber,
+                cleanName: cleanImageName
+            };
+
+            // Обрабатываем каждую маску
+            for (let maskIndex = 0; maskIndex < foundMasks.length; maskIndex++) {
+                const mask = foundMasks[maskIndex];
+                const maskNumber = maskIndex + 1;
+
+                try {
+                    // ★★★ ИСПОЛЬЗУЕМ СОХРАНЕННУЮ ПЛОЩАДЬ ИЗ mask.area ★★★
+                    const area = mask.area || 0;
+
+                    // Получаем цветной overlay
+                    let overlayBlob;
+                    if (mask.dataUrl.startsWith('blob:')) {
+                        const overlayResponse = await fetch(mask.dataUrl);
+                        overlayBlob = await overlayResponse.blob();
+                    } else if (mask.dataUrl.startsWith('data:')) {
+                        const overlayResponse = await fetch(mask.dataUrl);
+                        overlayBlob = await overlayResponse.blob();
+                    } else {
+                        overlayBlob = await (await fetch(mask.dataUrl)).blob();
+                    }
+
+                    // Извлекаем бинарную маску из overlay по красному цвету
+                    const maskBlob = await extractMaskFromOverlay(overlayBlob);
+
+                    imageData.masks.push({
+                        index: maskNumber,
+                        area: area,  // ← ИСПОЛЬЗУЕМ СОХРАНЕННУЮ ПЛОЩАДЬ
+                        maskBlob: maskBlob,
+                        overlayBlob: overlayBlob,
+                        propagated: mask.propagated || false
                     });
 
-                originalPromises.push(originalPromise);
+                    console.log(`Маска ${maskNumber} для ${imageName}: площадь = ${area} px²`);
+
+                } catch (maskError) {
+                    console.error(`Ошибка обработки маски ${maskNumber}:`, maskError);
+                }
+            }
+
+            if (imageData.masks.length > 0) {
+                metadataMap.set(image.name, imageData);
             }
         }
 
-        await Promise.all(originalPromises);
+        // ========== АЛЬТЕРНАТИВНЫЙ ПОДХОД: если не нашли соответствий ==========
+        if (metadataMap.size === 0) {
+            console.log('Пробуем альтернативный подход - используем ключи multiMasks напрямую...');
 
-        // 3. Создаем файлы с метаданными
-        // Глобальный файл со всей информацией
+            let altIndex = 0;
+            const maskKeys = Object.keys(window.multiMasks);
+
+            for (const maskKey of maskKeys) {
+                const masks = window.multiMasks[maskKey];
+                if (!masks || masks.length === 0) continue;
+
+                // Ищем соответствующее изображение в allUploadedImages
+                let foundImage = null;
+                for (const img of allUploadedImages) {
+                    if (isSameImageName(img.name, maskKey)) {
+                        foundImage = img;
+                        break;
+                    }
+                }
+
+                if (!foundImage) {
+                    console.log(`Не найдено изображение для маски: ${maskKey}`);
+                    continue;
+                }
+
+                altIndex++;
+                const paddedNumber = altIndex.toString().padStart(3, '0');
+                const cleanImageName = normalizeFilename(maskKey.replace(/\.[^/.]+$/, ''));
+
+                // Получаем оригинальное изображение
+                const originalResponse = await fetch(foundImage.dataUrl);
+                const originalBlob = await originalResponse.blob();
+                const fileExt = foundImage.name.split('.').pop() || 'png';
+                const imgDimensions = await getImageDimensionsFromBlob(originalBlob);
+
+                const imageData = {
+                    original: {
+                        name: foundImage.name,
+                        blob: originalBlob,
+                        width: imgDimensions.width,
+                        height: imgDimensions.height,
+                        size: originalBlob.size,
+                        imageNumber: altIndex,
+                        paddedNumber: paddedNumber,
+                        cleanName: cleanImageName,
+                        extension: fileExt
+                    },
+                    masks: [],
+                    imageNumber: altIndex,
+                    paddedNumber: paddedNumber,
+                    cleanName: cleanImageName
+                };
+
+                // Обрабатываем все маски для этого ключа
+                for (let maskIndex = 0; maskIndex < masks.length; maskIndex++) {
+                    const mask = masks[maskIndex];
+                    const maskNumber = maskIndex + 1;
+
+                    try {
+                        // ★★★ ИСПОЛЬЗУЕМ СОХРАНЕННУЮ ПЛОЩАДЬ ИЗ mask.area ★★★
+                        const area = mask.area || 0;
+
+                        // Получаем цветной overlay
+                        let overlayBlob = await (await fetch(mask.dataUrl)).blob();
+
+                        // Извлекаем бинарную маску из overlay по красному цвету
+                        const maskBlob = await extractMaskFromOverlay(overlayBlob);
+
+                        imageData.masks.push({
+                            index: maskNumber,
+                            area: area,  // ← ИСПОЛЬЗУЕМ СОХРАНЕННУЮ ПЛОЩАДЬ
+                            maskBlob: maskBlob,
+                            overlayBlob: overlayBlob,
+                            propagated: mask.propagated || false
+                        });
+
+                        console.log(`Альт. Маска ${maskNumber} для ${maskKey}: площадь = ${area} px²`);
+
+                    } catch (err) {
+                        console.error(`Ошибка обработки маски ${maskKey}:`, err);
+                    }
+                }
+
+                if (imageData.masks.length > 0) {
+                    metadataMap.set(foundImage.name, imageData);
+                }
+            }
+        }
+
+        // Проверяем, есть ли данные для сохранения
+        if (metadataMap.size === 0) {
+            throw new Error('Не найдено данных для сохранения (нет масок)');
+        }
+
+        // Сохраняем файлы в архив
+        for (const [imageName, data] of metadataMap.entries()) {
+            const paddedNum = data.paddedNumber;
+            const cleanName = data.cleanName;
+
+            console.log(`Сохранение в архив: ${imageName}, масок: ${data.masks.length}`);
+
+            // Сохраняем оригинал
+            const originalFileName = `${paddedNum}_${cleanName}_original.${data.original.extension}`;
+            originalsFolder.file(originalFileName, data.original.blob);
+
+            // Сохраняем все маски и overlay
+            for (const mask of data.masks) {
+                // Бинарная маска в папку masks
+                const binaryFileName = `${paddedNum}_${cleanName}_mask_${mask.index}.png`;
+                masksFolder.file(binaryFileName, mask.maskBlob);
+
+                // Цветной overlay в папку overlays
+                const overlayFileName = `${paddedNum}_${cleanName}_mask_${mask.index}_overlay.png`;
+                overlaysFolder.file(overlayFileName, mask.overlayBlob);
+
+                console.log(`  - Сохранена маска ${mask.index}: ${binaryFileName} (${mask.area} px²)`);
+            }
+        }
+
+        // Создаем метаданные
         const globalMetadata = {
             generation_date: new Date().toISOString(),
-            session_id: currentSessionId,
+            generation_date_formatted: new Date().toLocaleString('ru-RU'),
             total_images: metadataMap.size,
             total_masks: Array.from(metadataMap.values()).reduce((sum, data) => sum + data.masks.length, 0),
             images: []
         };
 
-        // Для каждого изображения создаем отдельный файл метаданных и добавляем в глобальный
-        for (const [originalName, data] of metadataMap.entries()) {
-            if (!data.original) continue;
+        for (const [imageName, data] of metadataMap.entries()) {
+            const paddedNum = data.paddedNumber;
+            const cleanName = data.cleanName;
+            const totalPixels = data.original.width * data.original.height;
 
-            // Формируем базовое имя файла с номером
-            const baseFileName = data.imageNumber.toString().padStart(3, '0');
-            const fileExt = originalName.split('.').pop() || 'jpg';
-
-            // Данные для этого изображения
             const imageMetadata = {
                 image_number: data.imageNumber,
-                original_filename: originalName,
-                new_filename: `${baseFileName}_original.${fileExt}`,
+                padded_number: paddedNum,
+                original_filename: imageName,
+                new_filename: `${paddedNum}_${cleanName}_original.${data.original.extension}`,
                 width: data.original.width,
                 height: data.original.height,
                 file_size_bytes: data.original.size,
                 file_size_formatted: formatFileSize(data.original.size),
-                total_pixels: data.original.width * data.original.height,
+                total_pixels: totalPixels,
                 masks: data.masks.map(mask => ({
                     mask_index: mask.index,
-                    area_pixels: mask.area,
-                    area_percentage: ((mask.area / (data.original.width * data.original.height)) * 100).toFixed(2),
-                    original_mask_filename: mask.originalFilename,
-                    new_mask_filename: `${baseFileName}_mask_${mask.index}.png`,
-                    overlay_filename: `${baseFileName}_mask_${mask.index}_overlay.png`
+                    area_pixels: mask.area,  // ← ИСПОЛЬЗУЕМ СОХРАНЕННУЮ ПЛОЩАДЬ
+                    area_percentage: ((mask.area / totalPixels) * 100).toFixed(2),
+                    binary_mask_filename: `${paddedNum}_${cleanName}_mask_${mask.index}.png`,
+                    overlay_filename: `${paddedNum}_${cleanName}_mask_${mask.index}_overlay.png`,
+                    propagated: mask.propagated || false
                 }))
             };
 
-            // Добавляем в глобальный массив
             globalMetadata.images.push(imageMetadata);
-
-            // Создаем отдельный JSON файл для этого изображения
-            const metadataJson = JSON.stringify(imageMetadata, null, 2);
-            metadataFolder.file(`${baseFileName}_metadata.json`, metadataJson);
-
-            // Создаем читаемый текстовый файл с метаданными
-            const textMetadata = generateReadableMetadata(imageMetadata);
-            metadataFolder.file(`${baseFileName}_metadata.txt`, textMetadata);
+            metadataFolder.file(`${paddedNum}_${cleanName}_metadata.json`, JSON.stringify(imageMetadata, null, 2));
         }
 
-        // Сортируем изображения по номеру для глобальных файлов
-        globalMetadata.images.sort((a, b) => a.image_number - b.image_number);
+        // Сохраняем общие метаданные
+        metadataFolder.file('all_metadata.json', JSON.stringify(globalMetadata, null, 2));
 
-        // Сохраняем глобальный файл метаданных
-        const globalMetadataJson = JSON.stringify(globalMetadata, null, 2);
-        metadataFolder.file('all_metadata.json', globalMetadataJson);
+        // Создаем CSV
+        const csvRows = [
+            ['Image #', 'Padded #', 'Original Filename', 'New Filename', 'Width', 'Height',
+             'Total Pixels', 'File Size (Bytes)', 'File Size', 'Mask #', 'Area (px²)',
+             'Area (%)', 'Propagated', 'Mask File', 'Overlay File']
+        ];
 
-        // Создаем общий читаемый файл со всей информацией
-        const globalTextMetadata = generateGlobalReadableMetadata(globalMetadata);
-        metadataFolder.file('all_metadata.txt', globalTextMetadata);
-
-        // Создаем CSV файл для удобного импорта в Excel
-        const csvContent = generateCSVMetadata(globalMetadata);
-        metadataFolder.file('metadata.csv', csvContent);
-
-        // 4. Создаем изображения с наложением маски (оверлеи) с новыми именами
-        const overlayPromises = [];
-
-        resultItems.forEach(item => {
-            const maskImg = item.querySelector('.result-thumb');
-            const nameDiv = item.querySelector('.result-name');
-
-            if (maskImg && nameDiv) {
-                const fullName = nameDiv.textContent;
-                const maskMatch = fullName.match(/(.*)\s*\(маска\s*(\d+)\)/);
-
-                if (maskMatch) {
-                    const originalName = maskMatch[1].trim();
-                    const maskNumber = parseInt(maskMatch[2]) || 1;
-
-                    // Получаем порядковый номер для этого изображения
-                    const imageNumber = imageNumberMap.get(originalName) || 1;
-                    const baseFileName = imageNumber.toString().padStart(3, '0');
-
-                    // Находим оригинальное изображение
-                    const originalImage = Object.values(images).find(img => img.name === originalName);
-
-                    if (originalImage) {
-                        // Создаем оверлей
-                        const overlayPromise = createOverlayImage(
-                            originalImage.dataUrl,
-                            maskImg.src,
-                            originalName,
-                            maskNumber
-                        ).then(overlayBlob => {
-                            const fileName = `${baseFileName}_mask_${maskNumber}_overlay.png`;
-                            overlaysFolder.file(fileName, overlayBlob);
-                        });
-
-                        overlayPromises.push(overlayPromise);
-                    }
-                }
-            }
+        globalMetadata.images.forEach(img => {
+            img.masks.forEach(mask => {
+                csvRows.push([
+                    img.image_number,
+                    img.padded_number,
+                    `"${img.original_filename}"`,
+                    `"${img.new_filename}"`,
+                    img.width,
+                    img.height,
+                    img.total_pixels,
+                    img.file_size_bytes,
+                    `"${img.file_size_formatted}"`,
+                    mask.mask_index,
+                    mask.area_pixels,  // ← ИСПОЛЬЗУЕМ СОХРАНЕННУЮ ПЛОЩАДЬ
+                    mask.area_percentage,
+                    mask.propagated ? 'Yes' : 'No',
+                    `"${mask.binary_mask_filename}"`,
+                    `"${mask.overlay_filename}"`
+                ]);
+            });
         });
 
-        // Ждем создания всех оверлеев
-        await Promise.all(overlayPromises);
+        metadataFolder.file('all_masks_info.csv', csvRows.map(row => row.join(',')).join('\n'));
 
-        // Генерируем итоговый ZIP архив
+        // README
+        const readmeContent = `# Результаты сегментации
+Дата генерации: ${globalMetadata.generation_date_formatted}
+
+## Структура архива:
+📁 originals/ - Оригинальные изображения
+📁 masks/ - Бинарные черно-белые маски (извлечены из overlays по красному цвету)
+📁 overlays/ - Цветные наложения масок (исходные)
+📁 metadata/ - Метаданные
+
+## Как извлекались маски:
+Бинарные маски для папки masks были автоматически извлечены из overlays
+путем анализа красного цвета. Пиксели с чистым красным цветом (R>=250, G<=5, B<=5)
+были преобразованы в белый цвет (маска), остальные - в черный (фон).
+
+## Статистика:
+Всего изображений: ${globalMetadata.total_images}
+Всего масок: ${globalMetadata.total_masks}
+
+## Подробная информация:
+${globalMetadata.images.map(img => `
+### ${img.padded_number}: ${img.original_filename}
+- Размер: ${img.width}×${img.height} (${img.total_pixels.toLocaleString()} px)
+- Масок: ${img.masks.length}
+${img.masks.map(mask => `  - Маска ${mask.mask_index}: ${mask.area_pixels.toLocaleString()} px² (${mask.area_percentage}%) ${mask.propagated ? '🔄 распространенная' : '✍️ ручная'}`).join('\n')}
+`).join('\n')}
+
+## Примечания:
+- 🔄 - распространенная маска (создана автоматически)
+- ✍️ - ручная маска (создана пользователем)
+- Маски в папке masks получены путем выделения чистых красных областей из overlays
+- Площади масок взяты из интерфейса (точные значения)
+`;
+        metadataFolder.file('README.txt', readmeContent);
+
+        // Генерируем архив
         const finalZipBlob = await zip.generateAsync({
             type: 'blob',
             compression: 'DEFLATE',
-            compressionOptions: {
-                level: 6
-            }
+            compressionOptions: { level: 6 }
         });
 
-        // Создаем ссылку для скачивания
         const url = window.URL.createObjectURL(finalZipBlob);
         const a = document.createElement('a');
         a.href = url;
-
-        // Генерируем имя файла с текущей датой
-        const date = new Date();
-        const dateStr = `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2,'0')}-${date.getDate().toString().padStart(2,'0')}`;
-        a.download = `segmentation_results_${dateStr}.zip`;
-
+        a.download = `segmentation_results_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.zip`;
         document.body.appendChild(a);
         a.click();
 
-        // Очищаем
         setTimeout(() => {
             document.body.removeChild(a);
             window.URL.revokeObjectURL(url);
         }, 100);
 
-        showToast('Успех', 'Архив с оригиналами, масками, наложениями и метаданными готов', 'success');
+        showToast('Успех', `Архив готов! ${globalMetadata.total_images} изобр., ${globalMetadata.total_masks} масок `, 'success');
+
     } catch (error) {
         console.error('Download error:', error);
         showToast('Ошибка', error.message, 'error');
@@ -5807,7 +6632,129 @@ async function completeMask() {
         hideLoading();
     }
 }
+// Функция для отладки - показывает содержимое multiMasks
+function debugMasks() {
+    console.log('=== DEBUG: window.multiMasks ===');
+    if (!window.multiMasks || Object.keys(window.multiMasks).length === 0) {
+        console.log('Нет масок в multiMasks');
+        return;
+    }
 
+    let totalMasks = 0;
+    for (const imageName in window.multiMasks) {
+        const masks = window.multiMasks[imageName];
+        console.log(`\n📁 ${imageName}:`);
+        console.log(`   Масок: ${masks.length}`);
+        masks.forEach((mask, idx) => {
+            console.log(`   Маска ${idx + 1}:`);
+            console.log(`     - dataUrl: ${mask.dataUrl ? mask.dataUrl.substring(0, 50) + '...' : 'null'}`);
+            console.log(`     - binaryDataUrl: ${mask.binaryDataUrl ? mask.binaryDataUrl.substring(0, 50) + '...' : 'null'}`);
+            console.log(`     - propagated: ${mask.propagated || false}`);
+            console.log(`     - area: ${mask.area || 'не вычислена'}`);
+        });
+        totalMasks += masks.length;
+    }
+    console.log(`\n📊 Всего масок: ${totalMasks}`);
+
+    // Показываем уведомление
+    showToast('Отладка', `Найдено масок: ${totalMasks} в ${Object.keys(window.multiMasks).length} изображениях`, 'info', 5000);
+}
+
+// Добавляем кнопку отладки в интерфейс (можно добавить в HTML или вызвать из консоли)
+// Для удобства можно добавить глобальную функцию
+window.debugMasks = debugMasks;
+// Вспомогательная функция для получения размеров изображения из Blob
+function getImageDimensionsFromBlob(blob) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+            resolve({
+                width: img.width,
+                height: img.height
+            });
+            URL.revokeObjectURL(img.src);
+        };
+        img.onerror = reject;
+        img.src = URL.createObjectURL(blob);
+    });
+}
+
+// Функция для форматирования размера файла
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+// Функция для конвертации цветной маски в черно-белую (бинарную)
+// Белый = маска, Черный = фон
+async function convertToBinaryMask(colorMaskBlob) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+            // Создаем canvas для обработки
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+
+            // Рисуем исходную маску
+            ctx.drawImage(img, 0, 0, img.width, img.height);
+
+            // Получаем данные пикселей
+            const imageData = ctx.getImageData(0, 0, img.width, img.height);
+            const data = imageData.data;
+
+            // Конвертируем в черно-белое (бинарное) изображение
+            // Белый (255,255,255) - область маски
+            // Черный (0,0,0) - фон
+            for (let i = 0; i < data.length; i += 4) {
+                // Проверяем, является ли пиксель частью маски
+                // Ищем пиксели, которые имеют цвет (не прозрачные и не черные)
+                const r = data[i];
+                const g = data[i+1];
+                const b = data[i+2];
+                const a = data[i+3];
+
+                // Пиксель считается частью маски если:
+                // 1. Он не полностью прозрачный (a > 0)
+                // 2. И он не черный (r,g,b не все равны 0 или близки к 0)
+                // 3. Или если он имеет какой-то цвет (r > 0 или g > 0 или b > 0)
+                const isMaskPixel = (a > 0) && (r > 10 || g > 10 || b > 10);
+
+                if (isMaskPixel) {
+                    // Белый цвет для маски (область выделения)
+                    data[i] = 255;     // R
+                    data[i+1] = 255;   // G
+                    data[i+2] = 255;   // B
+                    data[i+3] = 255;   // A - полностью непрозрачный
+                } else {
+                    // Черный цвет для фона
+                    data[i] = 0;       // R
+                    data[i+1] = 0;     // G
+                    data[i+2] = 0;     // B
+                    data[i+3] = 255;   // A - полностью непрозрачный
+                }
+            }
+
+            // Обновляем canvas с бинарным изображением
+            ctx.putImageData(imageData, 0, 0);
+
+            // Конвертируем в blob
+            canvas.toBlob((blob) => {
+                resolve(blob);
+            }, 'image/png');
+        };
+
+        img.onerror = () => {
+            console.error('Ошибка конвертации маски в черно-белую');
+            reject(new Error('Не удалось конвертировать маску'));
+        };
+
+        img.src = URL.createObjectURL(colorMaskBlob);
+    });
+}
 // Вспомогательная функция для форматирования размера файла
 function formatFileSize(bytes) {
     if (bytes === 0) return '0 Bytes';
@@ -5816,7 +6763,37 @@ function formatFileSize(bytes) {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
+async function calculateMaskAreaFromBlob(blob) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
 
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+
+            const imageData = ctx.getImageData(0, 0, img.width, img.height);
+            const data = imageData.data;
+
+            let area = 0;
+
+            for (let i = 0; i < data.length; i += 4) {
+                // считаем белые пиксели маски
+                if (data[i] > 200 || data[i + 1] > 200 || data[i + 2] > 200) {
+                    area++;
+                }
+            }
+
+            resolve(area);
+        };
+
+        img.onerror = reject;
+        img.src = URL.createObjectURL(blob);
+    });
+}
 // Функция для генерации читаемого текстового файла с метаданными
 function generateReadableMetadata(metadata) {
     const lines = [];
@@ -6224,6 +7201,9 @@ window.addEventListener('load', function() {
         createImageModal();
     }
 });
+
+
+</script>
 
 
 </script>

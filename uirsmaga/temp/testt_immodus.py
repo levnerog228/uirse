@@ -1,9 +1,9 @@
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image
 import matplotlib.pyplot as plt
 import cv2
 from scipy import ndimage
-import immodus_bibl as imb
+from aboba import immodus_bibl as imb
 import matplotlib.patches as patches
 from matplotlib.widgets import Button, Slider, CheckButtons
 from matplotlib.path import Path

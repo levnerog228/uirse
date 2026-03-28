@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: flask-sam2-app
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./uirsmaga:/app/uirsmaga
+      - ./sam2:/app/sam2
+    environment:
+      - PYTHONPATH=/app
+      - FLASK_ENV=development
+      - MYSQL_HOST=mysql        # имя сервиса MySQL
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=password
+      - MYSQL_DB=mydb
+    depends_on:
+      - mysql
+    working_dir: /app/uirsmaga
+    command: python server.py
+
+  mysql:
+    image: mysql:8.0.36
+    container_name: flask-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+      MYSQL_DATABASE: mydb
+    ports:
+      - "3307:3307"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mysql_data:
