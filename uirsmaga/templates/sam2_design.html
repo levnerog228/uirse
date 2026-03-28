@@ -2936,6 +2936,9 @@ input:checked + .toggle-slider:before {
     <button class="action-btn success" onclick="propagateMasks()" id="propagate-btn" disabled>
         <i class="fas fa-broadcast-tower"></i> Распространить
     </button>
+                       <button class="action-btn primary" onclick="openGSDPopup()" id="calc-area-btn" style="background: var(--warning);">
+    <i class="fas fa-calculator"></i> Расчет площади
+</button>
 </div>
                 </div>
             </div>
@@ -3210,7 +3213,117 @@ input:checked + .toggle-slider:before {
             </div>
         </div>
     </div>
+    <!-- GSD Calculation Modal -->
+<div class="modal" id="gsd-modal">
+    <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-title">
+            <i class="fas fa-draw-polygon" style="margin-right: 10px;"></i> Расчет площади по GSD
+        </div>
 
+        <div class="gsd-form" style="padding: 10px 0;">
+            <!-- Информация о текущей маске -->
+            <div style="background: var(--surface-dark); padding: 12px; border-radius: var(--radius-sm); margin-bottom: 20px;">
+                <div style="font-size: 13px; color: var(--text-light); margin-bottom: 5px;">
+                    <i class="fas fa-vector-square"></i> Текущая маска
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="font-size: 14px; font-weight: 500;">Количество пикселей (N):</span>
+                    <span id="gsd-modal-pixel-count" style="font-size: 18px; font-weight: 700; color: var(--primary);">0</span>
+                </div>
+                <div style="font-size: 11px; color: var(--text-lighter); margin-top: 5px;">
+                    Площадь в пикселях: <span id="gsd-modal-px-area">0</span> px²
+                </div>
+            </div>
+
+            <!-- Параметры GSD -->
+            <div style="margin-bottom: 20px;">
+                <div style="font-size: 14px; font-weight: 500; margin-bottom: 12px;">
+                    <i class="fas fa-drone"></i> Параметры съемки
+                </div>
+
+                <div style="display: grid; gap: 12px;">
+                    <div>
+                        <label style="font-size: 13px; color: var(--text-light); display: block; margin-bottom: 5px;">
+                            Высота полета H (м) <span style="color: var(--danger);">*</span>
+                        </label>
+                        <input type="number" id="gsd-height-input" placeholder="Например: 100" step="any" value="100"
+                               style="width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px;">
+                    </div>
+
+                    <div>
+                        <label style="font-size: 13px; color: var(--text-light); display: block; margin-bottom: 5px;">
+                            Размер пикселя матрицы S (мм) <span style="color: var(--danger);">*</span>
+                        </label>
+                        <input type="number" id="gsd-sensor-input" placeholder="Например: 0.0024" step="any" value="0.0024"
+                               style="width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px;">
+                        <div style="font-size: 11px; color: var(--text-lighter); margin-top: 4px;">
+                            Типичные значения: 0.0024 мм (2.4 мкм) для большинства дронов
+                        </div>
+                    </div>
+
+                    <div>
+                        <label style="font-size: 13px; color: var(--text-light); display: block; margin-bottom: 5px;">
+                            Фокусное расстояние F (мм) <span style="color: var(--danger);">*</span>
+                        </label>
+                        <input type="number" id="gsd-focal-input" placeholder="Например: 8" step="any" value="8"
+                               style="width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px;">
+                    </div>
+
+                    <div>
+                        <label style="font-size: 13px; color: var(--text-light); display: block; margin-bottom: 5px;">
+                            Единица измерения площади
+                        </label>
+                        <select id="gsd-unit-select" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px;">
+                            <option value="m2">Квадратные метры (м²)</option>
+                            <option value="ha">Гектары (га)</option>
+                            <option value="km2">Квадратные километры (км²)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Результаты расчета -->
+            <div id="gsd-results" style="background: var(--bg); border-radius: var(--radius-sm); padding: 15px; margin-bottom: 20px; display: none;">
+                <div style="font-size: 14px; font-weight: 500; margin-bottom: 12px; color: var(--success);">
+                    <i class="fas fa-chart-line"></i> Результаты расчета
+                </div>
+
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="font-size: 13px; color: var(--text-light);">GSD (размер пикселя на местности):</span>
+                    <span id="gsd-result-value" style="font-size: 14px; font-weight: 600; color: var(--primary);">—</span>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="font-size: 13px; color: var(--text-light);">Площадь одного пикселя:</span>
+                    <span id="gsd-pixel-area" style="font-size: 13px;">—</span>
+                </div>
+
+                <div style="border-top: 1px solid var(--border); margin: 10px 0;"></div>
+
+                <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                    <span style="font-size: 16px; font-weight: 600;">Итоговая площадь объекта:</span>
+                    <span id="gsd-final-area" style="font-size: 24px; font-weight: 700; color: var(--success);">—</span>
+                </div>
+            </div>
+
+            <!-- Формула -->
+            <div style="font-size: 11px; color: var(--text-lighter); text-align: center; padding: 10px; background: var(--surface-dark); border-radius: var(--radius-sm);">
+                📐 Формулы:<br>
+                GSD = (H × S) / F | Площадь = N × GSD²<br>
+                где H - высота (м), S - размер пикселя (мм), F - фокусное (мм)
+            </div>
+        </div>
+
+        <div class="modal-actions" style="margin-top: 20px;">
+            <button class="action-btn secondary" onclick="closeGSDPopup()">
+                <i class="fas fa-times"></i> Закрыть
+            </button>
+            <button class="action-btn primary" onclick="calculateGSDArea()">
+                <i class="fas fa-calculator"></i> Рассчитать
+            </button>
+        </div>
+    </div>
+</div>
     <!-- Message Modal -->
     <div class="modal" id="message-modal">
         <div class="modal-content">
@@ -3220,7 +3333,7 @@ input:checked + .toggle-slider:before {
                 <button class="action-btn primary" onclick="hideModal('message-modal')">OK</button>
             </div>
         </div>
-    </div>а
+    </div>
 
 <script>
     // Глобальные переменные
@@ -3243,6 +3356,17 @@ input:checked + .toggle-slider:before {
     let dragOffsetY = 0;
     let currentMask = false;
     let currentUploadType = 'single'; // 'single' или 'zip'
+    // Глобальные переменные для GSD
+    let defaultGSDSettings = {
+    height: 100,
+    sensorPixel: 0.0024,
+    focal: 8,
+    unit: 'm2'
+};
+
+
+    let currentMaskAreaGSD = 0; // Площадь в реальных единицах (м²/га/км²)
+    let currentGSDUnit = 'm2';
 
     // Переменные для хранения текущей маски и её площади
     let currentMaskImageData = null;
@@ -5507,14 +5631,56 @@ function setTool(tool) {
     // СОЗДАЕМ БИНАРНУЮ (ЧЕРНО-БЕЛУЮ) МАСКУ СРАЗУ
     const binaryMaskDataUrl = await createBinaryMask(window.currentTempMask);
 
-    // Сохраняем маски (и цветную, и бинарную)
+    // ★★★ ВЫЧИСЛЯЕМ ПЛОЩАДЬ МАСКИ В ПИКСЕЛЯХ ★★★
+    const pixelArea = await calculateMaskAreaFromDataUrl(window.currentTempMask);
+
+    // ★★★ ПОЛУЧАЕМ ТЕКУЩИЕ НАСТРОЙКИ GSD ★★★
+    const gsdHeight = parseFloat(document.getElementById('gsd-height-input')?.value) || 100;
+    const gsdSensor = parseFloat(document.getElementById('gsd-sensor-input')?.value) || 0.0024;
+    const gsdFocal = parseFloat(document.getElementById('gsd-focal-input')?.value) || 8;
+    const gsdUnit = document.getElementById('gsd-unit-select')?.value || 'm2';
+
+    // ★★★ РАССЧИТЫВАЕМ РЕАЛЬНУЮ ПЛОЩАДЬ ★★★
+    const gsd = (gsdHeight * gsdSensor) / gsdFocal;
+    const pixelAreaM2 = Math.pow(gsd, 2);
+    let realArea = pixelArea * pixelAreaM2;
+
+    // Конвертируем в выбранную единицу
+    let formattedArea = '';
+    switch (gsdUnit) {
+        case 'ha':
+            realArea = realArea / 10000;
+            formattedArea = realArea.toLocaleString('ru-RU', { minimumFractionDigits: 4, maximumFractionDigits: 4 }) + ' га';
+            break;
+        case 'km2':
+            realArea = realArea / 1000000;
+            formattedArea = realArea.toLocaleString('ru-RU', { minimumFractionDigits: 6, maximumFractionDigits: 6 }) + ' км²';
+            break;
+        default:
+            formattedArea = realArea.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' м²';
+    }
+
+    // Сохраняем маски
     const maskData = {
         dataUrl: window.currentTempMask,           // Цветная маска (для отображения)
         binaryDataUrl: binaryMaskDataUrl,          // Бинарная маска (для скачивания)
         color: maskColor,
         index: window.multiMasks[currentImageName].length,
-        points: [...points]
+        points: [...points],
+        pixelArea: pixelArea,                       // ★★★ ПЛОЩАДЬ В ПИКСЕЛЯХ ★★★
+        realArea: realArea,                         // ★★★ РЕАЛЬНАЯ ПЛОЩАДЬ ★★★
+        formattedArea: formattedArea,               // ★★★ ФОРМАТИРОВАННАЯ СТРОКА ★★★
+        gsdSettings: {
+            height: gsdHeight,
+            sensorPixel: gsdSensor,
+            focal: gsdFocal,
+            unit: gsdUnit
+        },
+        createdAt: new Date().toISOString()
     };
+
+    const calcBtn = document.getElementById('calc-area-btn');
+    if (calcBtn) calcBtn.disabled = false;
 
     window.multiMasks[currentImageName].push(maskData);
 
@@ -5535,9 +5701,129 @@ function setTool(tool) {
     document.getElementById('undo-btn').disabled = true;
     document.getElementById('complete-btn').disabled = true;
 
-    showToast('Успех', `Маска #${window.multiMasks[currentImageName].length} сохранена`, 'success');
+    showToast('Успех',
+        `Маска #${window.multiMasks[currentImageName].length} сохранена. Площадь: ${formattedArea} (${pixelArea.toLocaleString()} px²)`,
+        'success'
+    );
+}
+// Функция расчета реальной площади по GSD
+function calculateRealArea(pixelArea, gsdSettings) {
+    const { height, sensorPixel, focal, unit } = gsdSettings;
+
+    // Расчет GSD в метрах на пиксель
+    const gsd = (height * sensorPixel) / focal;
+
+    // Площадь одного пикселя в м²
+    const pixelAreaM2 = Math.pow(gsd, 2);
+
+    // Итоговая площадь в м²
+    let areaM2 = pixelArea * pixelAreaM2;
+
+    // Конвертация в нужную единицу
+    switch (unit) {
+        case 'ha':
+            return areaM2 / 10000;
+        case 'km2':
+            return areaM2 / 1000000;
+        default:
+            return areaM2;
+    }
 }
 
+// Функция форматирования площади с единицей измерения
+function formatAreaWithUnit(area, unit) {
+    let formattedValue;
+
+    switch (unit) {
+        case 'ha':
+            formattedValue = area.toLocaleString('ru-RU', {
+                minimumFractionDigits: 4,
+                maximumFractionDigits: 4
+            });
+            return `${formattedValue} га`;
+        case 'km2':
+            formattedValue = area.toLocaleString('ru-RU', {
+                minimumFractionDigits: 6,
+                maximumFractionDigits: 6
+            });
+            return `${formattedValue} км²`;
+        default:
+            // Для м²
+            if (area >= 10000) {
+                formattedValue = area.toLocaleString('ru-RU', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            } else if (area >= 1) {
+                formattedValue = area.toLocaleString('ru-RU', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            } else {
+                formattedValue = area.toLocaleString('ru-RU', {
+                    minimumFractionDigits: 4,
+                    maximumFractionDigits: 4
+                });
+            }
+            return `${formattedValue} м²`;
+    }
+}
+
+// Функция обновления площади для существующей маски по новым GSD параметрам
+function updateMaskAreaWithGSD(imageName, maskIndex, gsdSettings) {
+    if (!window.multiMasks[imageName] || !window.multiMasks[imageName][maskIndex]) {
+        return false;
+    }
+
+    const mask = window.multiMasks[imageName][maskIndex];
+    const pixelArea = mask.pixelArea || 0;
+
+    if (pixelArea === 0) return false;
+
+    // Пересчитываем реальную площадь
+    const realArea = calculateRealArea(pixelArea, gsdSettings);
+    const formattedArea = formatAreaWithUnit(realArea, gsdSettings.unit);
+
+    // Обновляем данные маски
+    mask.realArea = realArea;
+    mask.areaUnit = gsdSettings.unit;
+    mask.formattedArea = formattedArea;
+    mask.gsdSettings = { ...gsdSettings };
+
+    return true;
+}
+// Вспомогательная функция для вычисления площади из dataUrl
+async function calculateMaskAreaFromDataUrl(dataUrl) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+            // Создаем canvas для анализа
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+
+            ctx.drawImage(img, 0, 0);
+
+            const imageData = ctx.getImageData(0, 0, img.width, img.height);
+            const data = imageData.data;
+
+            let area = 0;
+            for (let i = 0; i < data.length; i += 4) {
+                // Проверяем, является ли пиксель частью маски (яркий пиксель)
+                if (data[i] > 200 || data[i+1] > 200 || data[i+2] > 200) {
+                    area++;
+                }
+            }
+
+            resolve(area);
+        };
+        img.onerror = () => {
+            reject(new Error('Не удалось загрузить маску для вычисления площади'));
+        };
+        img.src = dataUrl;
+    });
+}
 // Функция для создания бинарной маски из цветной
 async function createBinaryMask(colorMaskDataUrl) {
     return new Promise((resolve, reject) => {
@@ -5594,16 +5880,15 @@ async function createBinaryMask(colorMaskDataUrl) {
 }
 
     // Обновленная функция для отображения всех масок из multiMasks
+// Обновленная функция для отображения всех масок из multiMasks
 function updateResultsWithAllMasks() {
     const resultsGrid = document.getElementById('results-grid');
     if (!resultsGrid) return;
 
     resultsGrid.innerHTML = '';
 
-    // Создаем массив данных для модального окна
     const modalImages = [];
 
-    // Проходим по всем изображениям и их маскам в multiMasks
     Object.keys(window.multiMasks).forEach(imageName => {
         const masks = window.multiMasks[imageName];
 
@@ -5617,18 +5902,31 @@ function updateResultsWithAllMasks() {
             div.setAttribute('data-image', imageName);
             div.setAttribute('data-mask-index', maskIndex);
 
-            // Определяем цвет для отображения (используем сохраненный цвет или цвет по умолчанию)
             const badgeColor = mask.color || maskColors[maskIndex % maskColors.length];
 
-            // Создаем контейнер для информации о маске
+            // ★★★ ПОЛУЧАЕМ ФОРМАТИРОВАННУЮ ПЛОЩАДЬ ★★★
+            // Если есть реальная площадь - показываем её, иначе показываем пиксели
+            let areaDisplayText = '';
+            let areaTitle = '';
+
+            if (mask.realArea !== undefined && mask.formattedArea) {
+                areaDisplayText = mask.formattedArea;
+                areaTitle = `Площадь: ${areaDisplayText} | В пикселях: ${(mask.pixelArea || 0).toLocaleString()} px²`;
+            } else if (mask.pixelArea) {
+                areaDisplayText = `${mask.pixelArea.toLocaleString()} px²`;
+                areaTitle = `Площадь в пикселях: ${mask.pixelArea.toLocaleString()} px²`;
+            } else {
+                areaDisplayText = 'Вычисляется...';
+                areaTitle = 'Площадь не вычислена';
+            }
+
             div.innerHTML = `
                 <img src="${mask.dataUrl}" class="result-thumb" alt="${imageName} - маска ${maskIndex + 1}">
                 <div class="result-name">${imageName} (маска ${maskIndex + 1})${mask.propagated ? ' 🔄' : ''}</div>
                 <div class="result-mask-index" style="display: none;">${maskIndex}</div>
-                <div class="result-area-badge" style="display: none; border-left: 4px solid ${badgeColor}">
+                <div class="result-area-badge" style="display: flex; border-left: 4px solid ${badgeColor}" title="${areaTitle}">
                     <i class="fas fa-vector-square"></i>
-                    <span class="area-value">${mask.area ? mask.area.toLocaleString() : '0'}</span>
-                    <span class="area-unit">px²</span>
+                    <span class="area-value">${areaDisplayText}</span>
                 </div>
                 <button class="result-delete-btn" onclick="deleteResultItem(this)" title="Удалить">
                     <i class="fas fa-times"></i>
@@ -5637,54 +5935,54 @@ function updateResultsWithAllMasks() {
 
             resultsGrid.appendChild(div);
 
-            // Если площадь еще не вычислена, вычисляем асинхронно
-            if (!mask.area) {
-                const img = new Image();
-                img.onload = async () => {
-                    const area = await calculateMaskAreaFromImage(img);
-                    const areaBadge = div.querySelector('.result-area-badge');
-                    const areaValue = areaBadge.querySelector('.area-value');
-
-                    areaValue.textContent = area.toLocaleString('ru-RU');
-                    areaBadge.style.display = 'flex';
-                    areaBadge.title = `Точная площадь: ${area} пикселей`;
-
-                    // Обновляем площадь в объекте маски
-                    mask.area = area;
+            // Если нет реальной площади, но есть пиксельная - пытаемся пересчитать
+            if (mask.pixelArea && !mask.realArea) {
+                // Пытаемся пересчитать с текущими GSD настройками
+                const currentGSDSettings = {
+                    height: parseFloat(document.getElementById('gsd-height-input')?.value) || defaultGSDSettings.height,
+                    sensorPixel: parseFloat(document.getElementById('gsd-sensor-input')?.value) || defaultGSDSettings.sensorPixel,
+                    focal: parseFloat(document.getElementById('gsd-focal-input')?.value) || defaultGSDSettings.focal,
+                    unit: document.getElementById('gsd-unit-select')?.value || defaultGSDSettings.unit
                 };
-                img.src = mask.dataUrl;
-            } else {
-                // Если площадь уже есть, сразу показываем
+
+                const realArea = calculateRealArea(mask.pixelArea, currentGSDSettings);
+                const formattedArea = formatAreaWithUnit(realArea, currentGSDSettings.unit);
+
+                mask.realArea = realArea;
+                mask.areaUnit = currentGSDSettings.unit;
+                mask.formattedArea = formattedArea;
+                mask.gsdSettings = { ...currentGSDSettings };
+
+                // Обновляем отображение
                 const areaBadge = div.querySelector('.result-area-badge');
-                areaBadge.style.display = 'flex';
+                const areaValueSpan = areaBadge.querySelector('.area-value');
+                areaValueSpan.textContent = formattedArea;
+                areaBadge.title = `Площадь: ${formattedArea} | В пикселях: ${mask.pixelArea.toLocaleString()} px²`;
             }
 
             // Добавляем в массив для модального окна
             modalImages.push({
                 src: mask.dataUrl,
                 name: `${imageName} (маска ${maskIndex + 1})${mask.propagated ? ' - распространенная' : ''}`,
-                area: mask.area ? mask.area.toLocaleString() + ' px²' : 'Вычисляется...'
+                area: mask.formattedArea || (mask.pixelArea ? `${mask.pixelArea.toLocaleString()} px²` : 'Вычисляется...')
             });
         });
     });
 
-    // Добавляем обработчики кликов на все элементы результатов
+    // Добавляем обработчики кликов
     setTimeout(() => {
         const resultItems = resultsGrid.querySelectorAll('.result-item');
         resultItems.forEach((item) => {
-            // Удаляем старый обработчик, если был
             if (item.clickHandler) {
                 item.removeEventListener('click', item.clickHandler);
             }
 
-            // Создаем новый обработчик
             item.clickHandler = function(e) {
-                // Проверяем, что клик не по кнопке удаления
                 if (!e.target.closest('.result-delete-btn') && !e.target.closest('.result-area-badge')) {
                     const img = this.querySelector('.result-thumb');
                     const name = this.querySelector('.result-name').textContent;
                     const areaBadge = this.querySelector('.area-value');
-                    const area = areaBadge ? areaBadge.textContent + ' px²' : '0 px²';
+                    const area = areaBadge ? areaBadge.textContent : '0';
 
                     openImageModal(
                         img.src,
@@ -5695,12 +5993,10 @@ function updateResultsWithAllMasks() {
                 }
             };
 
-            // Добавляем новый обработчик
             item.addEventListener('click', item.clickHandler);
         });
     }, 100);
 
-    // Показываем панель результатов, если есть хотя бы одна маска
     if (resultsGrid.children.length > 0) {
         document.getElementById('results-panel').style.display = 'block';
     } else {
@@ -5723,86 +6019,82 @@ async function propagateMasks() {
     };
 
     try {
-        // Сначала пробуем /propagate
         let response = await fetch('/propagate', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
 
-        // Если 400, пробуем /sam2/propagate
         if (response.status === 400) {
-            console.log('Trying alternative endpoint /sam2/propagate...');
             response = await fetch('/sam2/propagate', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
         }
 
-        // Проверяем, что ответ в формате JSON
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
             const text = await response.text();
-            console.error('Server returned non-JSON response:', text);
             throw new Error('Сервер вернул некорректный ответ');
         }
 
         const data = await response.json();
 
         if (data.success) {
-            // Убеждаемся, что multiMasks существует
             if (!window.multiMasks) window.multiMasks = {};
 
-            // Проходим по всем изображениям из ответа сервера
             const imageNames = Object.keys(data.visualizations);
+
+            // ★★★ ПОЛУЧАЕМ ТЕКУЩИЕ GSD НАСТРОЙКИ ★★★
+            const currentGSDSettings = {
+                height: parseFloat(document.getElementById('gsd-height-input')?.value) || 100,
+                sensorPixel: parseFloat(document.getElementById('gsd-sensor-input')?.value) || 0.0024,
+                focal: parseFloat(document.getElementById('gsd-focal-input')?.value) || 8,
+                unit: document.getElementById('gsd-unit-select')?.value || 'm2'
+            };
 
             for (let i = 0; i < imageNames.length; i++) {
                 const imageName = imageNames[i];
                 const maskDataUrl = data.visualizations[imageName];
 
-                // Инициализируем массив масок для этого изображения, если нужно
                 if (!window.multiMasks[imageName]) {
                     window.multiMasks[imageName] = [];
                 }
 
-                // Определяем цвет для новой маски
                 const maskColor = maskColors[window.multiMasks[imageName].length % maskColors.length];
 
                 try {
-                    // Получаем blob цветной маски
                     const maskResponse = await fetch(maskDataUrl);
                     const colorMaskBlob = await maskResponse.blob();
 
-                    // Создаем бинарную маску (черно-белую)
                     const binaryMaskBlob = await convertToBinaryMask(colorMaskBlob);
                     const binaryMaskDataUrl = URL.createObjectURL(binaryMaskBlob);
 
-                    // Вычисляем площадь маски для метаданных
-                    const area = await calculateMaskAreaFromBlob(binaryMaskBlob);
+                    // ★★★ ВЫЧИСЛЯЕМ ПЛОЩАДЬ В ПИКСЕЛЯХ ★★★
+                    const pixelArea = await calculateMaskAreaFromBlob(binaryMaskBlob);
 
-                    // Сохраняем маску в multiMasks (как при обычном завершении)
+                    // ★★★ РАССЧИТЫВАЕМ РЕАЛЬНУЮ ПЛОЩАДЬ ★★★
+                    const realArea = calculateRealArea(pixelArea, currentGSDSettings);
+                    const formattedArea = formatAreaWithUnit(realArea, currentGSDSettings.unit);
+
                     const maskData = {
-                        dataUrl: maskDataUrl,                    // Цветная маска для отображения
-                        binaryDataUrl: binaryMaskDataUrl,        // Бинарная маска для скачивания
-                        color: maskColor,                        // Цвет для отображения
-                        index: window.multiMasks[imageName].length, // Индекс маски
-                        propagated: true,                        // Отмечаем, что это распространенная маска
-                        points: [],                              // Для распространенных масок точек нет
-                        area: area,                              // Сохраняем площадь для быстрого доступа
-                        createdAt: new Date().toISOString()      // Время создания
+                        dataUrl: maskDataUrl,
+                        binaryDataUrl: binaryMaskDataUrl,
+                        color: maskColor,
+                        index: window.multiMasks[imageName].length,
+                        propagated: true,
+                        points: [],
+                        pixelArea: pixelArea,                       // ★★★ ПЛОЩАДЬ В ПИКСЕЛЯХ ★★★
+                        realArea: realArea,                         // ★★★ РЕАЛЬНАЯ ПЛОЩАДЬ ★★★
+                        formattedArea: formattedArea,               // ★★★ ФОРМАТИРОВАННАЯ СТРОКА ★★★
+                        gsdSettings: { ...currentGSDSettings },     // ★★★ СОХРАНЯЕМ ПАРАМЕТРЫ GSD ★★★
+                        createdAt: new Date().toISOString()
                     };
 
                     window.multiMasks[imageName].push(maskData);
 
-                    // Обновляем отображение в панели результатов
-                    updateResultsWithAllMasks();
-
-                    console.log(`Маска для "${imageName}" сохранена в multiMasks. Всего масок: ${window.multiMasks[imageName].length}`);
+                    console.log(`Маска для "${imageName}" сохранена. Площадь: ${formattedArea} (${pixelArea} px²)`);
 
                 } catch (maskError) {
                     console.error(`Ошибка при обработке маски для ${imageName}:`, maskError);
@@ -5815,22 +6107,31 @@ async function propagateMasks() {
                         index: window.multiMasks[imageName].length,
                         propagated: true,
                         points: [],
+                        pixelArea: 0,
+                        realArea: 0,
+                        formattedArea: 'Ошибка',
                         error: true,
                         createdAt: new Date().toISOString()
                     };
                     window.multiMasks[imageName].push(maskData);
-                    updateResultsWithAllMasks();
                 }
             }
 
-            // Если текущее изображение имеет маски, обновляем отображение на canvas
+            // ★★★ АКТИВИРУЕМ КНОПКУ "РАСЧЕТ ПЛОЩАДИ" ★★★
+            const calcAreaBtn = document.getElementById('calc-area-btn');
+            if (calcAreaBtn) {
+                calcAreaBtn.disabled = false;
+            }
+
+            // Обновляем отображение результатов
+            updateResultsWithAllMasks();
+
             const currentImageName = images[currentImageIndex]?.name || allUploadedImages[currentImageIndex]?.name;
             if (currentImageName && window.multiMasks[currentImageName] && window.multiMasks[currentImageName].length > 0) {
                 currentMask = true;
                 await renderCanvas();
             }
 
-            // Показываем уведомление об успехе
             const totalMasks = Object.values(window.multiMasks).reduce((sum, masks) => sum + masks.length, 0);
             showToast('Успех',
                 `Распространение завершено! Создано масок: ${totalMasks} для ${Object.keys(window.multiMasks).length} изображений`,
@@ -6185,13 +6486,11 @@ async function downloadResults() {
         return;
     }
 
-    // Проверяем наличие масок в multiMasks
     if (!window.multiMasks || Object.keys(window.multiMasks).length === 0) {
         showToast('Ошибка', 'Нет масок для скачивания', 'error');
         return;
     }
 
-    // Подсчитываем общее количество масок
     let totalMasks = 0;
     for (const imageName in window.multiMasks) {
         totalMasks += window.multiMasks[imageName].length;
@@ -6207,7 +6506,6 @@ async function downloadResults() {
     try {
         const zip = new JSZip();
 
-        // Создаем папки
         const originalsFolder = zip.folder("originals");
         const masksFolder = zip.folder("masks");
         const overlaysFolder = zip.folder("overlays");
@@ -6215,12 +6513,10 @@ async function downloadResults() {
 
         const metadataMap = new Map();
 
-        // Функция для нормализации имени файла
         function normalizeFilename(filename) {
             return filename.replace(/[\\/:*?"<>|]/g, '_');
         }
 
-        // Функция для сравнения имен файлов
         function isSameImageName(name1, name2) {
             const name1WithoutExt = name1.replace(/\.[^/.]+$/, '');
             const name2WithoutExt = name2.replace(/\.[^/.]+$/, '');
@@ -6229,7 +6525,6 @@ async function downloadResults() {
             return normalized1 === normalized2;
         }
 
-        // Функция извлечения маски по красному цвету
         async function extractMaskFromOverlay(overlayBlob) {
             return new Promise((resolve, reject) => {
                 const img = new Image();
@@ -6256,7 +6551,6 @@ async function downloadResults() {
                         const g = data[i+1];
                         const b = data[i+2];
 
-                        // Ищем чистый красный цвет
                         const isMaskPixel = (r >= 250 && g <= 5 && b <= 5);
 
                         if (isMaskPixel) {
@@ -6284,12 +6578,26 @@ async function downloadResults() {
             });
         }
 
-        // ========== ОСНОВНОЙ ПОДХОД: ищем маски по имени изображения ==========
+        function getImageDimensionsFromBlob(blob) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => {
+                    resolve({
+                        width: img.width,
+                        height: img.height
+                    });
+                    URL.revokeObjectURL(img.src);
+                };
+                img.onerror = reject;
+                img.src = URL.createObjectURL(blob);
+            });
+        }
+
+        // ========== ОСНОВНОЙ ПОДХОД ==========
         for (let i = 0; i < allUploadedImages.length; i++) {
             const image = allUploadedImages[i];
             const imageName = image.name;
 
-            // Ищем соответствующие маски
             let foundMasks = null;
             let matchedMaskKey = null;
 
@@ -6309,7 +6617,6 @@ async function downloadResults() {
             const imageNumber = i + 1;
             const paddedNumber = imageNumber.toString().padStart(3, '0');
 
-            // Получаем оригинальное изображение
             const originalResponse = await fetch(image.dataUrl);
             const originalBlob = await originalResponse.blob();
             const fileExt = image.name.split('.').pop() || 'png';
@@ -6334,14 +6641,30 @@ async function downloadResults() {
                 cleanName: cleanImageName
             };
 
-            // Обрабатываем каждую маску
             for (let maskIndex = 0; maskIndex < foundMasks.length; maskIndex++) {
                 const mask = foundMasks[maskIndex];
                 const maskNumber = maskIndex + 1;
 
                 try {
-                    // ★★★ ИСПОЛЬЗУЕМ СОХРАНЕННУЮ ПЛОЩАДЬ ИЗ mask.area ★★★
-                    const area = mask.area || 0;
+                    // ★★★ СОХРАНЯЕМ ОБЕ ПЛОЩАДИ ★★★
+                    const pixelArea = mask.pixelArea || 0;
+
+                    let realArea = 0;
+                    let realAreaUnit = 'px²';
+                    let realAreaDisplay = '';
+
+                    if (mask.realArea !== undefined && mask.realArea > 0) {
+                        realArea = mask.realArea;
+                        realAreaUnit = mask.areaUnit || 'м²';
+                        realAreaDisplay = formatAreaWithUnit(realArea, realAreaUnit);
+                    } else if (pixelArea > 0) {
+                        // Если нет реальной площади, но есть пиксельная
+                        realArea = pixelArea;
+                        realAreaUnit = 'px²';
+                        realAreaDisplay = `${pixelArea.toLocaleString()} px²`;
+                    } else {
+                        realAreaDisplay = 'не вычислена';
+                    }
 
                     // Получаем цветной overlay
                     let overlayBlob;
@@ -6355,18 +6678,21 @@ async function downloadResults() {
                         overlayBlob = await (await fetch(mask.dataUrl)).blob();
                     }
 
-                    // Извлекаем бинарную маску из overlay по красному цвету
                     const maskBlob = await extractMaskFromOverlay(overlayBlob);
 
                     imageData.masks.push({
                         index: maskNumber,
-                        area: area,  // ← ИСПОЛЬЗУЕМ СОХРАНЕННУЮ ПЛОЩАДЬ
+                        pixelArea: pixelArea,                    // ★★★ ПЛОЩАДЬ В ПИКСЕЛЯХ ★★★
+                        realArea: realArea,                      // ★★★ РЕАЛЬНАЯ ПЛОЩАДЬ ★★★
+                        realAreaUnit: realAreaUnit,              // ★★★ ЕДИНИЦА ИЗМЕРЕНИЯ ★★★
+                        realAreaDisplay: realAreaDisplay,        // ★★★ ФОРМАТИРОВАННАЯ СТРОКА ★★★
                         maskBlob: maskBlob,
                         overlayBlob: overlayBlob,
-                        propagated: mask.propagated || false
+                        propagated: mask.propagated || false,
+                        gsdSettings: mask.gsdSettings || null
                     });
 
-                    console.log(`Маска ${maskNumber} для ${imageName}: площадь = ${area} px²`);
+                    console.log(`Маска ${maskNumber} для ${imageName}: пикселей = ${pixelArea}, реальная = ${realAreaDisplay}`);
 
                 } catch (maskError) {
                     console.error(`Ошибка обработки маски ${maskNumber}:`, maskError);
@@ -6378,9 +6704,9 @@ async function downloadResults() {
             }
         }
 
-        // ========== АЛЬТЕРНАТИВНЫЙ ПОДХОД: если не нашли соответствий ==========
+        // ========== АЛЬТЕРНАТИВНЫЙ ПОДХОД ==========
         if (metadataMap.size === 0) {
-            console.log('Пробуем альтернативный подход - используем ключи multiMasks напрямую...');
+            console.log('Пробуем альтернативный подход...');
 
             let altIndex = 0;
             const maskKeys = Object.keys(window.multiMasks);
@@ -6389,7 +6715,6 @@ async function downloadResults() {
                 const masks = window.multiMasks[maskKey];
                 if (!masks || masks.length === 0) continue;
 
-                // Ищем соответствующее изображение в allUploadedImages
                 let foundImage = null;
                 for (const img of allUploadedImages) {
                     if (isSameImageName(img.name, maskKey)) {
@@ -6407,7 +6732,6 @@ async function downloadResults() {
                 const paddedNumber = altIndex.toString().padStart(3, '0');
                 const cleanImageName = normalizeFilename(maskKey.replace(/\.[^/.]+$/, ''));
 
-                // Получаем оригинальное изображение
                 const originalResponse = await fetch(foundImage.dataUrl);
                 const originalBlob = await originalResponse.blob();
                 const fileExt = foundImage.name.split('.').pop() || 'png';
@@ -6431,30 +6755,45 @@ async function downloadResults() {
                     cleanName: cleanImageName
                 };
 
-                // Обрабатываем все маски для этого ключа
                 for (let maskIndex = 0; maskIndex < masks.length; maskIndex++) {
                     const mask = masks[maskIndex];
                     const maskNumber = maskIndex + 1;
 
                     try {
-                        // ★★★ ИСПОЛЬЗУЕМ СОХРАНЕННУЮ ПЛОЩАДЬ ИЗ mask.area ★★★
-                        const area = mask.area || 0;
+                        const pixelArea = mask.pixelArea || 0;
 
-                        // Получаем цветной overlay
+                        let realArea = 0;
+                        let realAreaUnit = 'px²';
+                        let realAreaDisplay = '';
+
+                        if (mask.realArea !== undefined && mask.realArea > 0) {
+                            realArea = mask.realArea;
+                            realAreaUnit = mask.areaUnit || 'м²';
+                            realAreaDisplay = formatAreaWithUnit(realArea, realAreaUnit);
+                        } else if (pixelArea > 0) {
+                            realArea = pixelArea;
+                            realAreaUnit = 'px²';
+                            realAreaDisplay = `${pixelArea.toLocaleString()} px²`;
+                        } else {
+                            realAreaDisplay = 'не вычислена';
+                        }
+
                         let overlayBlob = await (await fetch(mask.dataUrl)).blob();
-
-                        // Извлекаем бинарную маску из overlay по красному цвету
                         const maskBlob = await extractMaskFromOverlay(overlayBlob);
 
                         imageData.masks.push({
                             index: maskNumber,
-                            area: area,  // ← ИСПОЛЬЗУЕМ СОХРАНЕННУЮ ПЛОЩАДЬ
+                            pixelArea: pixelArea,
+                            realArea: realArea,
+                            realAreaUnit: realAreaUnit,
+                            realAreaDisplay: realAreaDisplay,
                             maskBlob: maskBlob,
                             overlayBlob: overlayBlob,
-                            propagated: mask.propagated || false
+                            propagated: mask.propagated || false,
+                            gsdSettings: mask.gsdSettings || null
                         });
 
-                        console.log(`Альт. Маска ${maskNumber} для ${maskKey}: площадь = ${area} px²`);
+                        console.log(`Альт. Маска ${maskNumber} для ${maskKey}: пикселей = ${pixelArea}, реальная = ${realAreaDisplay}`);
 
                     } catch (err) {
                         console.error(`Ошибка обработки маски ${maskKey}:`, err);
@@ -6467,7 +6806,6 @@ async function downloadResults() {
             }
         }
 
-        // Проверяем, есть ли данные для сохранения
         if (metadataMap.size === 0) {
             throw new Error('Не найдено данных для сохранения (нет масок)');
         }
@@ -6479,21 +6817,17 @@ async function downloadResults() {
 
             console.log(`Сохранение в архив: ${imageName}, масок: ${data.masks.length}`);
 
-            // Сохраняем оригинал
             const originalFileName = `${paddedNum}_${cleanName}_original.${data.original.extension}`;
             originalsFolder.file(originalFileName, data.original.blob);
 
-            // Сохраняем все маски и overlay
             for (const mask of data.masks) {
-                // Бинарная маска в папку masks
                 const binaryFileName = `${paddedNum}_${cleanName}_mask_${mask.index}.png`;
                 masksFolder.file(binaryFileName, mask.maskBlob);
 
-                // Цветной overlay в папку overlays
                 const overlayFileName = `${paddedNum}_${cleanName}_mask_${mask.index}_overlay.png`;
                 overlaysFolder.file(overlayFileName, mask.overlayBlob);
 
-                console.log(`  - Сохранена маска ${mask.index}: ${binaryFileName} (${mask.area} px²)`);
+                console.log(`  - Сохранена маска ${mask.index}: ${binaryFileName} (пикселей: ${mask.pixelArea}, реальная: ${mask.realAreaDisplay})`);
             }
         }
 
@@ -6521,14 +6855,31 @@ async function downloadResults() {
                 file_size_bytes: data.original.size,
                 file_size_formatted: formatFileSize(data.original.size),
                 total_pixels: totalPixels,
-                masks: data.masks.map(mask => ({
-                    mask_index: mask.index,
-                    area_pixels: mask.area,  // ← ИСПОЛЬЗУЕМ СОХРАНЕННУЮ ПЛОЩАДЬ
-                    area_percentage: ((mask.area / totalPixels) * 100).toFixed(2),
-                    binary_mask_filename: `${paddedNum}_${cleanName}_mask_${mask.index}.png`,
-                    overlay_filename: `${paddedNum}_${cleanName}_mask_${mask.index}_overlay.png`,
-                    propagated: mask.propagated || false
-                }))
+                masks: data.masks.map(mask => {
+                    // ★★★ ФОРМИРУЕМ МЕТАДАННЫЕ С ОБЕИМИ ПЛОЩАДЯМИ ★★★
+                    const maskMetadata = {
+                        mask_index: mask.index,
+                        area_pixels: mask.pixelArea,                    // Площадь в пикселях
+                        area_real: mask.realArea,                       // Реальная площадь
+                        area_unit: mask.realAreaUnit,                   // Единица измерения
+                        area_display: mask.realAreaDisplay,             // Форматированная строка
+                        binary_mask_filename: `${paddedNum}_${cleanName}_mask_${mask.index}.png`,
+                        overlay_filename: `${paddedNum}_${cleanName}_mask_${mask.index}_overlay.png`,
+                        propagated: mask.propagated || false
+                    };
+
+                    // Добавляем GSD параметры, если есть
+                    if (mask.gsdSettings) {
+                        maskMetadata.gsd_settings = {
+                            height: mask.gsdSettings.height,
+                            sensor_pixel: mask.gsdSettings.sensorPixel,
+                            focal: mask.gsdSettings.focal,
+                            unit: mask.gsdSettings.unit
+                        };
+                    }
+
+                    return maskMetadata;
+                })
             };
 
             globalMetadata.images.push(imageMetadata);
@@ -6538,11 +6889,12 @@ async function downloadResults() {
         // Сохраняем общие метаданные
         metadataFolder.file('all_metadata.json', JSON.stringify(globalMetadata, null, 2));
 
-        // Создаем CSV
+        // Создаем CSV с обеими площадями
         const csvRows = [
             ['Image #', 'Padded #', 'Original Filename', 'New Filename', 'Width', 'Height',
-             'Total Pixels', 'File Size (Bytes)', 'File Size', 'Mask #', 'Area (px²)',
-             'Area (%)', 'Propagated', 'Mask File', 'Overlay File']
+             'Total Pixels', 'File Size (Bytes)', 'File Size', 'Mask #',
+             'Area (pixels)', 'Area (real)', 'Area Unit', 'Area Display',
+             'Propagated', 'Mask File', 'Overlay File', 'GSD Height', 'GSD Sensor', 'GSD Focal']
         ];
 
         globalMetadata.images.forEach(img => {
@@ -6558,16 +6910,42 @@ async function downloadResults() {
                     img.file_size_bytes,
                     `"${img.file_size_formatted}"`,
                     mask.mask_index,
-                    mask.area_pixels,  // ← ИСПОЛЬЗУЕМ СОХРАНЕННУЮ ПЛОЩАДЬ
-                    mask.area_percentage,
+                    mask.area_pixels,                                    // Площадь в пикселях
+                    mask.area_real,                                      // Реальная площадь
+                    `"${mask.area_unit}"`,                               // Единица измерения
+                    `"${mask.area_display}"`,                            // Форматированная строка
                     mask.propagated ? 'Yes' : 'No',
                     `"${mask.binary_mask_filename}"`,
-                    `"${mask.overlay_filename}"`
+                    `"${mask.overlay_filename}"`,
+                    mask.gsd_settings?.height || '',
+                    mask.gsd_settings?.sensor_pixel || '',
+                    mask.gsd_settings?.focal || ''
                 ]);
             });
         });
 
         metadataFolder.file('all_masks_info.csv', csvRows.map(row => row.join(',')).join('\n'));
+
+        // Создаем отдельный CSV только с площадями для быстрого анализа
+        const areaSummaryRows = [
+            ['Image #', 'Image Name', 'Mask #', 'Area (pixels)', 'Area (real)', 'Area Unit', 'GSD Used']
+        ];
+
+        globalMetadata.images.forEach(img => {
+            img.masks.forEach(mask => {
+                areaSummaryRows.push([
+                    img.image_number,
+                    `"${img.original_filename}"`,
+                    mask.mask_index,
+                    mask.area_pixels,
+                    mask.area_real,
+                    `"${mask.area_unit}"`,
+                    mask.gsd_settings ? `H=${mask.gsd_settings.height}, S=${mask.gsd_settings.sensor_pixel}, F=${mask.gsd_settings.focal}` : 'No GSD'
+                ]);
+            });
+        });
+
+        metadataFolder.file('areas_summary.csv', areaSummaryRows.map(row => row.join(',')).join('\n'));
 
         // README
         const readmeContent = `# Результаты сегментации
@@ -6575,32 +6953,41 @@ async function downloadResults() {
 
 ## Структура архива:
 📁 originals/ - Оригинальные изображения
-📁 masks/ - Бинарные черно-белые маски (извлечены из overlays по красному цвету)
-📁 overlays/ - Цветные наложения масок (исходные)
+📁 masks/ - Бинарные черно-белые маски
+📁 overlays/ - Цветные наложения масок
 📁 metadata/ - Метаданные
 
-## Как извлекались маски:
-Бинарные маски для папки masks были автоматически извлечены из overlays
-путем анализа красного цвета. Пиксели с чистым красным цветом (R>=250, G<=5, B<=5)
-были преобразованы в белый цвет (маска), остальные - в черный (фон).
+## Информация о площадях:
+Для каждой маски сохраняются два значения площади:
+1. **Area (pixels)** - площадь в пикселях (количество пикселей в маске)
+2. **Area (real)** - реальная площадь, рассчитанная по GSD
+
+Формула расчета:
+- GSD = (H × S) / F
+- Реальная площадь = Площадь в пикселях × GSD²
 
 ## Статистика:
 Всего изображений: ${globalMetadata.total_images}
 Всего масок: ${globalMetadata.total_masks}
 
-## Подробная информация:
+## Файлы метаданных:
+- all_metadata.json - полные метаданные в JSON формате
+- all_masks_info.csv - подробная информация о масках
+- areas_summary.csv - краткая сводка по площадям
+
+## Детальная информация:
 ${globalMetadata.images.map(img => `
 ### ${img.padded_number}: ${img.original_filename}
 - Размер: ${img.width}×${img.height} (${img.total_pixels.toLocaleString()} px)
 - Масок: ${img.masks.length}
-${img.masks.map(mask => `  - Маска ${mask.mask_index}: ${mask.area_pixels.toLocaleString()} px² (${mask.area_percentage}%) ${mask.propagated ? '🔄 распространенная' : '✍️ ручная'}`).join('\n')}
+${img.masks.map(mask => `  - Маска ${mask.mask_index}: ${mask.area_display} (${mask.area_pixels.toLocaleString()} px²) ${mask.propagated ? '🔄 распространенная' : '✍️ ручная'}`).join('\n')}
 `).join('\n')}
 
 ## Примечания:
 - 🔄 - распространенная маска (создана автоматически)
 - ✍️ - ручная маска (создана пользователем)
-- Маски в папке masks получены путем выделения чистых красных областей из overlays
-- Площади масок взяты из интерфейса (точные значения)
+- Для масок с GSD параметрами площадь рассчитана по формуле GSD = (H × S) / F
+- Площадь в пикселях всегда доступна, даже если GSD не заданы
 `;
         metadataFolder.file('README.txt', readmeContent);
 
@@ -6623,7 +7010,7 @@ ${img.masks.map(mask => `  - Маска ${mask.mask_index}: ${mask.area_pixels.t
             window.URL.revokeObjectURL(url);
         }, 100);
 
-        showToast('Успех', `Архив готов! ${globalMetadata.total_images} изобр., ${globalMetadata.total_masks} масок `, 'success');
+        showToast('Успех', `Архив готов! ${globalMetadata.total_images} изобр., ${globalMetadata.total_masks} масок`, 'success');
 
     } catch (error) {
         console.error('Download error:', error);
@@ -7201,12 +7588,227 @@ window.addEventListener('load', function() {
         createImageModal();
     }
 });
+// Функция для открытия GSD модального окна
+function openGSDPopup() {
+    console.log('=== openGSDPopup called ===');
 
+    // Загружаем сохраненные настройки GSD из localStorage (если есть)
+    const savedSettings = localStorage.getItem('gsd_settings');
+    if (savedSettings) {
+        try {
+            const settings = JSON.parse(savedSettings);
+            document.getElementById('gsd-height-input').value = settings.height || 100;
+            document.getElementById('gsd-sensor-input').value = settings.sensorPixel || 0.0024;
+            document.getElementById('gsd-focal-input').value = settings.focal || 8;
+            document.getElementById('gsd-unit-select').value = settings.unit || 'm2';
+        } catch(e) {
+            console.error('Error loading saved settings:', e);
+        }
+    } else {
+        // Значения по умолчанию
+        document.getElementById('gsd-height-input').value = 100;
+        document.getElementById('gsd-sensor-input').value = 0.0024;
+        document.getElementById('gsd-focal-input').value = 8;
+        document.getElementById('gsd-unit-select').value = 'm2';
+    }
+
+    // ★★★ УБИРАЕМ ПРОВЕРКУ НА НАЛИЧИЕ ИЗОБРАЖЕНИЯ ★★★
+    // Просто показываем информацию о маске, если она есть
+    const currentImageName = images[currentImageIndex]?.name || allUploadedImages[currentImageIndex]?.name;
+    let pixelArea = 0;
+    let maskExists = false;
+
+    if (currentImageName && window.multiMasks && window.multiMasks[currentImageName]) {
+        const masks = window.multiMasks[currentImageName];
+        if (masks && masks.length > 0) {
+            maskExists = true;
+            const activeMask = masks[masks.length - 1];
+            pixelArea = activeMask.pixelArea || 0;
+
+            // Если в маске есть сохраненные GSD параметры, загружаем их
+            if (activeMask.gsdSettings && activeMask.gsdSettings.height) {
+                document.getElementById('gsd-height-input').value = activeMask.gsdSettings.height;
+                document.getElementById('gsd-sensor-input').value = activeMask.gsdSettings.sensorPixel;
+                document.getElementById('gsd-focal-input').value = activeMask.gsdSettings.focal;
+                document.getElementById('gsd-unit-select').value = activeMask.gsdSettings.unit;
+            }
+        }
+    }
+
+    // Отображаем информацию о маске (если есть)
+    const pixelCountSpan = document.getElementById('gsd-modal-pixel-count');
+    const pxAreaSpan = document.getElementById('gsd-modal-px-area');
+    const pixelInfoBlock = pixelCountSpan?.parentElement?.parentElement;
+
+    if (!currentImageName) {
+        // Нет загруженных изображений
+        if (pixelInfoBlock) {
+            pixelInfoBlock.style.opacity = '0.5';
+        }
+        pixelCountSpan.textContent = 'Нет загруженных изображений';
+        pxAreaSpan.textContent = '—';
+    } else if (pixelArea > 0) {
+        if (pixelInfoBlock) {
+            pixelInfoBlock.style.opacity = '1';
+        }
+        pixelCountSpan.textContent = pixelArea.toLocaleString('ru-RU');
+        pxAreaSpan.textContent = pixelArea.toLocaleString('ru-RU');
+    } else if (maskExists) {
+        if (pixelInfoBlock) {
+            pixelInfoBlock.style.opacity = '0.7';
+        }
+        pixelCountSpan.textContent = '0 (маска создана, но площадь не вычислена)';
+        pxAreaSpan.textContent = '0';
+    } else if (currentImageName) {
+        if (pixelInfoBlock) {
+            pixelInfoBlock.style.opacity = '0.5';
+        }
+        pixelCountSpan.textContent = 'Нет маски для текущего изображения';
+        pxAreaSpan.textContent = '—';
+    }
+
+    // Сохраняем текущую площадь
+    window.currentPixelArea = pixelArea;
+
+    // Скрываем результаты предыдущего расчета
+    const resultsDiv = document.getElementById('gsd-results');
+    if (resultsDiv) {
+        resultsDiv.style.display = 'none';
+    }
+
+    // Показываем модальное окно
+    const modal = document.getElementById('gsd-modal');
+    if (modal) {
+        modal.style.display = 'flex';
+        console.log('GSD modal opened');
+    } else {
+        console.error('GSD modal element not found');
+        showToast('Ошибка', 'Не удалось открыть окно расчета площади', 'error');
+    }
+}
+
+// Функция для расчета площади по GSD
+function calculateGSDArea() {
+    const height = parseFloat(document.getElementById('gsd-height-input').value);
+    const sensorPixel = parseFloat(document.getElementById('gsd-sensor-input').value);
+    const focal = parseFloat(document.getElementById('gsd-focal-input').value);
+    const unit = document.getElementById('gsd-unit-select').value;
+
+    if (isNaN(height) || height <= 0 || isNaN(sensorPixel) || sensorPixel <= 0 || isNaN(focal) || focal <= 0) {
+        showToast('Ошибка', 'Введите корректные параметры', 'error');
+        return;
+    }
+
+    const pixelArea = window.currentPixelArea || 0;
+    if (pixelArea === 0) {
+        showToast('Ошибка', 'Площадь маски не определена', 'error');
+        return;
+    }
+
+    const gsdSettings = { height, sensorPixel, focal, unit };
+    const realArea = calculateRealArea(pixelArea, gsdSettings);
+    const formattedArea = formatAreaWithUnit(realArea, unit);
+
+    // Обновляем отображение в модальном окне
+    const gsd = (height * sensorPixel) / focal;
+    const pixelAreaM2 = Math.pow(gsd, 2);
+
+    document.getElementById('gsd-result-value').textContent = gsd.toFixed(6) + ' м/пикс';
+    document.getElementById('gsd-pixel-area').textContent = pixelAreaM2.toFixed(6) + ' м²';
+    document.getElementById('gsd-final-area').textContent = formattedArea;
+    document.getElementById('gsd-results').style.display = 'block';
+
+    // ★★★ ОБНОВЛЯЕМ ТОЛЬКО ТЕКУЩЕЕ ИЗОБРАЖЕНИЕ ★★★
+    const currentImageName = window.currentGSDActiveImage || images[currentImageIndex]?.name;
+
+    if (currentImageName && window.multiMasks[currentImageName]) {
+        // Сохраняем GSD настройки для этого изображения
+        if (!window.imageGSDSettings) window.imageGSDSettings = {};
+        window.imageGSDSettings[currentImageName] = { ...gsdSettings };
+
+        // Обновляем все маски этого изображения
+        let updatedCount = 0;
+        for (let i = 0; i < window.multiMasks[currentImageName].length; i++) {
+            const mask = window.multiMasks[currentImageName][i];
+            if (mask.pixelArea) {
+                const newRealArea = calculateRealArea(mask.pixelArea, gsdSettings);
+                mask.realArea = newRealArea;
+                mask.areaUnit = unit;
+                mask.formattedArea = formatAreaWithUnit(newRealArea, unit);
+                mask.gsdSettings = { ...gsdSettings };
+                updatedCount++;
+            }
+        }
+
+        if (updatedCount > 0) {
+            updateResultsWithAllMasks();
+            showToast('Успех',
+                `Площадь обновлена для ${updatedCount} масок изображения "${currentImageName}". ${formattedArea}`,
+                'success'
+            );
+        }
+    }
+
+    // Сохраняем последние настройки для нового изображения по умолчанию
+    localStorage.setItem('gsd_settings', JSON.stringify(gsdSettings));
+
+    updateAreaDisplayWithGSD(realArea, unit);
+}
+
+// Функция для обновления отображения площади с учетом GSD
+function updateAreaDisplayWithGSD(areaValue, unit) {
+    const areaInfo = document.getElementById('area-info');
+    const areaValueElement = document.getElementById('area-value');
+    const areaUnitElement = document.getElementById('area-unit');
+
+    if (areaValue > 0) {
+        areaInfo.style.display = 'block';
+
+        // Если есть элемент для отображения единицы измерения, обновляем его
+        if (areaUnitElement) {
+            areaUnitElement.textContent = unit;
+        } else {
+            // Если элемента нет, создаем его или обновляем существующий
+            const parentElement = areaValueElement.parentElement;
+            if (parentElement) {
+                let unitSpan = parentElement.querySelector('.area-unit');
+                if (!unitSpan) {
+                    unitSpan = document.createElement('span');
+                    unitSpan.className = 'area-unit';
+                    unitSpan.style.fontSize = '14px';
+                    unitSpan.style.marginLeft = '2px';
+                    unitSpan.style.color = 'var(--text-light)';
+                    parentElement.appendChild(unitSpan);
+                }
+                unitSpan.textContent = unit;
+            }
+        }
+
+        areaValueElement.textContent = areaValue.toLocaleString('ru-RU', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+
+        // Добавляем анимацию обновления
+        areaValueElement.classList.add('updated');
+        setTimeout(() => {
+            areaValueElement.classList.remove('updated');
+        }, 300);
+    }
+}
+
+// Функция для закрытия GSD модального окна
+function closeGSDPopup() {
+    const modal = document.getElementById('gsd-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
 
 </script>
 
 
-</script>
+
 
 <!-- Подключаем библиотеку JSZip для работы с ZIP архивами -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
