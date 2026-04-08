@@ -1,5 +1,5 @@
 from flask import Blueprint, request
-import database
+import uirsmaga.database as  database
 
 api_bp = Blueprint('api', __name__)
 

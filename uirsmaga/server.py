@@ -160,14 +160,15 @@ MIN_AREA = 10
 USE_SAM_REFINEMENT = True
 
 # Импортируем функции для работы с БД
-import database
-from database import get_db_connection
+import uirsmaga.database as database
+from uirsmaga.database import get_db_connection
 
 # Импортируем маршруты из routes.py
-from routes import pages_bp
+from uirsmaga.routes import pages_bp
 
 # Проверяем и создаем папку для загрузок
-UPLOAD_FOLDER = os.path.join('static', 'uploads')
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+UPLOAD_FOLDER = os.path.join(BASE_DIR, 'static', 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app = Flask(__name__)
@@ -176,9 +177,18 @@ CORS(app, supports_credentials=True)
 
 # Конфигурация
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['TEMP_FOLDER'] = tempfile.mkdtemp()
+# ✅ Используем фиксированную папку вместо tempfile.mkdtemp()
+TEMP_FOLDER = os.environ.get('TEMP_FOLDER', '/tmp/flask_sam2_temp')
+app.config['TEMP_FOLDER'] = TEMP_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024  # 200MB
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+
+# Создаем временную папку
+os.makedirs(TEMP_FOLDER, exist_ok=True)
+
+print(f"[INFO] UPLOAD_FOLDER: {UPLOAD_FOLDER}")
+print(f"[INFO] TEMP_FOLDER: {TEMP_FOLDER}")
+
 
 # Инициализация модели (один раз при запуске)
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -454,8 +464,12 @@ def sam2_upload_file():
         return jsonify({'error': 'File must be a ZIP archive'}), 400
 
     try:
-        # Сохраняем временный файл
-        temp_dir = tempfile.mkdtemp(dir=app.config['TEMP_FOLDER'])
+        # ✅ Исправлено: создаем сессию напрямую в TEMP_FOLDER
+        import uuid
+        session_id = str(uuid.uuid4())  # Уникальный ID
+        temp_dir = os.path.join(app.config['TEMP_FOLDER'], session_id)
+        os.makedirs(temp_dir, exist_ok=True)
+
         zip_path = os.path.join(temp_dir, secure_filename(file.filename))
         file.save(zip_path)
 
@@ -471,14 +485,12 @@ def sam2_upload_file():
         for key, img_array in images.items():
             images_base64[key] = numpy_to_base64(img_array)
 
-        # Сохраняем numpy массивы во временный файл
+        # Сохраняем numpy массивы
         npz_path = os.path.join(temp_dir, 'images.npz')
         np.savez_compressed(npz_path, **{k: v for k, v in images.items()})
 
-        session_id = os.path.basename(temp_dir)
-
         print(f"[INFO] ZIP uploaded: {len(images)} images, session_id: {session_id}")
-        print(f"[INFO] Image keys: {list(images.keys())}")
+        print(f"[INFO] Temp dir: {temp_dir}")
 
         return jsonify({
             'success': True,
@@ -880,7 +892,7 @@ def upload_single():
 
         # Проверка формата файла
         allowed_extensions = {'png', 'jpg', 'jpeg', 'bmp', 'tiff'}
-        if not '.' in file.filename or file.filename.rsplit('.', 1)[1].lower() not in allowed_extensions:
+        if '.' not in file.filename or file.filename.rsplit('.', 1)[1].lower() not in allowed_extensions:
             return jsonify({'error': 'Invalid file format'}), 400
 
         # Читаем изображение
@@ -889,16 +901,20 @@ def upload_single():
         img = img.convert('RGB')
         img_array = np.array(img)
 
-        # Конвертируем в base64 для отправки на фронтенд
+        # Конвертируем в base64
         img_base64 = numpy_to_base64(img_array)
 
-        # Создаем временную сессию для предпросмотра
-        temp_dir = tempfile.mkdtemp(dir=app.config['TEMP_FOLDER'])
-        session_id = os.path.basename(temp_dir)  # Убрали префикс "preview_"
+        # ✅ Исправлено: создаем сессию напрямую в TEMP_FOLDER
+        import uuid
+        session_id = str(uuid.uuid4())
+        temp_dir = os.path.join(app.config['TEMP_FOLDER'], session_id)
+        os.makedirs(temp_dir, exist_ok=True)
 
-        # Сохраняем изображение для возможной дальнейшей работы
+        # Сохраняем изображение
         npz_path = os.path.join(temp_dir, 'images.npz')
         np.savez_compressed(npz_path, **{file.filename: img_array})
+
+        print(f"[INFO] Single image uploaded, session_id: {session_id}")
 
         return jsonify({
             'success': True,
@@ -909,6 +925,8 @@ def upload_single():
 
     except Exception as e:
         print(f"Error in upload_single: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 

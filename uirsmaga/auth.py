@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session
-import database
+import uirsmaga.database as database
 
 auth_bp = Blueprint('auth', __name__)
 

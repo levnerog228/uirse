@@ -37,12 +37,15 @@ COPY uirsmaga/requirements.txt .
 
 RUN pip install --no-cache-dir --no-build-isolation -r requirements.txt
 
+
 # -----------------------------
 # 3. sam2 (без build isolation)
 # -----------------------------
 COPY sam2 /app/sam2
 
-RUN pip install -e /app/sam2
+#RUN pip install -e /app/sam2
+RUN pip cache purge && \
+    pip install --no-cache-dir -e /app/sam2
 
 # -----------------------------
 # 4. код приложения
@@ -56,4 +59,4 @@ ENV PYTHONPATH=/app
 EXPOSE 5001
 
 # запуск
-CMD ["python", "uirsmaga/server.py"]
+CMD ["gunicorn", "-b", "0.0.0.0:5001", "--workers", "4", "--timeout", "120", "uirsmaga.server:app"]

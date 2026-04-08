@@ -3742,65 +3742,44 @@ async function convertToBinaryMask(colorMaskBlob) {
     return new Promise((resolve, reject) => {
         const img = new Image();
         img.onload = () => {
-            // Создаем canvas для обработки
             const canvas = document.createElement('canvas');
             canvas.width = img.width;
             canvas.height = img.height;
             const ctx = canvas.getContext('2d');
-
-            // Рисуем исходную маску
             ctx.drawImage(img, 0, 0, img.width, img.height);
 
-            // Получаем данные пикселей
             const imageData = ctx.getImageData(0, 0, img.width, img.height);
             const data = imageData.data;
 
-            // Конвертируем в черно-белое (бинарное) изображение
-            // Белый (255,255,255) - область маски
-            // Черный (0,0,0) - фон
             for (let i = 0; i < data.length; i += 4) {
-                // Проверяем, является ли пиксель частью маски
-                // Ищем пиксели, которые имеют цвет (не прозрачные и не черные)
                 const r = data[i];
                 const g = data[i+1];
                 const b = data[i+2];
                 const a = data[i+3];
 
-                // Пиксель считается частью маски если:
-                // 1. Он не полностью прозрачный (a > 0)
-                // 2. И он не черный (r,g,b не все равны 0 или близки к 0)
-                // 3. Или если он имеет какой-то цвет (r > 0 или g > 0 или b > 0)
-                const isMaskPixel = (a > 0) && (r > 10 || g > 10 || b > 10);
+                // ★ ИЗМЕНЯЕМ УСЛОВИЕ: ищем КРАСНЫЕ пиксели (R > 200, G < 50, B < 50)
+                const isMaskPixel = (a > 0) && (r > 200) && (g < 50) && (b < 50);
 
                 if (isMaskPixel) {
-                    // Белый цвет для маски (область выделения)
                     data[i] = 255;     // R
                     data[i+1] = 255;   // G
                     data[i+2] = 255;   // B
-                    data[i+3] = 255;   // A - полностью непрозрачный
+                    data[i+3] = 255;   // A
                 } else {
-                    // Черный цвет для фона
-                    data[i] = 0;       // R
-                    data[i+1] = 0;     // G
-                    data[i+2] = 0;     // B
-                    data[i+3] = 255;   // A - полностью непрозрачный
+                    data[i] = 0;
+                    data[i+1] = 0;
+                    data[i+2] = 0;
+                    data[i+3] = 255;
                 }
             }
 
-            // Обновляем canvas с бинарным изображением
             ctx.putImageData(imageData, 0, 0);
-
-            // Конвертируем в blob
             canvas.toBlob((blob) => {
                 resolve(blob);
             }, 'image/png');
         };
 
-        img.onerror = () => {
-            console.error('Ошибка конвертации маски в черно-белую');
-            reject(new Error('Не удалось конвертировать маску'));
-        };
-
+        img.onerror = reject;
         img.src = URL.createObjectURL(colorMaskBlob);
     });
 }

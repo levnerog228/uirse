@@ -60,14 +60,15 @@ def update_user_profile(user_id, field, value):
         if conn:
             conn.close()
 
+
 def login():
     conn = None
     try:
         data = request.form
-        email = data.get('username')  # Здесь ожидается email (поле переименовано в форме)
+        login_input = data.get('username')  # Может быть email или логин 'admin'
         password = data.get('password')
 
-        if not email or not password:
+        if not login_input or not password:
             return False, "Missing credentials", None
 
         conn = get_db_connection()
@@ -77,23 +78,49 @@ def login():
         with conn.cursor() as cursor:
             hashed_password = hashlib.sha256(password.encode()).hexdigest()
 
-            sql = """SELECT id, \
-                            first_name, \
-                            last_name, \
-                            middle_name,
-                            CONCAT(last_name, ' ', first_name, ' ', IFNULL(middle_name, '')) AS full_name,
-                            email, \
-                            phone, \
-                            birth_date, \
-                            registration_date,
-                            avatar_url, \
-                            position, \
-                            access_rights
-                     FROM users
-                     WHERE email = %s \
-                       AND password_hash = %s"""
-            cursor.execute(sql, (email, hashed_password))
-            user = cursor.fetchone()
+            # Проверяем, является ли введенное значение 'admin' (независимо от регистра)
+            if login_input.lower() == 'admin':
+                # Ищем администратора по правам доступа
+                sql = """SELECT id, \
+                                first_name, \
+                                last_name, \
+                                middle_name,
+                                CONCAT(last_name, ' ', first_name, ' ', IFNULL(middle_name, '')) AS full_name,
+                                email, \
+                                phone, \
+                                birth_date, \
+                                registration_date,
+                                avatar_url, \
+                                position, \
+                                access_rights
+                         FROM users
+                         WHERE access_rights = 'admin' \
+                           AND password_hash = %s
+                         LIMIT 1"""
+                cursor.execute(sql, (hashed_password,))
+                user = cursor.fetchone()
+
+                if not user:
+                    return False, "Invalid credentials", None
+            else:
+                # Обычный вход по email
+                sql = """SELECT id, \
+                                first_name, \
+                                last_name, \
+                                middle_name,
+                                CONCAT(last_name, ' ', first_name, ' ', IFNULL(middle_name, '')) AS full_name,
+                                email, \
+                                phone, \
+                                birth_date, \
+                                registration_date,
+                                avatar_url, \
+                                position, \
+                                access_rights
+                         FROM users
+                         WHERE email = %s \
+                           AND password_hash = %s"""
+                cursor.execute(sql, (login_input, hashed_password))
+                user = cursor.fetchone()
 
             if user:
                 if user.get('birth_date'):

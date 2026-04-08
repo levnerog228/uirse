@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, session, redirect, url_for, current_app, request, jsonify
-from database import *
+from uirsmaga.database import *
 import os
 import psutil
 import hashlib
