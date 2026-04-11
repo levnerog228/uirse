@@ -2683,9 +2683,9 @@ input:checked + .toggle-slider:before {
     <button class="header-btn" onclick="showInfo()">
         <i class="fas fa-info-circle"></i> Информация
     </button>
-    <button class="header-btn" onclick="showHelp()">
-        <i class="fas fa-question-circle"></i> Помощь
-    </button>
+    <a href="{{ url_for('pages.help_page') }}" class="header-btn">
+    <i class="fas fa-question-circle"></i> Помощь
+    </a>
 </div>
 </header>
 

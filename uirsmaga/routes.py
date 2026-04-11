@@ -166,6 +166,24 @@ def stats():
     refresh_user_session()
     return render_template('stats.html', user=session['user'])
 
+@pages_bp.route('/help')
+def help_page():
+    """Страница помощи - доступна всем, включая гостей"""
+    # Для гостей создаем специальную сессию или просто передаем user=None
+    guest_user = {
+        'id': None,
+        'first_name': 'Гость',
+        'last_name': '',
+        'access_rights': 'guest'
+    }
+
+    # Если пользователь авторизован, используем его данные
+    if 'user' in session:
+        user = session['user']
+    else:
+        user = guest_user
+
+    return render_template('help.html', user=user, is_guest=('user' not in session))
 
 @pages_bp.route('/test')
 def test():

@@ -307,51 +307,128 @@
                 grid-template-columns: 1fr;
             }
         }
+        /* === СТИЛИ ПОП-АПА === */
+.popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.popup-overlay.active {
+    display: flex;
+    opacity: 1;
+}
+.popup-content {
+    max-width: 90vw;
+    max-height: 90vh;
+    position: relative;
+    cursor: default;
+    animation: zoomIn 0.2s ease;
+}
+.popup-image {
+    max-width: 100%;
+    max-height: 90vh;
+    object-fit: contain;
+    border-radius: var(--radius);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    border: 2px solid var(--surface);
+}
+.popup-close {
+    position: absolute;
+    top: -15px;
+    right: -15px;
+    width: 40px;
+    height: 40px;
+    background: var(--surface);
+    color: var(--text);
+    border: none;
+    border-radius: 50%;
+    font-size: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transition: var(--transition);
+    z-index: 1001;
+}
+.popup-close:hover {
+    background: var(--danger);
+    color: white;
+    transform: scale(1.1);
+}
+@keyframes zoomIn {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="app-container">
-        <!-- === ТОЧНО ТАКАЯ ЖЕ ШАПКА КАК НА ГЛАВНОЙ ФОРМЕ === -->
-        <header class="header">
-            <div class="logo">
-                <div class="logo-icon">
- <img src="../static/photo-Photoroom.png" alt="Логотип">
-                </div>
-                <div class="logo-text">Поиск однородностей</div>
+    <!-- === ТОЧНО ТАКАЯ ЖЕ ШАПКА КАК НА ГЛАВНОЙ ФОРМЕ === -->
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">
+                <img src="../static/photo-Photoroom.png" alt="Логотип">
             </div>
-            <div class="header-actions">
-                <!-- Блок авторизованного пользователя (как на главной) -->
+            <div class="logo-text">Поиск однородностей</div>
+        </div>
+        <div class="header-actions">
+            {% if is_guest %}
+                <a href="{{ url_for('auth.login_page') }}" class="header-btn">
+                    <i class="fas fa-sign-in-alt"></i> Вход
+                </a>
+                <a href="{{ url_for('auth.login_page') }}?register=true" class="header-btn">
+                    <i class="fas fa-user-plus"></i> Регистрация
+                </a>
+            {% else %}
+                <!-- Блок авторизованного пользователя -->
                 <div class="user-info">
-                    <span class="user-name">Иван Петров</span>
+                    <span class="user-name">{{ user.first_name }} {{ user.last_name }}</span>
                 </div>
                 <div class="user-actions">
-                    <!-- Если админ (пример) -->
-                    <!-- <a href="#" class="header-btn"><i class="fas fa-cog"></i> Управление</a> -->
-                    <a href="#" class="header-btn">
+                    {% if user.access_rights == 'admin' %}
+                        <a href="{{ url_for('pages.administration') }}" class="header-btn">
+                            <i class="fas fa-cog"></i> Управление
+                        </a>
+                    {% endif %}
+                    <a href="{{ url_for('pages.profile') }}" class="header-btn">
                         <i class="fas fa-user"></i> Профиль
                     </a>
-                    <a href="#" class="header-btn">
+                    <a href="{{ url_for('auth.logout') }}" class="header-btn">
                         <i class="fas fa-sign-out-alt"></i> Выход
                     </a>
                 </div>
-                <!-- Общие кнопки -->
-                <button class="header-btn" onclick="alert('Информация о системе')">
-                    <i class="fas fa-info-circle"></i> Информация
-                </button>
-                <button class="header-btn primary" onclick="">
-                    <i class="fas fa-question-circle"></i> Помощь
-                </button>
-            </div>
-        </header>
+            {% endif %}
 
-        <!-- Ссылка возврата -->
-        <div>
-            <div class="back-link" onclick="history.back()">
-                <i class="fas fa-arrow-left"></i> Вернуться к сегментации
-            </div>
+            <!-- Общие кнопки для всех пользователей -->
+            <button class="header-btn" onclick="showInfo()">
+                <i class="fas fa-info-circle"></i> Информация
+            </button>
+            <button class="header-btn" onclick="showHelp()">
+                <i class="fas fa-question-circle"></i> Помощь
+            </button>
         </div>
+    </header>
+
+    <!-- Ссылка возврата -->
+    <div>
+        <div class="back-link" onclick="history.back()">
+            <i class="fas fa-arrow-left"></i> Вернуться к сегментации
+        </div>
+    </div>
 
         <!-- Основной контент помощи -->
         <div class="help-content-wrapper">
@@ -485,13 +562,58 @@
             </div>
         </footer>
     </div>
+    <!-- Поп-ап для увеличенного просмотра изображений -->
+<div class="popup-overlay" id="imagePopup">
+    <div class="popup-content">
+        <button class="popup-close" id="popupClose">&times;</button>
+        <img class="popup-image" id="popupImage" src="" alt="Увеличенное изображение">
+    </div>
+</div>
 
     <script>
-        // Для демонстрации — при клике на "Помощь" можно ничего не делать, мы уже на странице помощи
-        function showHelp() {
-            // В реальном приложении здесь может быть переход, но мы уже на странице
-            console.log('Страница помощи открыта');
+    // Функционал поп-апа для увеличения изображений
+    document.addEventListener('DOMContentLoaded', function() {
+        const popup = document.getElementById('imagePopup');
+        const popupImage = document.getElementById('popupImage');
+        const popupClose = document.getElementById('popupClose');
+
+        // Находим все изображения в блоках иллюстраций
+        const images = document.querySelectorAll('.illustration-box img');
+
+        // Открытие поп-апа при клике на изображение
+        images.forEach(img => {
+            img.addEventListener('click', function(e) {
+                e.stopPropagation();
+                popupImage.src = this.src;
+                popup.classList.add('active');
+                document.body.style.overflow = 'hidden'; // Блокируем прокрутку страницы
+            });
+        });
+
+        // Закрытие поп-апа
+        function closePopup() {
+            popup.classList.remove('active');
+            document.body.style.overflow = ''; // Возвращаем прокрутку
         }
+
+        // Закрытие по клику на крестик
+        popupClose.addEventListener('click', closePopup);
+
+        // Закрытие по клику на оверлей
+        popup.addEventListener('click', function(e) {
+            if (e.target === popup) {
+                closePopup();
+            }
+        });
+
+        // Закрытие по клавише ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && popup.classList.contains('active')) {
+                closePopup();
+            }
+        });
+    });
+</script>
     </script>
 </body>
 </html>
