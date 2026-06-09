@@ -1,3 +1,5 @@
+ОБЯЗАТЛЕЬНО НЕОБХОДИМО ПРОВЕРИТЬ ВЕСА МОДЕЛИ В ПАПКЕ sam2/checkpoints/. ИЗ-за того, что гит не поддерживает загрузку больших файлов, веса могут быть битыми. Для установки необходимо скачать их по ссылке https://dl.fbaipublicfiles.com/segment_anything_2/092824/sam2.1_hiera_large.pt . Если необходимы другие веса, они представлены в следующем репозитории: https://github.com/facebookresearch/sam2
+
 Для развертывания выполнить:
 НАСТРОЙКА БД:
 1. Создать сеть Docker - sudo docker network create app-network
